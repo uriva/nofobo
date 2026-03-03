@@ -99,17 +99,17 @@ export default function Landing() {
             <img
               src="/nofobo-comic.jpg"
               alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
-              className="max-w-md w-full rounded-2xl border border-grape-800"
+              className="max-w-2xl w-full rounded-2xl border border-grape-800"
             />
             <img
               src="/nofobo-profiles.jpg"
               alt="How AI-generated profiles enable fair pairwise comparison"
-              className="max-w-md w-full rounded-2xl border border-grape-800"
+              className="max-w-2xl w-full rounded-2xl border border-grape-800"
             />
             <img
               src="/nofobo-elo.jpg"
               alt="How personal ELO ratings build your preference ranking from pairwise choices"
-              className="max-w-md w-full rounded-2xl border border-grape-800"
+              className="max-w-2xl w-full rounded-2xl border border-grape-800"
             />
           </div>
         </div>
