@@ -2,7 +2,9 @@ services:
   - type: web
     runtime: static
     name: nofobo
-    buildCommand: npx vite build
+    plan: free
+    branch: master
+    buildCommand: npm install && npx vite build
     staticPublishPath: ./web/dist
     headers:
       - path: /*
