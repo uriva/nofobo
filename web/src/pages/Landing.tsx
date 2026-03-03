@@ -95,7 +95,7 @@ export default function Landing() {
           <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
             A comic guide to finding love through math
           </p>
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-start">
+          <div className="flex flex-col gap-8 items-center">
             <img
               src="/nofobo-comic.jpg"
               alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
