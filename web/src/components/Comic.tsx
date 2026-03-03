@@ -28,9 +28,52 @@ export default function Comic() {
       speech:
         'Just pick who you vibe with more. "Alex or Jordan?" That\'s it. That\'s the whole thing.',
       caption:
-        "Each comparison builds your TRUE preference ranking. No overthinking. Just vibes.",
+        "No overthinking. No agonizing over 100 profiles. Just two at a time.",
       bg: "from-blue-950 to-blue-900/50",
       border: "border-blue-800/50",
+    },
+    {
+      title: "The Rating Engine",
+      emoji: "&#x1f3af;",
+      scene: "&#x1f4ca; &#x1f4c8; &#x1f3c6;",
+      speech: "",
+      caption: "",
+      isSpecial: true,
+      specialContent: (
+        <div className="space-y-3 text-sm">
+          <p className="text-grape-200 font-comic font-bold text-base">
+            But wait &mdash; Gale-Shapley needs a full ranking of everyone. How
+            do simple A-or-B picks become a ranked list?
+          </p>
+          <div className="space-y-2 text-grape-300 font-comic">
+            <p>
+              <span className="text-grape-100 font-bold">ELO ratings</span>{" "}
+              &mdash; the same system used to rank chess players. Everyone starts
+              at the same score.
+            </p>
+            <p>
+              <span className="text-grape-100 font-bold">Each comparison</span>{" "}
+              adjusts both scores: the person you picked goes up, the other goes
+              down.
+            </p>
+            <p>
+              <span className="text-grape-100 font-bold">Smart pairing:</span>{" "}
+              we show you people with similar scores so each choice is
+              maximally informative.
+            </p>
+          </div>
+          <div className="mt-3 p-3 bg-grape-950/80 rounded-lg border border-grape-700">
+            <p className="text-grape-200 font-comic text-xs">
+              <span className="font-bold text-grape-100">After ~20 picks</span>{" "}
+              your ELO scores form a reliable preference ranking &mdash; no need
+              to manually sort through hundreds of profiles. Your gut reactions
+              do the work; the math keeps score.
+            </p>
+          </div>
+        </div>
+      ),
+      bg: "from-emerald-950 to-emerald-900/50",
+      border: "border-emerald-700/50",
     },
     {
       title: "The Math",
