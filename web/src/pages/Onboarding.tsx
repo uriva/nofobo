@@ -70,7 +70,10 @@ export default function Onboarding() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ messages: [] }),
+        body: JSON.stringify({
+          messages: [],
+          links: links.split("\n").map((l) => l.trim()).filter(Boolean),
+        }),
       });
       const data = await res.json();
       if (data.response) {
@@ -85,7 +88,7 @@ export default function Onboarding() {
         {
           role: "assistant",
           content:
-            "Hey there! I'm excited to help create your NOFOBO profile. Tell me - what's something you're passionate about that most people wouldn't guess?",
+            "Hi! Let's build your profile. What do you do for work?",
         },
       ]);
     } finally {
@@ -110,7 +113,10 @@ export default function Onboarding() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages,
+          links: links.split("\n").map((l) => l.trim()).filter(Boolean),
+        }),
       });
       const data = await res.json();
       if (data.response) {

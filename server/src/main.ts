@@ -7,6 +7,7 @@ import {
   continueOnboarding,
   generateProfileFromLinks,
   fetchLinkSummary,
+  extractUrls,
 } from "./ai.ts";
 import {
   runMatching,
@@ -67,9 +68,37 @@ async function handler(req: Request): Promise<Response> {
 
     const body = await req.json();
     const chatHistory = body.messages ?? [];
+    const userLinks: string[] = body.links ?? [];
 
     try {
-      const response = await continueOnboarding(chatHistory);
+      // Collect all URLs: from step-1 links + any URLs in user messages
+      const allUrls = new Set<string>(userLinks);
+      for (const msg of chatHistory) {
+        if (msg.role === "user") {
+          for (const url of extractUrls(msg.content)) {
+            allUrls.add(url);
+          }
+        }
+      }
+
+      // Scrape URLs and build context
+      let linkContext = "";
+      if (allUrls.size > 0) {
+        const summaries = await Promise.all(
+          [...allUrls].map(async (url) => {
+            const summary = await fetchLinkSummary(url);
+            return summary ? `[Content from ${url}]:\n${summary}` : "";
+          }),
+        );
+        const validSummaries = summaries.filter(Boolean);
+        if (validSummaries.length > 0) {
+          linkContext = "\n\n--- Scraped content from user's links ---\n" +
+            validSummaries.join("\n\n") +
+            "\n--- End of scraped content ---\n\nUse the above scraped content to inform your questions and eventually the profile you write. Reference specific details you find interesting.";
+        }
+      }
+
+      const response = await continueOnboarding(chatHistory, linkContext);
       return json({ response });
     } catch (e) {
       console.error("Onboarding chat error:", e);
