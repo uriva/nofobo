@@ -20,7 +20,7 @@ export default function Landing() {
             </span>
           </div>
           <button
-            onClick={() => navigate(user ? "/compare" : "/auth")}
+            onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
             className="bg-grape-600 hover:bg-grape-500 text-white px-6 py-2 rounded-full font-semibold transition-all hover:shadow-lg hover:shadow-grape-600/25"
           >
             {user ? "Go to App" : "Get Started"}
@@ -48,7 +48,7 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => navigate(user ? "/compare" : "/auth")}
+              onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
               className="bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:shadow-xl hover:shadow-grape-600/30 hover:-translate-y-0.5"
             >
               Find Your Match
@@ -150,9 +150,14 @@ export default function Landing() {
       {/* How Profiles Work */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl font-black text-white text-center mb-16">
+          <h2 className="text-4xl font-black text-white text-center mb-4">
             AI-Crafted Profiles
           </h2>
+          <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
+            Every profile is written by AI after a short interview. This means
+            every profile has the same depth, structure, and information
+            density — making it easy to compare two people side by side.
+          </p>
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="space-y-6">
@@ -165,8 +170,8 @@ export default function Landing() {
                       Chat with our AI
                     </h3>
                     <p className="text-grape-300">
-                      Our AI asks thoughtful questions to really get to know you.
-                      No boring forms.
+                      A short interview collects specific facts about you — what
+                      you do, what you care about, what you're looking for.
                     </p>
                   </div>
                 </div>
@@ -179,8 +184,8 @@ export default function Landing() {
                       Share your links
                     </h3>
                     <p className="text-grape-300">
-                      Drop your social links, portfolio, blog - the AI reads
-                      them to understand you better.
+                      Drop your social links, portfolio, blog — the AI reads
+                      them to pull in real details about you.
                     </p>
                   </div>
                 </div>
@@ -190,14 +195,31 @@ export default function Landing() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white">
-                      Get a real profile
+                      Normalized, fair profiles
                     </h3>
                     <p className="text-grape-300">
-                      AI writes a rich, authentic description. Every profile is
-                      high-quality and informative.
+                      AI writes every profile the same way: fact-dense, no
+                      fluff, no self-marketing. When you're comparing two
+                      people, you're comparing substance — not who's a better
+                      copywriter.
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Why normalization matters */}
+              <div className="mt-8 bg-grape-950/50 border border-grape-900/50 rounded-xl p-5">
+                <h4 className="text-sm font-bold text-grape-200 mb-2">
+                  Why AI writes your profile
+                </h4>
+                <p className="text-grape-400 text-sm leading-relaxed">
+                  On other apps, some people write great bios and some write
+                  terrible ones — so you're judging writing skill, not
+                  compatibility. Here, AI normalizes every profile to the same
+                  quality and format. During pairwise comparison, you're reading
+                  two equally well-written profiles and picking the person, not
+                  the prose.
+                </p>
               </div>
             </div>
             <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6">
@@ -237,7 +259,7 @@ export default function Landing() {
             Join NOFOBO and let Nobel Prize-winning math find your person.
           </p>
           <button
-            onClick={() => navigate(user ? "/compare" : "/auth")}
+            onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
             className="bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-xl hover:shadow-grape-600/30 hover:-translate-y-0.5"
           >
             Get Started Free

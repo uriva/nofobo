@@ -17,7 +17,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (error || !user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/app/auth" replace />;
   }
   return <>{children}</>;
 }
@@ -46,7 +46,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!data?.profiles?.length) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/app/onboarding" replace />;
   }
 
   return <>{children}</>;
@@ -57,9 +57,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/app/auth" element={<Auth />} />
         <Route
-          path="/onboarding"
+          path="/app/onboarding"
           element={
             <ProtectedRoute>
               <Onboarding />
@@ -67,7 +67,7 @@ export default function App() {
           }
         />
         <Route
-          path="/compare"
+          path="/app/compare"
           element={
             <ProtectedRoute>
               <OnboardedRoute>
@@ -77,7 +77,7 @@ export default function App() {
           }
         />
         <Route
-          path="/match"
+          path="/app/match"
           element={
             <ProtectedRoute>
               <OnboardedRoute>
@@ -87,10 +87,12 @@ export default function App() {
           }
         />
         <Route
-          path="/profile"
+          path="/app/profile"
           element={
             <ProtectedRoute>
-              <Onboarding />
+              <OnboardedRoute>
+                <Profile />
+              </OnboardedRoute>
             </ProtectedRoute>
           }
         />

@@ -8,6 +8,7 @@ import {
   generateProfileFromLinks,
   fetchLinkSummary,
   extractUrls,
+  editProfile,
 } from "./ai.ts";
 import {
   runMatching,
@@ -432,6 +433,42 @@ async function handler(req: Request): Promise<Response> {
     } catch (e) {
       console.error("Demote error:", e);
       return json({ error: "Failed to demote" }, 500);
+    }
+  }
+
+  // --- AI Profile Edit ---
+  if (path === "/api/profile/edit" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    const body = await req.json();
+    const { editRequest } = body;
+    if (!editRequest) {
+      return json({ error: "editRequest required" }, 400);
+    }
+
+    try {
+      // Get user's current profile
+      const { profiles } = await adminDb.query({
+        profiles: { $: { where: { "user.id": user.id } } },
+      });
+      const profile = profiles[0];
+      if (!profile) return json({ error: "Profile not found" }, 404);
+
+      const currentProfile = profile.aiDescription ?? "";
+      const updatedProfile = await editProfile(currentProfile, editRequest);
+
+      // Save updated profile
+      await adminDb.transact([
+        adminDb.tx.profiles[profile.id].update({
+          aiDescription: updatedProfile,
+        }),
+      ]);
+
+      return json({ success: true, profile: updatedProfile });
+    } catch (e) {
+      console.error("Profile edit error:", e);
+      return json({ error: "Failed to edit profile" }, 500);
     }
   }
 

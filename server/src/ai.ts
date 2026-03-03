@@ -146,3 +146,33 @@ export async function fetchLinkSummary(url: string): Promise<string> {
     return "";
   }
 }
+
+// --- AI Profile Editing ---
+// User describes what they want changed; AI returns updated profile text.
+
+const PROFILE_EDIT_PROMPT = `You are the profile editor for NOFOBO, a dating app. The user has an existing AI-generated dating profile and wants to make changes to it.
+
+Your job: take the current profile and the user's requested change, and return the updated profile.
+
+Rules:
+- Return ONLY the updated profile text, no preamble, no explanation
+- Keep the same factual, informational style — packed with concrete facts
+- NO filler adjectives like "passionate", "vibrant", "dynamic"
+- NO generic dating-app fluff
+- Every sentence should contain a specific fact about the person
+- 150-250 words
+- Write in third person
+- Honor the user's request: if they say "remove X", remove it. If they say "add Y", add it. If they say "make it shorter", shorten it.`;
+
+export async function editProfile(
+  currentProfile: string,
+  editRequest: string,
+): Promise<string> {
+  return await callAI([
+    { role: "system", content: PROFILE_EDIT_PROMPT },
+    {
+      role: "user",
+      content: `Current profile:\n\n${currentProfile}\n\nRequested change: ${editRequest}`,
+    },
+  ]);
+}

@@ -96,10 +96,16 @@ export default function Compare() {
       {/* Header */}
       <div className="border-b border-grape-900/50 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-xl font-black text-white">NOFOBO</span>
+          <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/match")}
+              onClick={() => navigate("/app/profile")}
+              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+            >
+              My Profile
+            </button>
+            <button
+              onClick={() => navigate("/app/match")}
               className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
             >
               My Match
@@ -153,7 +159,7 @@ export default function Compare() {
             <div className="text-6xl mb-6">{"\u{1f389}"}</div>
             <p className="text-grape-300 text-lg mb-4">{message}</p>
             <button
-              onClick={() => navigate("/match")}
+              onClick={() => navigate("/app/match")}
               className="bg-grape-600 hover:bg-grape-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
             >
               Check Your Match

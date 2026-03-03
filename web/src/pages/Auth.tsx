@@ -14,7 +14,7 @@ export default function Auth() {
 
   // If already logged in, redirect
   if (user) {
-    navigate("/onboarding");
+    navigate("/app/onboarding");
     return null;
   }
 
@@ -39,7 +39,7 @@ export default function Auth() {
     setError("");
     try {
       await db.auth.signInWithMagicCode({ email: sentTo, code: code.trim() });
-      navigate("/onboarding");
+      navigate("/app/onboarding");
     } catch (e: any) {
       setError(e?.message ?? "Invalid code");
     } finally {

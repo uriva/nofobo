@@ -147,10 +147,10 @@ export default function Match() {
       {/* Header */}
       <div className="border-b border-grape-900/50 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="text-xl font-black text-white">NOFOBO</span>
+          <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/compare")}
+              onClick={() => navigate("/app/compare")}
               className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
             >
               Compare
@@ -235,7 +235,7 @@ export default function Match() {
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => navigate("/compare")}
+                      onClick={() => navigate("/app/compare")}
                       className="flex-1 border border-grape-700 text-grape-300 hover:bg-grape-950 py-3 rounded-xl font-semibold transition-all"
                     >
                       Keep Comparing
@@ -394,7 +394,7 @@ export default function Match() {
                 preference list!
               </p>
               <button
-                onClick={() => navigate("/compare")}
+                onClick={() => navigate("/app/compare")}
                 className="bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white px-8 py-3 rounded-full font-semibold transition-all"
               >
                 Start Comparing

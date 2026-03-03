@@ -43,7 +43,7 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (data?.profiles?.length) {
-      navigate("/compare");
+      navigate("/app/compare");
     }
   }, [data]);
 
@@ -229,7 +229,7 @@ export default function Onboarding() {
           .link({ user: user.id }),
       ]);
 
-      navigate("/compare");
+      navigate("/app/compare");
     } catch (e) {
       console.error("Save profile error:", e);
     } finally {
@@ -244,7 +244,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="border-b border-grape-900/50 px-6 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <span className="text-xl font-black text-white">NOFOBO</span>
+          <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
           <span className="text-grape-400 text-sm">
             {step === "basics"
               ? "Step 1: The Basics"
