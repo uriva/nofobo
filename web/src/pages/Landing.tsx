@@ -98,7 +98,7 @@ export default function Landing() {
           <img
             src="/nofobo-comic.jpg"
             alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
-            className="w-full rounded-2xl border border-grape-800"
+            className="max-w-md mx-auto w-full rounded-2xl border border-grape-800"
           />
         </div>
       </section>
