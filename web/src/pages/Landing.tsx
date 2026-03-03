@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
-import Comic from "../components/Comic.tsx";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -96,7 +95,11 @@ export default function Landing() {
           <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
             A comic guide to finding love through math
           </p>
-          <Comic />
+          <img
+            src="/nofobo-comic.jpg"
+            alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
+            className="w-full rounded-2xl border border-grape-800"
+          />
         </div>
       </section>
 
