@@ -35,16 +35,16 @@ export default function Landing() {
             Powered by Nobel Prize-winning mathematics
           </div>
           <h1 className="text-5xl sm:text-7xl font-black text-white mb-6 leading-tight">
-            Stop Swiping.
+            Too Many Options.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-grape-400 to-purple-300">
-              Start Matching.
+              One Right Match.
             </span>
           </h1>
           <p className="text-xl text-grape-200/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            NOFOBO uses the Gale-Shapley stable matching algorithm to find you
-            one perfect match per week. No endless swiping. No paradox of
-            choice. Just math-guaranteed compatibility.
+            Dating apps give you hundreds of matches and zero clarity. NOFOBO
+            uses the Gale-Shapley algorithm to cut through the noise and find
+            you one optimal match per week. No more FOBO.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -229,7 +229,7 @@ export default function Landing() {
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-grape-900/50 to-purple-900/50 border border-grape-800/50 rounded-3xl p-12">
           <h2 className="text-4xl font-black text-white mb-4">
-            Ready to stop swiping?
+            Ready to ditch the paradox of choice?
           </h2>
           <p className="text-grape-300 text-lg mb-8">
             Join NOFOBO and let Nobel Prize-winning math find your person.
