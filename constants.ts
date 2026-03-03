@@ -14,5 +14,5 @@ export const API_URL = _viteApiUrl ||
 
 export const ELO_K_FACTOR = 32;
 export const ELO_DEFAULT = 1400;
-export const MIN_COMPARISONS_FOR_MATCHING = 10;
-export const COMPARISONS_PER_SESSION = 10;
+export const MIN_COMPARISONS_FOR_MATCHING = 30;
+export const COMPARISONS_PER_SESSION = 20;

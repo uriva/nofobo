@@ -67,8 +67,19 @@ export default function Comic() {
             <p className="text-grape-200 font-comic text-xs">
               <span className="font-bold text-grape-100">This means taste matters.</span>{" "}
               If you're into quiet bookworms, your scores will reflect that
-              &mdash; even if the rest of the world ranks differently. After ~20
-              picks, your personal ranking is reliable enough for the algorithm.
+              &mdash; even if the rest of the world ranks differently.
+            </p>
+          </div>
+          <div className="mt-3 p-3 bg-grape-950/80 rounded-lg border border-grape-700">
+            <p className="text-grape-200 font-comic text-xs">
+              <span className="font-bold text-grape-100">Think about it:</span>{" "}
+              Tinder users swipe 50&ndash;100+ times per session without thinking twice.
+              That same effort here gives you something far better. A Tinder swipe is binary
+              &mdash; yes or no &mdash; which just splits people into two unsorted piles.
+              Each of our pairwise comparisons gives a <em>relative ordering</em> between
+              two people, which is strictly more informative. So the same number of quick
+              gut-feel picks produces an actual ranked preference list instead of an
+              unranked pile of &ldquo;maybe.&rdquo;
             </p>
           </div>
         </div>
