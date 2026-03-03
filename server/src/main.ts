@@ -392,6 +392,49 @@ async function handler(req: Request): Promise<Response> {
     }
   }
 
+  // --- Demote a match (user dated them, not a fit) ---
+  if (path === "/api/elo/demote" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    const body = await req.json();
+    const { targetUserId } = body;
+    if (!targetUserId) {
+      return json({ error: "targetUserId required" }, 400);
+    }
+
+    try {
+      // Set target's ELO to rock bottom in user's rankings
+      const DEMOTED_SCORE = 0;
+
+      const { eloRatings } = await adminDb.query({
+        eloRatings: {
+          $: { where: { "rater.id": user.id, "target.id": targetUserId } },
+        },
+      });
+
+      if (eloRatings.length > 0) {
+        await adminDb.transact([
+          adminDb.tx.eloRatings[eloRatings[0].id].update({
+            score: DEMOTED_SCORE,
+          }),
+        ]);
+      } else {
+        const newId = id();
+        await adminDb.transact([
+          adminDb.tx.eloRatings[newId]
+            .update({ score: DEMOTED_SCORE, comparisonsCount: 0 })
+            .link({ rater: user.id, target: targetUserId }),
+        ]);
+      }
+
+      return json({ success: true, demoted: targetUserId });
+    } catch (e) {
+      console.error("Demote error:", e);
+      return json({ error: "Failed to demote" }, 500);
+    }
+  }
+
   return json({ error: "Not found" }, 404);
 }
 

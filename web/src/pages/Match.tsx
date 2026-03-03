@@ -25,6 +25,8 @@ export default function Match() {
   const [cycleWeek, setCycleWeek] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [demoting, setDemoting] = useState(false);
+  const [demoted, setDemoted] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,6 +115,30 @@ export default function Match() {
       } catch (e) {
         console.error("Reveal update error:", e);
       }
+    }
+  };
+
+  const handleDemote = async () => {
+    if (!match?.userId || !user) return;
+    setDemoting(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/elo/demote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetUserId: match.userId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDemoted(true);
+      }
+    } catch (e) {
+      console.error("Demote error:", e);
+    } finally {
+      setDemoting(false);
     }
   };
 
@@ -221,6 +247,26 @@ export default function Match() {
                       Chat with {match.name}
                     </button>
                   </div>
+
+                  {/* Demote / not for me */}
+                  {demoted ? (
+                    <div className="bg-grape-950/50 border border-grape-900/50 rounded-xl p-4 text-center">
+                      <p className="text-grape-400 text-sm">
+                        Got it &mdash; {match.name} won&rsquo;t be matched with you again.
+                        Keep comparing to improve next week&rsquo;s match.
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleDemote}
+                      disabled={demoting}
+                      className="w-full text-grape-600 hover:text-grape-400 text-sm py-2 transition-colors disabled:opacity-50"
+                    >
+                      {demoting
+                        ? "Updating..."
+                        : `Dated ${match.name} and it's not a fit? Remove from future matches`}
+                    </button>
+                  )}
                 </>
               ) : (
                 /* Chat view */

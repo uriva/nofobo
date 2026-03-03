@@ -117,8 +117,9 @@ export default function Landing() {
               </h3>
               <p className="text-grape-300 leading-relaxed">
                 Talking to 20 people means none of them get real attention. One
-                match means you can actually show up, be present, and give it a
-                real shot.
+                match means you can actually show up and give it a real shot.
+                Getting the same person again? That's the math saying: this one's
+                worth your time.
               </p>
             </div>
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">

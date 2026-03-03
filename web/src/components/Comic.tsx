@@ -133,7 +133,7 @@ export default function Comic() {
       speech:
         "Every Sunday, you get ONE match. Not 10. Not 100. The ONE person the algorithm says is best for you.",
       caption:
-        "One match = full attention. No more spreading yourself across 47 conversations.",
+        "Getting the same person week after week? That's the algorithm telling you something. Give them your full attention. And if you date and it's not a fit — just tell us, and we'll match you with someone new.",
       bg: "from-grape-950 to-purple-900/50",
       border: "border-purple-700/50",
     },
