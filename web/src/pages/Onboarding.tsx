@@ -22,6 +22,9 @@ export default function Onboarding() {
   const [lookingFor, setLookingFor] = useState("");
   const [links, setLinks] = useState("");
   const [generatedProfile, setGeneratedProfile] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Check if already onboarded
@@ -58,6 +61,24 @@ export default function Onboarding() {
   const getAuthToken = () => {
     // user from db.useAuth() has refresh_token directly
     return user?.refresh_token ?? "";
+  };
+
+  const handlePhotoSelect = (e: { target: HTMLInputElement }) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Validate: images only, max 5MB
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
   const startChat = async () => {
@@ -167,25 +188,44 @@ export default function Onboarding() {
       const profileId = id();
       const linksArray = links
         .split("\n")
-        .map((l) => l.trim())
+        .map((l: string) => l.trim())
         .filter(Boolean);
+
+      // Upload photo if selected
+      let photoUrl: string | undefined;
+      if (photoFile) {
+        const photoPath = `profiles/${user.id}/photo`;
+        await db.storage.uploadFile(photoPath, photoFile);
+        // Query for the uploaded file to get its URL
+        // deno-lint-ignore no-explicit-any
+        const fileResult = await (db as any).queryOnce({
+          $files: { $: { where: { path: photoPath } } },
+        });
+        const files = fileResult.data?.$files;
+        if (files && files.length > 0) {
+          photoUrl = (files[0] as { url?: string }).url;
+        }
+      }
+
+      const profileData: Record<string, unknown> = {
+        name,
+        age: parseInt(age),
+        gender,
+        lookingFor,
+        bio: messages
+          .filter((m) => m.role === "user")
+          .map((m) => m.content)
+          .join(" | "),
+        links: JSON.stringify(linksArray),
+        aiDescription: generatedProfile,
+        onboardingComplete: true,
+        createdAt: Date.now(),
+      };
+      if (photoUrl) profileData.photoUrl = photoUrl;
 
       await db.transact([
         db.tx.profiles[profileId]
-          .update({
-            name,
-            age: parseInt(age),
-            gender,
-            lookingFor,
-            bio: messages
-              .filter((m) => m.role === "user")
-              .map((m) => m.content)
-              .join(" | "),
-            links: JSON.stringify(linksArray),
-            aiDescription: generatedProfile,
-            onboardingComplete: true,
-            createdAt: Date.now(),
-          })
+          .update(profileData)
           .link({ user: user.id }),
       ]);
 
@@ -300,6 +340,56 @@ export default function Onboarding() {
 
             <div>
               <label className="block text-grape-300 text-sm mb-2 font-medium">
+                Your photo
+              </label>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              {photoPreview ? (
+                <div className="flex items-center gap-4">
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-grape-600"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+                    >
+                      Change photo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-grape-800 rounded-xl px-4 py-6 text-grape-500 hover:border-grape-600 hover:text-grape-400 transition-colors flex flex-col items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium">Upload a photo</span>
+                  <span className="text-xs text-grape-600">Max 5MB</span>
+                </button>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">
                 Your links (one per line) - social media, portfolio, blog, etc.
               </label>
               <textarea
@@ -398,13 +488,17 @@ export default function Onboarding() {
             {/* Profile preview */}
             <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-2xl">
-                  {gender === "woman"
-                    ? "\u{1f469}"
-                    : gender === "man"
-                      ? "\u{1f468}"
-                      : "\u{1f9d1}"}
-                </div>
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt={name}
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-2xl text-white font-bold">
+                    {name.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <div className="font-bold text-white text-lg">
                     {name}, {age}

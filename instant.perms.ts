@@ -49,12 +49,26 @@ const rules = {
     allow: {
       view: "isParticipant",
       create: "false",
-      update: "false",
+      update: "isParticipant",
       delete: "false",
     },
     bind: [
       "isParticipant",
       "auth.id in data.ref('user1.id') || auth.id in data.ref('user2.id')",
+    ],
+  },
+  chatMessages: {
+    allow: {
+      view: "isMatchParticipant",
+      create: "isSenderAndMatchParticipant",
+      update: "false",
+      delete: "false",
+    },
+    bind: [
+      "isMatchParticipant",
+      "auth.id in data.ref('match.user1.id') || auth.id in data.ref('match.user2.id')",
+      "isSenderAndMatchParticipant",
+      "auth.id == data.ref('sender.id') && (auth.id in data.ref('match.user1.id') || auth.id in data.ref('match.user2.id'))",
     ],
   },
 } satisfies InstantRules;

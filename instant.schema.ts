@@ -38,6 +38,10 @@ const _schema = i.schema({
       createdAt: i.number().indexed(),
       revealed: i.boolean().indexed(),
     }),
+    chatMessages: i.entity({
+      text: i.string(),
+      createdAt: i.number().indexed(),
+    }),
   },
   links: {
     profileUser: {
@@ -94,6 +98,19 @@ const _schema = i.schema({
     matchUser2: {
       forward: { on: "matches", has: "one", label: "user2" },
       reverse: { on: "$users", has: "many", label: "matchesAsUser2" },
+    },
+    chatMessageMatch: {
+      forward: {
+        on: "chatMessages",
+        has: "one",
+        label: "match",
+        onDelete: "cascade",
+      },
+      reverse: { on: "matches", has: "many", label: "chatMessages" },
+    },
+    chatMessageSender: {
+      forward: { on: "chatMessages", has: "one", label: "sender" },
+      reverse: { on: "$users", has: "many", label: "sentMessages" },
     },
   },
 });

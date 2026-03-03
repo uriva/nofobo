@@ -376,6 +376,7 @@ async function handler(req: Request): Promise<Response> {
 
       return json({
         match: {
+          matchId: myMatch.id,
           userId: matchedUser?.id,
           name: matchedProfile?.name,
           age: matchedProfile?.age,
