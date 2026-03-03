@@ -47,27 +47,28 @@ export default function Comic() {
           </p>
           <div className="space-y-2 text-grape-300 font-comic">
             <p>
-              <span className="text-grape-100 font-bold">ELO ratings</span>{" "}
-              &mdash; the same system used to rank chess players. Everyone starts
-              at the same score.
+              <span className="text-grape-100 font-bold">Your personal ELO scores</span>{" "}
+              &mdash; inspired by chess ratings, but these are entirely private
+              to you. There's no global popularity ladder.
             </p>
             <p>
               <span className="text-grape-100 font-bold">Each comparison</span>{" "}
-              adjusts both scores: the person you picked goes up, the other goes
-              down.
+              updates your personal scores: the person you picked goes up in{" "}
+              <em>your</em> ranking, the other goes down. Other people's rankings
+              are unaffected.
             </p>
             <p>
               <span className="text-grape-100 font-bold">Smart pairing:</span>{" "}
-              we show you people with similar scores so each choice is
-              maximally informative.
+              we show you people with similar scores in your list, so each
+              choice is maximally informative.
             </p>
           </div>
           <div className="mt-3 p-3 bg-grape-950/80 rounded-lg border border-grape-700">
             <p className="text-grape-200 font-comic text-xs">
-              <span className="font-bold text-grape-100">After ~20 picks</span>{" "}
-              your ELO scores form a reliable preference ranking &mdash; no need
-              to manually sort through hundreds of profiles. Your gut reactions
-              do the work; the math keeps score.
+              <span className="font-bold text-grape-100">This means taste matters.</span>{" "}
+              If you're into quiet bookworms, your scores will reflect that
+              &mdash; even if the rest of the world ranks differently. After ~20
+              picks, your personal ranking is reliable enough for the algorithm.
             </p>
           </div>
         </div>
