@@ -72,12 +72,11 @@ export default function Comic() {
           </div>
           <div className="mt-3 p-3 bg-grape-950/80 rounded-lg border border-grape-700">
             <p className="text-grape-200 font-comic text-xs">
-              <span className="font-bold text-grape-100">Same easy picks, better outcome:</span>{" "}
-              You already know how to do this &mdash; just pick who you like more.
-              The difference is what happens next. Each pick tells us not just
-              &ldquo;yes&rdquo; or &ldquo;no,&rdquo; but <em>who you prefer relative to whom</em>.
-              That builds an actual ranked preference list, which feeds into the matching
-              algorithm. Same effort, real ranking, one optimal match.
+              <span className="font-bold text-grape-100">It&rsquo;s quick and easy:</span>{" "}
+              just pick who you like more, over and over. Each pick tells us{" "}
+              <em>who you prefer relative to whom</em>, so after enough picks your
+              personal ranking converges into something solid enough for the
+              matching algorithm to work with.
             </p>
           </div>
         </div>
