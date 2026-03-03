@@ -1,0 +1,31 @@
+{
+  "tasks": {
+    "dev": "npx vite --host 0.0.0.0 --port 3000",
+    "build": "npx vite build",
+    "serve": "deno run -A server/src/main.ts",
+    "check": "deno fmt --check && deno lint && deno check server/src/main.ts",
+    "push-schema": "npx instant-cli push schema --yes",
+    "push-perms": "npx instant-cli push perms --yes"
+  },
+  "imports": {
+    "react": "npm:react@^19.1.0",
+    "react/": "npm:react@^19.1.0/",
+    "react-dom": "npm:react-dom@^19.1.0",
+    "react-dom/": "npm:react-dom@^19.1.0/",
+    "react-router-dom": "npm:react-router-dom@^7.6.1",
+    "@instantdb/react": "npm:@instantdb/react@^0.22.150",
+    "@instantdb/admin": "npm:@instantdb/admin@^0.22.150",
+    "@instantdb/core": "npm:@instantdb/core@^0.22.150",
+    "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.5.2",
+    "vite": "npm:vite@^6.3.5"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "lib": ["dom", "dom.iterable", "esnext", "deno.ns"]
+  },
+  "nodeModulesDir": "auto",
+  "deploy": {
+    "entrypoint": "server/src/main.ts"
+  }
+}
