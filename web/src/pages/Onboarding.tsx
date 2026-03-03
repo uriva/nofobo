@@ -55,20 +55,15 @@ export default function Onboarding() {
     }
   }, [step]);
 
-  const getAuthToken = async () => {
-    // Get the refresh token from InstantDB's internal reactor
-    const reactor = (db as any)._core?._reactor ?? (db as any).core?._reactor;
-    if (reactor) {
-      const cached = reactor._currentUserCached ?? (await reactor.getCurrentUser());
-      return cached?.user?.refresh_token ?? "";
-    }
-    return "";
+  const getAuthToken = () => {
+    // user from db.useAuth() has refresh_token directly
+    return user?.refresh_token ?? "";
   };
 
   const startChat = async () => {
     setLoading(true);
     try {
-      const token = await getAuthToken();
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/onboarding/chat`, {
         method: "POST",
         headers: {
@@ -80,6 +75,9 @@ export default function Onboarding() {
       const data = await res.json();
       if (data.response) {
         setMessages([{ role: "assistant", content: data.response }]);
+      } else {
+        console.error("No response from chat API:", data);
+        throw new Error(data.error || "No response");
       }
     } catch (e) {
       console.error("Failed to start chat:", e);
@@ -105,7 +103,7 @@ export default function Onboarding() {
     setLoading(true);
 
     try {
-      const token = await getAuthToken();
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/onboarding/chat`, {
         method: "POST",
         headers: {
@@ -137,6 +135,9 @@ export default function Onboarding() {
             { role: "assistant", content: data.response },
           ]);
         }
+      } else {
+        console.error("No response from chat API:", data);
+        throw new Error(data.error || "No response");
       }
     } catch (e) {
       console.error("Chat error:", e);

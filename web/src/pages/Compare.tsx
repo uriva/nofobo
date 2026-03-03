@@ -24,7 +24,7 @@ export default function Compare() {
   const [chosen, setChosen] = useState<number | null>(null);
 
   const getAuthToken = () => {
-    return db.auth._currentUserCached?.token ?? "";
+    return user?.refresh_token ?? "";
   };
 
   const loadPair = useCallback(async () => {

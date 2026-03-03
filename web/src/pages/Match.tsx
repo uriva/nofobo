@@ -27,7 +27,7 @@ export default function Match() {
   }, [user]);
 
   const getAuthToken = () => {
-    return db.auth._currentUserCached?.token ?? "";
+    return user?.refresh_token ?? "";
   };
 
   const loadMatch = async () => {
