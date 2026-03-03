@@ -56,9 +56,13 @@ export default function Onboarding() {
   }, [step]);
 
   const getAuthToken = async () => {
-    // Get the refresh token from InstantDB auth
-    const token = db.auth._currentUserCached?.token;
-    return token ?? "";
+    // Get the refresh token from InstantDB's internal reactor
+    const reactor = (db as any)._core?._reactor ?? (db as any).core?._reactor;
+    if (reactor) {
+      const cached = reactor._currentUserCached ?? (await reactor.getCurrentUser());
+      return cached?.user?.refresh_token ?? "";
+    }
+    return "";
   };
 
   const startChat = async () => {
