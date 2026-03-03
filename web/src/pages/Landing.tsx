@@ -95,11 +95,23 @@ export default function Landing() {
           <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
             A comic guide to finding love through math
           </p>
-          <img
-            src="/nofobo-comic.jpg"
-            alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
-            className="max-w-md mx-auto w-full rounded-2xl border border-grape-800"
-          />
+          <div className="flex flex-col md:flex-row gap-8 justify-center items-start">
+            <img
+              src="/nofobo-comic.jpg"
+              alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
+              className="max-w-md w-full rounded-2xl border border-grape-800"
+            />
+            <img
+              src="/nofobo-profiles.jpg"
+              alt="How AI-generated profiles enable fair pairwise comparison"
+              className="max-w-md w-full rounded-2xl border border-grape-800"
+            />
+            <img
+              src="/nofobo-elo.jpg"
+              alt="How personal ELO ratings build your preference ranking from pairwise choices"
+              className="max-w-md w-full rounded-2xl border border-grape-800"
+            />
+          </div>
         </div>
       </section>
 
