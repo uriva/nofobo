@@ -144,7 +144,7 @@ export default function Comic() {
       speech:
         "I'm not wondering if there's someone better out there. The math already checked.",
       caption:
-        "NOFOBO: because your soulmate shouldn't be a needle in a haystack of swipes.",
+        "NOFOBO: because your soulmate deserves your full attention.",
       bg: "from-pink-950 to-pink-900/50",
       border: "border-pink-800/50",
     },

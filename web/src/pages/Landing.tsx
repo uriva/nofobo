@@ -42,9 +42,9 @@ export default function Landing() {
             </span>
           </h1>
           <p className="text-xl text-grape-200/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Dating apps give you hundreds of matches and zero clarity. NOFOBO
-            uses the Gale-Shapley algorithm to cut through the noise and find
-            you one optimal match per week. No more FOBO.
+            Good relationships require focus, but you can't focus when you're
+            juggling 20 conversations. NOFOBO uses the Gale-Shapley algorithm
+            to find you one optimal match per week. One person, full attention.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -113,11 +113,12 @@ export default function Landing() {
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
               <div className="text-4xl mb-4">&#x1f9e0;</div>
               <h3 className="text-xl font-bold text-white mb-3">
-                No Paradox of Choice
+                Focus Over Abundance
               </h3>
               <p className="text-grape-300 leading-relaxed">
-                Research shows more options = less satisfaction. With 100
-                matches, you always wonder "what if." With one, you invest fully.
+                Talking to 20 people means none of them get real attention. One
+                match means you can actually show up, be present, and give it a
+                real shot.
               </p>
             </div>
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
