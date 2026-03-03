@@ -72,14 +72,12 @@ export default function Comic() {
           </div>
           <div className="mt-3 p-3 bg-grape-950/80 rounded-lg border border-grape-700">
             <p className="text-grape-200 font-comic text-xs">
-              <span className="font-bold text-grape-100">Think about it:</span>{" "}
-              Tinder users swipe 50&ndash;100+ times per session without thinking twice.
-              That same effort here gives you something far better. A Tinder swipe is binary
-              &mdash; yes or no &mdash; which just splits people into two unsorted piles.
-              Each of our pairwise comparisons gives a <em>relative ordering</em> between
-              two people, which is strictly more informative. So the same number of quick
-              gut-feel picks produces an actual ranked preference list instead of an
-              unranked pile of &ldquo;maybe.&rdquo;
+              <span className="font-bold text-grape-100">Same easy picks, better outcome:</span>{" "}
+              You already know how to do this &mdash; just pick who you like more.
+              The difference is what happens next. Each pick tells us not just
+              &ldquo;yes&rdquo; or &ldquo;no,&rdquo; but <em>who you prefer relative to whom</em>.
+              That builds an actual ranked preference list, which feeds into the matching
+              algorithm. Same effort, real ranking, one optimal match.
             </p>
           </div>
         </div>
