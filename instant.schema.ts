@@ -8,14 +8,20 @@ const _schema = i.schema({
     profiles: i.entity({
       name: i.string(),
       age: i.number().indexed(),
-      gender: i.string().indexed(),
-      lookingFor: i.string().indexed(),
-      bio: i.string(),
-      links: i.string(),
-      aiDescription: i.string(),
+      gender: i.string().indexed(), // "man" or "woman"
+      attractedTo: i.string().indexed().optional(), // "men", "women", or "both"
+      relationshipStatus: i.string().indexed().optional(), // one of the defined statuses
+      matchWithStatuses: i.string().optional(), // JSON array of acceptable statuses
+      kinkTags: i.string().optional(), // JSON array of kink tags
+      bio: i.string(), // user-written bio
       photoUrl: i.string().optional(),
+      communityCode: i.string().indexed().optional(), // community gating
       onboardingComplete: i.boolean().indexed(),
       createdAt: i.number().indexed(),
+      // Legacy fields (kept for backward compat, not used in new flow)
+      lookingFor: i.string().optional().indexed(),
+      links: i.string().optional(),
+      aiDescription: i.string().optional(),
     }),
     onboardingChats: i.entity({
       role: i.string(),

@@ -1,16 +1,20 @@
 interface ProfileCardProps {
   name: string;
   age: number;
-  description: string;
+  bio: string;
   photoUrl?: string;
+  relationshipStatus?: string;
+  kinkTags?: string[];
   large?: boolean;
 }
 
 export default function ProfileCard({
   name,
   age,
-  description,
+  bio,
   photoUrl,
+  relationshipStatus,
+  kinkTags,
   large,
 }: ProfileCardProps) {
   return (
@@ -44,16 +48,33 @@ export default function ProfileCard({
           >
             {name}, {age}
           </div>
+          {relationshipStatus && (
+            <div className="text-grape-400 text-sm">{relationshipStatus}</div>
+          )}
         </div>
       </div>
 
-      {/* Description */}
+      {/* Tags */}
+      {kinkTags && kinkTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {kinkTags.map((tag) => (
+            <span
+              key={tag}
+              className="text-xs bg-grape-900 text-grape-300 px-2 py-1 rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Bio */}
       <p
         className={`text-grape-200 leading-relaxed whitespace-pre-wrap ${
           large ? "text-base" : "text-sm"
         }`}
       >
-        {description}
+        {bio}
       </p>
     </div>
   );

@@ -9,9 +9,16 @@ interface PairProfile {
   profileId: string;
   name: string;
   age: number;
-  aiDescription: string;
+  bio: string;
   photoUrl?: string;
+  relationshipStatus?: string;
+  kinkTags?: string[];
 }
+
+const KINK_TAG_OPTIONS = [
+  "Dom", "Sub", "Switch", "Voyeur", "Exhibitionist",
+  "Bondage", "Role play", "Sensory play", "Impact play", "Group play",
+];
 
 export default function Compare() {
   const navigate = useNavigate();
@@ -20,8 +27,15 @@ export default function Compare() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [totalComparisons, setTotalComparisons] = useState(0);
+  const [eligibleCount, setEligibleCount] = useState(0);
   const [message, setMessage] = useState("");
   const [chosen, setChosen] = useState<number | null>(null);
+
+  // Filter state
+  const [showFilters, setShowFilters] = useState(false);
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
+  const [filterTags, setFilterTags] = useState<string[]>([]);
 
   const getAuthToken = () => {
     return user?.refresh_token ?? "";
@@ -32,13 +46,20 @@ export default function Compare() {
     setChosen(null);
     try {
       const token = getAuthToken();
-      const res = await fetch(`${API_URL}/api/compare/pair`, {
+      const params = new URLSearchParams();
+      if (minAge) params.set("minAge", minAge);
+      if (maxAge) params.set("maxAge", maxAge);
+      if (filterTags.length > 0) params.set("tags", filterTags.join(","));
+      const qs = params.toString() ? `?${params.toString()}` : "";
+
+      const res = await fetch(`${API_URL}/api/compare/pair${qs}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.pair) {
         setPair(data.pair);
         setTotalComparisons(data.totalComparisons ?? 0);
+        setEligibleCount(data.eligibleCount ?? 0);
         setMessage("");
       } else {
         setPair(null);
@@ -50,7 +71,7 @@ export default function Compare() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [minAge, maxAge, filterTags]);
 
   useEffect(() => {
     if (user) loadPair();
@@ -86,6 +107,12 @@ export default function Compare() {
     }
   };
 
+  const toggleTag = (tag: string) => {
+    setFilterTags((prev: string[]) =>
+      prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag],
+    );
+  };
+
   const progressPercent = Math.min(
     100,
     (totalComparisons / MIN_COMPARISONS_FOR_MATCHING) * 100,
@@ -99,16 +126,10 @@ export default function Compare() {
           <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/app/profile")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`text-sm font-medium transition-colors ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}
             >
-              My Profile
-            </button>
-            <button
-              onClick={() => navigate("/app/match")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              My Match
+              Filters {filterTags.length > 0 || minAge || maxAge ? `(active)` : ""}
             </button>
             <button
               onClick={() => db.auth.signOut()}
@@ -120,6 +141,77 @@ export default function Compare() {
         </div>
       </div>
 
+      {/* Filters panel */}
+      {showFilters && (
+        <div className="border-b border-grape-900/50 px-6 py-4 bg-grape-950/50">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Age range */}
+            <div>
+              <label className="text-grape-400 text-sm font-medium block mb-2">Age Range</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minAge}
+                  onChange={(e) => setMinAge(e.target.value)}
+                  className="w-20 bg-grape-900 border border-grape-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                />
+                <span className="text-grape-500">to</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxAge}
+                  onChange={(e) => setMaxAge(e.target.value)}
+                  className="w-20 bg-grape-900 border border-grape-700 rounded-lg px-3 py-1.5 text-white text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Kink tags */}
+            <div>
+              <label className="text-grape-400 text-sm font-medium block mb-2">Kink Tags (at least one overlap)</label>
+              <div className="flex flex-wrap gap-2">
+                {KINK_TAG_OPTIONS.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      filterTags.includes(tag)
+                        ? "bg-grape-600 border-grape-500 text-white"
+                        : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Apply / Clear */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => loadPair()}
+                className="bg-grape-600 hover:bg-grape-500 text-white text-sm px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Apply Filters
+              </button>
+              {(filterTags.length > 0 || minAge || maxAge) && (
+                <button
+                  onClick={() => {
+                    setMinAge("");
+                    setMaxAge("");
+                    setFilterTags([]);
+                  }}
+                  className="text-grape-500 hover:text-grape-300 text-sm px-4 py-2 transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         {/* Progress */}
         <div className="mb-8">
@@ -128,9 +220,7 @@ export default function Compare() {
               {totalComparisons} comparisons made
             </span>
             <span className="text-grape-400 text-sm">
-              {totalComparisons >= MIN_COMPARISONS_FOR_MATCHING
-                ? "Ready for matching!"
-                : `${MIN_COMPARISONS_FOR_MATCHING - totalComparisons} more needed for matching`}
+              {eligibleCount} people in your pool
             </span>
           </div>
           <div className="w-full h-2 bg-grape-950 rounded-full overflow-hidden">
@@ -138,6 +228,11 @@ export default function Compare() {
               className="h-full bg-gradient-to-r from-grape-600 to-purple-500 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
+          </div>
+          <div className="text-grape-500 text-xs mt-1 text-right">
+            {totalComparisons >= MIN_COMPARISONS_FOR_MATCHING
+              ? "Enough data for great rankings!"
+              : `${MIN_COMPARISONS_FOR_MATCHING - totalComparisons} more for solid rankings`}
           </div>
         </div>
 
@@ -156,14 +251,12 @@ export default function Compare() {
           </div>
         ) : message ? (
           <div className="text-center py-20">
-            <div className="text-6xl mb-6">{"\u{1f389}"}</div>
             <p className="text-grape-300 text-lg mb-4">{message}</p>
-            <button
-              onClick={() => navigate("/app/match")}
-              className="bg-grape-600 hover:bg-grape-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-            >
-              Check Your Match
-            </button>
+            <p className="text-grape-500 text-sm">
+              {totalComparisons > 0
+                ? `You've made ${totalComparisons} comparisons so far. Nice work!`
+                : "More people need to join before you can start comparing."}
+            </p>
           </div>
         ) : pair ? (
           <div className="grid md:grid-cols-2 gap-6">
@@ -183,8 +276,10 @@ export default function Compare() {
                 <ProfileCard
                   name={profile.name}
                   age={profile.age}
-                  description={profile.aiDescription}
+                  bio={profile.bio}
                   photoUrl={profile.photoUrl}
+                  relationshipStatus={profile.relationshipStatus}
+                  kinkTags={profile.kinkTags}
                 />
               </button>
             ))}

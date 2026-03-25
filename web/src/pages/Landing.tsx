@@ -22,7 +22,7 @@ export default function Landing() {
             onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
             className="bg-grape-600 hover:bg-grape-500 text-white px-6 py-2 rounded-full font-semibold transition-all hover:shadow-lg hover:shadow-grape-600/25"
           >
-            {user ? "Go to App" : "Get Started"}
+            {user ? "Go to App" : "Join Your Community"}
           </button>
         </div>
       </nav>
@@ -31,26 +31,26 @@ export default function Landing() {
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-grape-950 border border-grape-800 text-grape-300 text-sm font-medium">
-            Powered by Nobel Prize-winning mathematics
+            Community-powered matching with Nobel Prize-winning math
           </div>
           <h1 className="text-5xl sm:text-7xl font-black text-white mb-6 leading-tight">
-            Too Many Options.
+            Find Your People.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-grape-400 to-purple-300">
-              One Right Match.
+              No Guessing Games.
             </span>
           </h1>
           <p className="text-xl text-grape-200/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Good relationships require focus, but you can't focus when you're
-            juggling 20 conversations. NOFOBO uses the Gale-Shapley algorithm
-            to find you one optimal match per week. One person, full attention.
+            Your community organizer invited you here. Create a profile, compare
+            people side by side, and build honest preference rankings. The math
+            handles the rest.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
               className="bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:shadow-xl hover:shadow-grape-600/30 hover:-translate-y-0.5"
             >
-              Find Your Match
+              Get Started
             </button>
             <a
               href="#how-it-works"
@@ -66,9 +66,9 @@ export default function Landing() {
       <section className="py-12 border-y border-grape-900/50 bg-grape-950/30">
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
           <div>
-            <div className="text-3xl font-black text-white">1</div>
+            <div className="text-3xl font-black text-white">Private</div>
             <div className="text-grape-400 text-sm mt-1">
-              Match per week
+              Community-gated access
             </div>
           </div>
           <div>
@@ -78,9 +78,9 @@ export default function Landing() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-white text-transparent bg-clip-text bg-gradient-to-r from-grape-400 to-purple-300">&#8734;</div>
+            <div className="text-3xl font-black text-white">Honest</div>
             <div className="text-grape-400 text-sm mt-1">
-              Global reach
+              Side-by-side comparison
             </div>
           </div>
         </div>
@@ -93,17 +93,17 @@ export default function Landing() {
             How NOFOBO Works
           </h2>
           <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
-            A comic guide to finding love through math
+            A comic guide to matching through math
           </p>
           <div className="flex flex-col gap-8 items-center">
             <img
               src="/nofobo-comic.jpg"
-              alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works for dating"
+              alt="NOFOBO comic explaining how the Gale-Shapley stable matching algorithm works"
               className="max-w-2xl w-full rounded-2xl border border-grape-800"
             />
             <img
               src="/nofobo-profiles.jpg"
-              alt="How AI-generated profiles enable fair pairwise comparison"
+              alt="How profiles enable fair pairwise comparison"
               className="max-w-2xl w-full rounded-2xl border border-grape-800"
             />
             <img
@@ -115,149 +115,102 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Why One Match */}
+      {/* How It Works (steps) */}
       <section className="py-24 px-6 bg-gradient-to-b from-grape-950/50 to-[#0f0a1a]">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-black text-white text-center mb-16">
-            Why One Match Is{" "}
+            Three Steps to{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-grape-400 to-purple-300">
-              Better
+              Better Matches
             </span>
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
-              <div className="text-4xl mb-4">&#x1f9e0;</div>
+              <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold mb-4">
+                1
+              </div>
               <h3 className="text-xl font-bold text-white mb-3">
-                Focus Over Abundance
+                Create Your Profile
               </h3>
               <p className="text-grape-300 leading-relaxed">
-                Talking to 20 people means none of them get real attention. One
-                match means you can actually show up and give it a real shot.
-                Getting the same person again? That's the math saying: this one's
-                worth your time.
+                Enter your community code, write your bio, add a photo, and set
+                your preferences. Your profile stays within your community.
               </p>
             </div>
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
-              <div className="text-4xl mb-4">&#x1f4aa;</div>
+              <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold mb-4">
+                2
+              </div>
               <h3 className="text-xl font-bold text-white mb-3">
-                Stable Matching
+                Compare Side by Side
               </h3>
               <p className="text-grape-300 leading-relaxed">
-                Gale-Shapley guarantees no two people would rather be with each
-                other than their assigned match. The math literally prevents
-                FOBO.
+                See two compatible profiles at a time. Pick who you vibe with
+                more. Each choice builds your personal ranking through ELO
+                scores.
               </p>
             </div>
             <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
-              <div className="text-4xl mb-4">&#x1f30d;</div>
+              <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold mb-4">
+                3
+              </div>
               <h3 className="text-xl font-bold text-white mb-3">
-                Global Soulmate
+                Get Matched
               </h3>
               <p className="text-grape-300 leading-relaxed">
-                No geo restrictions. Your perfect match could be anywhere in the
-                world. We optimize for soul compatibility, not proximity.
+                Your organizer runs the Gale-Shapley algorithm on everyone's
+                rankings to find stable, optimal matches for the whole
+                community.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How Profiles Work */}
+      {/* Privacy */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-black text-white text-center mb-4">
-            AI-Crafted Profiles
+            Built for Privacy
           </h2>
           <p className="text-grape-300 text-center mb-16 text-lg max-w-2xl mx-auto">
-            Every profile is written by AI after a short interview. This means
-            every profile has the same depth, structure, and information
-            density — making it easy to compare two people side by side.
+            Your preferences stay between you and the math
           </p>
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold shrink-0">
-                    1
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      Chat with our AI
-                    </h3>
-                    <p className="text-grape-300">
-                      A short interview collects specific facts about you — what
-                      you do, what you care about, what you're looking for.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold shrink-0">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      Share your links
-                    </h3>
-                    <p className="text-grape-300">
-                      Drop your social links, portfolio, blog — the AI reads
-                      them to pull in real details about you.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-grape-600 flex items-center justify-center text-white font-bold shrink-0">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">
-                      Normalized, fair profiles
-                    </h3>
-                    <p className="text-grape-300">
-                      AI writes every profile the same way: fact-dense, no
-                      fluff, no self-marketing. When you're comparing two
-                      people, you're comparing substance — not who's a better
-                      copywriter.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Why normalization matters */}
-              <div className="mt-8 bg-grape-950/50 border border-grape-900/50 rounded-xl p-5">
-                <h4 className="text-sm font-bold text-grape-200 mb-2">
-                  Why AI writes your profile
-                </h4>
-                <p className="text-grape-400 text-sm leading-relaxed">
-                  On other apps, some people write great bios and some write
-                  terrible ones — so you're judging writing skill, not
-                  compatibility. Here, AI normalizes every profile to the same
-                  quality and format. During pairwise comparison, you're reading
-                  two equally well-written profiles and picking the person, not
-                  the prose.
-                </p>
-              </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-white mb-3">
+                Community-Gated
+              </h3>
+              <p className="text-grape-300 leading-relaxed">
+                Only people with your community code can see your profile. No
+                public discovery, no strangers browsing.
+              </p>
             </div>
-            <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-2xl">
-                  &#x1f468;&#x200d;&#x1f3a8;
-                </div>
-                <div>
-                  <div className="font-bold text-white">Alex, 28</div>
-                  <div className="text-grape-400 text-sm">Sample Profile</div>
-                </div>
-              </div>
-              <p className="text-grape-200 leading-relaxed text-sm italic">
-                "Alex is a product designer who moonlights as an amateur
-                astrophotographer. After spending three years building design
-                systems at a fintech startup, they've developed a philosophy
-                that the best interfaces - like the best relationships - are the
-                ones that feel invisible. When not pixel-pushing, you'll find
-                them hunting for the darkest skies within driving distance,
-                camera in tow. They're looking for someone who gets excited
-                about both the big questions and the small details - the kind of
-                person who can spend an hour debating the best font for a menu
-                AND the best item on that menu."
+            <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-white mb-3">
+                No Social Links
+              </h3>
+              <p className="text-grape-300 leading-relaxed">
+                We don't ask for Instagram, Twitter, or any social profiles.
+                What you share in your bio is entirely up to you.
+              </p>
+            </div>
+            <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-white mb-3">
+                Rankings Are Private
+              </h3>
+              <p className="text-grape-300 leading-relaxed">
+                Nobody sees who you ranked higher or lower. Your comparisons
+                feed into an algorithm, not a leaderboard.
+              </p>
+            </div>
+            <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl p-8">
+              <h3 className="text-xl font-bold text-white mb-3">
+                Mutual Compatibility
+              </h3>
+              <p className="text-grape-300 leading-relaxed">
+                You only see profiles where attraction goes both ways. No
+                wasted comparisons, no awkward mismatches.
               </p>
             </div>
           </div>
@@ -268,16 +221,16 @@ export default function Landing() {
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-grape-900/50 to-purple-900/50 border border-grape-800/50 rounded-3xl p-12">
           <h2 className="text-4xl font-black text-white mb-4">
-            Ready to ditch the paradox of choice?
+            Ready to find your match?
           </h2>
           <p className="text-grape-300 text-lg mb-8">
-            Join NOFOBO and let Nobel Prize-winning math find your person.
+            Get your community code from your organizer and start ranking.
           </p>
           <button
             onClick={() => navigate(user ? "/app/compare" : "/app/auth")}
             className="bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-xl hover:shadow-grape-600/30 hover:-translate-y-0.5"
           >
-            Get Started Free
+            Get Started
           </button>
         </div>
       </section>
