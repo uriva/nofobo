@@ -20,7 +20,7 @@ const KINK_TAG_OPTIONS = [
   "Bondage", "Role play", "Sensory play", "Impact play", "Group play",
 ];
 
-const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
+const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
 
 const RELATIONSHIP_STATUSES = [
   "Very single",

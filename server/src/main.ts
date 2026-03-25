@@ -12,7 +12,7 @@ import {
 import { ELO_DEFAULT } from "../../constants.ts";
 
 // Admin email whitelist
-const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
+const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
 
 // --- CORS ---
 const corsHeaders = {

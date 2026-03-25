@@ -16,7 +16,7 @@ interface Decision {
   createdAt: number;
 }
 
-const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
+const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
 
 export default function MyDecisions() {
   const navigate = useNavigate();
