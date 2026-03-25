@@ -20,6 +20,8 @@ const KINK_TAG_OPTIONS = [
   "Bondage", "Role play", "Sensory play", "Impact play", "Group play",
 ];
 
+const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
+
 const RELATIONSHIP_STATUSES = [
   "Very single",
   "Somewhat single",
@@ -147,6 +149,14 @@ export default function Compare() {
             >
               My Decisions
             </button>
+            {user?.email && ADMIN_EMAILS.includes(user.email) && (
+              <button
+                onClick={() => navigate("/app/admin")}
+                className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+              >
+                Admin
+              </button>
+            )}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`text-sm font-medium transition-colors ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}

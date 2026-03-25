@@ -16,6 +16,8 @@ interface Decision {
   createdAt: number;
 }
 
+const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
+
 export default function MyDecisions() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
@@ -120,6 +122,14 @@ export default function MyDecisions() {
             >
               Back to Compare
             </button>
+            {user?.email && ADMIN_EMAILS.includes(user.email) && (
+              <button
+                onClick={() => navigate("/app/admin")}
+                className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+              >
+                Admin
+              </button>
+            )}
           </div>
         </div>
       </div>
