@@ -147,13 +147,10 @@ export default function Onboarding() {
         const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
         await db.storage.uploadFile(photoPath, photos[i].file);
         // deno-lint-ignore no-explicit-any
-        const fileResult = await (db as any).queryOnce({
-          $files: { $: { where: { path: photoPath } } },
-        });
-        const files = fileResult.data?.$files;
-        if (files && files.length > 0) {
-          const url = (files[0] as { url?: string }).url;
-          if (url) photoUrls.push(url);
+        const downloadData = await (db as any).storage.getDownloadUrl(photoPath);
+        const url = downloadData?.url || downloadData;
+        if (url && typeof url === "string") {
+          photoUrls.push(url);
         }
       }
 
