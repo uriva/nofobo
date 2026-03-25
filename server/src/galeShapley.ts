@@ -28,13 +28,15 @@ export function updateElo(
 // --- Preference Ranking from ELO ---
 
 // Given a user's ELO ratings for all candidates, produce a ranked preference list.
-// Higher ELO = more preferred. Unrated candidates get default ELO.
+// Higher ELO = more preferred. Unrated candidates are EXCLUDED — you must have
+// compared someone for them to appear in your preference list.
 export function eloToPreferenceList(
   eloRatings: Map<string, number>,
   allCandidateIds: string[],
 ): string[] {
   return allCandidateIds
-    .map((id) => ({ id, score: eloRatings.get(id) ?? ELO_DEFAULT }))
+    .filter((id) => eloRatings.has(id))
+    .map((id) => ({ id, score: eloRatings.get(id)! }))
     .sort((a, b) => b.score - a.score)
     .map((x) => x.id);
 }
@@ -181,28 +183,32 @@ export function galeShapley(
 export interface UserEloData {
   userId: string;
   gender: string;
-  lookingFor: string;
+  attractedTo: string;
   ratings: Map<string, number>; // targetId -> ELO score
 }
 
+// Returns true if user A and user B have mutual attraction compatibility
+function isAttractionCompatible(a: UserEloData, b: UserEloData): boolean {
+  const aLikesB =
+    a.attractedTo === "both" ||
+    (a.attractedTo === "men" && b.gender === "man") ||
+    (a.attractedTo === "women" && b.gender === "woman");
+
+  const bLikesA =
+    b.attractedTo === "both" ||
+    (b.attractedTo === "men" && a.gender === "man") ||
+    (b.attractedTo === "women" && a.gender === "woman");
+
+  return aLikesB && bLikesA;
+}
+
 export function runMatching(users: UserEloData[]): MatchResult {
-  // Build compatibility pools: match users by gender/preference
-  // A can match B if A.lookingFor includes B.gender AND B.lookingFor includes A.gender
-  const compatible = (a: UserEloData, b: UserEloData) =>
-    (a.lookingFor === "everyone" || a.lookingFor === b.gender) &&
-    (b.lookingFor === "everyone" || b.lookingFor === a.gender);
-
-  // For Gale-Shapley, we need proposers and receivers.
-  // Strategy: each user is both a proposer and receiver.
-  // We build preferences where each user ranks all compatible users.
-  const allIds = users.map((u) => u.userId);
-
   const proposerPrefs = new Map<string, string[]>();
   const receiverPrefs = new Map<string, string[]>();
 
   for (const user of users) {
     const candidates = users
-      .filter((other) => other.userId !== user.userId && compatible(user, other))
+      .filter((other) => other.userId !== user.userId && isAttractionCompatible(user, other))
       .map((other) => other.userId);
 
     const ranked = eloToPreferenceList(user.ratings, candidates);
