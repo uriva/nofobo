@@ -20,6 +20,13 @@ const KINK_TAG_OPTIONS = [
   "Bondage", "Role play", "Sensory play", "Impact play", "Group play",
 ];
 
+const RELATIONSHIP_STATUSES = [
+  "Very single",
+  "Somewhat single",
+  "In a non-exclusive relationship",
+  "In a committed relationship but open to play",
+];
+
 export default function Compare() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
@@ -36,6 +43,7 @@ export default function Compare() {
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
 
   const getAuthToken = () => {
     return user?.refresh_token ?? "";
@@ -50,6 +58,7 @@ export default function Compare() {
       if (minAge) params.set("minAge", minAge);
       if (maxAge) params.set("maxAge", maxAge);
       if (filterTags.length > 0) params.set("tags", filterTags.join(","));
+      if (filterStatuses.length > 0) params.set("statuses", filterStatuses.join(","));
       const qs = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`${API_URL}/api/compare/pair${qs}`, {
@@ -71,7 +80,7 @@ export default function Compare() {
     } finally {
       setLoading(false);
     }
-  }, [minAge, maxAge, filterTags]);
+  }, [minAge, maxAge, filterTags, filterStatuses]);
 
   useEffect(() => {
     if (user) loadPair();
@@ -96,7 +105,6 @@ export default function Compare() {
         body: JSON.stringify({ winnerId, loserId }),
       });
 
-      // Brief pause to show selection, then load next pair
       setTimeout(() => {
         setSubmitting(false);
         loadPair();
@@ -113,6 +121,14 @@ export default function Compare() {
     );
   };
 
+  const toggleStatus = (status: string) => {
+    setFilterStatuses((prev: string[]) =>
+      prev.includes(status) ? prev.filter((s: string) => s !== status) : [...prev, status],
+    );
+  };
+
+  const hasActiveFilters = filterTags.length > 0 || filterStatuses.length > 0 || minAge || maxAge;
+
   const progressPercent = Math.min(
     100,
     (totalComparisons / MIN_COMPARISONS_FOR_MATCHING) * 100,
@@ -126,10 +142,16 @@ export default function Compare() {
           <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => navigate("/app/decisions")}
+              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+            >
+              My Decisions
+            </button>
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className={`text-sm font-medium transition-colors ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}
             >
-              Filters {filterTags.length > 0 || minAge || maxAge ? `(active)` : ""}
+              Filters {hasActiveFilters ? `(active)` : ""}
             </button>
             <button
               onClick={() => db.auth.signOut()}
@@ -167,6 +189,26 @@ export default function Compare() {
               </div>
             </div>
 
+            {/* Relationship status */}
+            <div>
+              <label className="text-grape-400 text-sm font-medium block mb-2">Relationship Status</label>
+              <div className="flex flex-wrap gap-2">
+                {RELATIONSHIP_STATUSES.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => toggleStatus(status)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      filterStatuses.includes(status)
+                        ? "bg-grape-600 border-grape-500 text-white"
+                        : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Kink tags */}
             <div>
               <label className="text-grape-400 text-sm font-medium block mb-2">Kink Tags (at least one overlap)</label>
@@ -195,12 +237,13 @@ export default function Compare() {
               >
                 Apply Filters
               </button>
-              {(filterTags.length > 0 || minAge || maxAge) && (
+              {hasActiveFilters && (
                 <button
                   onClick={() => {
                     setMinAge("");
                     setMaxAge("");
                     setFilterTags([]);
+                    setFilterStatuses([]);
                   }}
                   className="text-grape-500 hover:text-grape-300 text-sm px-4 py-2 transition-colors"
                 >

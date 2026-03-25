@@ -4,6 +4,8 @@ import Landing from "./pages/Landing.tsx";
 import Auth from "./pages/Auth.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import Compare from "./pages/Compare.tsx";
+import MyDecisions from "./pages/MyDecisions.tsx";
+import Admin from "./pages/Admin.tsx";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoading, user, error } = db.useAuth();
@@ -70,6 +72,26 @@ export default function App() {
             <ProtectedRoute>
               <OnboardedRoute>
                 <Compare />
+              </OnboardedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/decisions"
+          element={
+            <ProtectedRoute>
+              <OnboardedRoute>
+                <MyDecisions />
+              </OnboardedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/admin"
+          element={
+            <ProtectedRoute>
+              <OnboardedRoute>
+                <Admin />
               </OnboardedRoute>
             </ProtectedRoute>
           }

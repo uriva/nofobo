@@ -6,8 +6,13 @@ import adminDb from "./db.ts";
 import {
   updateElo,
   selectNextPair,
+  runMatching,
+  type UserEloData,
 } from "./galeShapley.ts";
 import { ELO_DEFAULT } from "../../constants.ts";
+
+// Admin email whitelist
+const ADMIN_EMAILS = ["uri.valevski@gmail.com"];
 
 // --- CORS ---
 const corsHeaders = {
@@ -100,6 +105,7 @@ async function handler(req: Request): Promise<Response> {
       const minAge = url.searchParams.get("minAge");
       const maxAge = url.searchParams.get("maxAge");
       const filterTags = url.searchParams.get("tags"); // comma-separated
+      const filterStatuses = url.searchParams.get("statuses"); // comma-separated
 
       // Get all profiles in same community
       const { profiles: candidates } = await adminDb.query({
@@ -143,6 +149,13 @@ async function handler(req: Request): Promise<Response> {
           const required = filterTags.split(",").map((t) => t.trim());
           const theirTags: string[] = JSON.parse(p.kinkTags ?? "[]");
           if (!required.some((r) => theirTags.includes(r))) return false;
+        }
+
+        // Relationship status filter (from query params)
+        if (filterStatuses) {
+          const allowed = filterStatuses.split(",").map((s) => s.trim());
+          if (p.relationshipStatus && !allowed.includes(p.relationshipStatus))
+            return false;
         }
 
         return true;
@@ -357,6 +370,383 @@ async function handler(req: Request): Promise<Response> {
     } catch (e) {
       console.error("Demote error:", e);
       return json({ error: "Failed to demote" }, 500);
+    }
+  }
+
+  // --- Get My Comparisons (for My Decisions page) ---
+  if (path === "/api/my/comparisons" && req.method === "GET") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    try {
+      const { comparisons } = await adminDb.query({
+        comparisons: {
+          $: { where: { "voter.id": user.id } },
+          winner: { user: {} },
+          loser: { user: {} },
+        },
+      });
+
+      // Map winner/loser profile IDs to user IDs and profile data
+      const result = comparisons.map((c) => {
+        const winner = c.winner;
+        const loser = c.loser;
+        const winnerPhotoUrls = JSON.parse(winner?.photoUrls ?? "[]");
+        const loserPhotoUrls = JSON.parse(loser?.photoUrls ?? "[]");
+        return {
+          comparisonId: c.id,
+          winnerId: winner?.user?.id ?? "",
+          winnerName: winner?.name ?? "Unknown",
+          winnerAge: winner?.age ?? 0,
+          winnerPhotoUrl: winner?.photoUrl ?? winnerPhotoUrls[0] ?? undefined,
+          loserId: loser?.user?.id ?? "",
+          loserName: loser?.name ?? "Unknown",
+          loserAge: loser?.age ?? 0,
+          loserPhotoUrl: loser?.photoUrl ?? loserPhotoUrls[0] ?? undefined,
+          createdAt: c.createdAt ?? 0,
+        };
+      });
+
+      // Sort newest first
+      result.sort((a, b) => b.createdAt - a.createdAt);
+
+      return json({ comparisons: result });
+    } catch (e) {
+      console.error("My comparisons error:", e);
+      return json({ error: "Failed to load comparisons" }, 500);
+    }
+  }
+
+  // --- Flip a Comparison (swap winner/loser) ---
+  if (path === "/api/compare/flip" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    const body = await req.json();
+    const { comparisonId } = body;
+    if (!comparisonId)
+      return json({ error: "comparisonId required" }, 400);
+
+    try {
+      // Get the comparison and verify ownership
+      const { comparisons } = await adminDb.query({
+        comparisons: {
+          $: { where: { id: comparisonId, "voter.id": user.id } },
+          winner: {},
+          loser: {},
+        },
+      });
+
+      if (comparisons.length === 0)
+        return json({ error: "Comparison not found" }, 404);
+
+      const comp = comparisons[0];
+      const oldWinnerId = comp.winner?.id;
+      const oldLoserId = comp.loser?.id;
+
+      if (!oldWinnerId || !oldLoserId)
+        return json({ error: "Invalid comparison data" }, 500);
+
+      // Swap the winner/loser links
+      await adminDb.transact([
+        adminDb.tx.comparisons[comparisonId]
+          .unlink({ winner: oldWinnerId, loser: oldLoserId })
+          .link({ winner: oldLoserId, loser: oldWinnerId }),
+      ]);
+
+      // Recalculate ELO: undo old result, apply new result
+      // Get current ELO ratings for these two targets
+      const { eloRatings } = await adminDb.query({
+        eloRatings: {
+          $: { where: { "rater.id": user.id } },
+          target: {},
+        },
+      });
+
+      let oldWinnerElo = ELO_DEFAULT;
+      let oldLoserElo = ELO_DEFAULT;
+      let oldWinnerRatingId: string | null = null;
+      let oldLoserRatingId: string | null = null;
+
+      for (const r of eloRatings) {
+        const targetId = r.target?.id;
+        if (targetId === oldWinnerId) {
+          oldWinnerElo = r.score;
+          oldWinnerRatingId = r.id;
+        }
+        if (targetId === oldLoserId) {
+          oldLoserElo = r.score;
+          oldLoserRatingId = r.id;
+        }
+      }
+
+      // Reverse the original ELO change, then apply new one
+      // Step 1: Undo — old winner loses, old loser wins
+      const undo = updateElo(oldLoserElo, oldWinnerElo);
+      // Step 2: Apply flip — old loser is new winner, old winner is new loser
+      const redo = updateElo(undo.winner, undo.loser);
+
+      const txns = [];
+      if (oldWinnerRatingId) {
+        txns.push(
+          adminDb.tx.eloRatings[oldWinnerRatingId].update({
+            score: redo.loser,
+          }),
+        );
+      }
+      if (oldLoserRatingId) {
+        txns.push(
+          adminDb.tx.eloRatings[oldLoserRatingId].update({
+            score: redo.winner,
+          }),
+        );
+      }
+
+      if (txns.length > 0) await adminDb.transact(txns);
+
+      return json({ success: true });
+    } catch (e) {
+      console.error("Flip comparison error:", e);
+      return json({ error: "Failed to flip comparison" }, 500);
+    }
+  }
+
+  // --- Delete a Comparison ---
+  if (path === "/api/compare/delete" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    const body = await req.json();
+    const { comparisonId } = body;
+    if (!comparisonId)
+      return json({ error: "comparisonId required" }, 400);
+
+    try {
+      // Verify ownership
+      const { comparisons } = await adminDb.query({
+        comparisons: {
+          $: { where: { id: comparisonId, "voter.id": user.id } },
+        },
+      });
+
+      if (comparisons.length === 0)
+        return json({ error: "Comparison not found" }, 404);
+
+      // Delete the comparison
+      await adminDb.transact([
+        adminDb.tx.comparisons[comparisonId].delete(),
+      ]);
+
+      // Note: We don't reverse the ELO changes on delete — the ELO ratings
+      // reflect all historical decisions. A full ELO recalc could be added
+      // later if needed.
+
+      return json({ success: true });
+    } catch (e) {
+      console.error("Delete comparison error:", e);
+      return json({ error: "Failed to delete comparison" }, 500);
+    }
+  }
+
+  // --- Admin: Get All Profiles in Community ---
+  if (path === "/api/admin/profiles" && req.method === "GET") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!ADMIN_EMAILS.includes(user.email))
+      return json({ error: "Forbidden" }, 403);
+
+    try {
+      // Get admin's profile to find their community
+      const { profiles: myProfiles } = await adminDb.query({
+        profiles: { $: { where: { "user.id": user.id } } },
+      });
+      const myCommunity = myProfiles[0]?.communityCode;
+      if (!myCommunity)
+        return json({ error: "Admin has no community" }, 400);
+
+      // Get all profiles in community
+      const { profiles } = await adminDb.query({
+        profiles: {
+          $: {
+            where: {
+              communityCode: myCommunity,
+              onboardingComplete: true,
+            },
+          },
+          user: {},
+        },
+      });
+
+      // Get comparison counts per user
+      const { comparisons: allComps } = await adminDb.query({
+        comparisons: {
+          voter: {},
+        },
+      });
+
+      const compCountByUser = new Map<string, number>();
+      for (const c of allComps) {
+        const voterId = c.voter?.id;
+        if (voterId)
+          compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
+      }
+
+      const result = profiles.map((p) => {
+        const photoUrls = JSON.parse(p.photoUrls ?? "[]");
+        return {
+          userId: p.user?.id ?? "",
+          profileId: p.id,
+          name: p.name,
+          age: p.age,
+          gender: p.gender,
+          attractedTo: p.attractedTo ?? "both",
+          relationshipStatus: p.relationshipStatus ?? "",
+          kinkTags: JSON.parse(p.kinkTags ?? "[]"),
+          bio: p.bio ?? p.aiDescription ?? "",
+          photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
+          location: p.location ?? undefined,
+          comparisonsCount: compCountByUser.get(p.user?.id ?? "") ?? 0,
+        };
+      });
+
+      return json({ profiles: result });
+    } catch (e) {
+      console.error("Admin profiles error:", e);
+      return json({ error: "Failed to load profiles" }, 500);
+    }
+  }
+
+  // --- Admin: Get User Rankings ---
+  if (path.startsWith("/api/admin/rankings/") && req.method === "GET") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!ADMIN_EMAILS.includes(user.email))
+      return json({ error: "Forbidden" }, 403);
+
+    const targetUserId = path.replace("/api/admin/rankings/", "");
+    if (!targetUserId)
+      return json({ error: "userId required" }, 400);
+
+    try {
+      // Get the target user's ELO ratings
+      const { eloRatings } = await adminDb.query({
+        eloRatings: {
+          $: { where: { "rater.id": targetUserId } },
+          target: { profiles: {} },
+        },
+      });
+
+      const rankings = eloRatings
+        .map((r) => {
+          const targetProfile = r.target?.profiles?.[0];
+          return {
+            targetUserId: r.target?.id ?? "",
+            targetName: targetProfile?.name ?? "Unknown",
+            score: r.score,
+            comparisonsCount: r.comparisonsCount ?? 0,
+          };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      return json({ rankings });
+    } catch (e) {
+      console.error("Admin rankings error:", e);
+      return json({ error: "Failed to load rankings" }, 500);
+    }
+  }
+
+  // --- Admin: Run Matching ---
+  if (path === "/api/admin/match" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!ADMIN_EMAILS.includes(user.email))
+      return json({ error: "Forbidden" }, 403);
+
+    try {
+      // Get admin's community
+      const { profiles: myProfiles } = await adminDb.query({
+        profiles: { $: { where: { "user.id": user.id } } },
+      });
+      const myCommunity = myProfiles[0]?.communityCode;
+      if (!myCommunity)
+        return json({ error: "Admin has no community" }, 400);
+
+      // Get all completed profiles in community
+      const { profiles } = await adminDb.query({
+        profiles: {
+          $: {
+            where: {
+              communityCode: myCommunity,
+              onboardingComplete: true,
+            },
+          },
+          user: {},
+        },
+      });
+
+      // Get all ELO ratings for these users
+      const userIds = profiles
+        .map((p) => p.user?.id)
+        .filter(Boolean) as string[];
+
+      const { eloRatings: allRatings } = await adminDb.query({
+        eloRatings: {
+          rater: {},
+          target: {},
+        },
+      });
+
+      // Build UserEloData for each user
+      const userIdSet = new Set(userIds);
+      const users: UserEloData[] = profiles.map((p) => {
+        const userId = p.user?.id ?? "";
+        const ratings = new Map<string, number>();
+
+        for (const r of allRatings) {
+          if (r.rater?.id === userId && userIdSet.has(r.target?.id ?? "")) {
+            ratings.set(r.target!.id, r.score);
+          }
+        }
+
+        return {
+          userId,
+          gender: p.gender,
+          attractedTo: p.attractedTo ?? "both",
+          ratings,
+        };
+      });
+
+      // Run Gale-Shapley matching
+      const result = runMatching(users);
+
+      // Build profile name lookup
+      const nameByUserId = new Map<string, string>();
+      for (const p of profiles) {
+        if (p.user?.id) nameByUserId.set(p.user.id, p.name);
+      }
+
+      // Format matches
+      const matches = [...result.matches.entries()].map(
+        ([proposer, receiver]) => ({
+          user1: {
+            userId: proposer,
+            name: nameByUserId.get(proposer) ?? "Unknown",
+          },
+          user2: {
+            userId: receiver,
+            name: nameByUserId.get(receiver) ?? "Unknown",
+          },
+        }),
+      );
+
+      const unmatchedNames = result.unmatched.map(
+        (uid) => nameByUserId.get(uid) ?? "Unknown",
+      );
+
+      return json({ matches, unmatchedNames });
+    } catch (e) {
+      console.error("Admin matching error:", e);
+      return json({ error: "Failed to run matching" }, 500);
     }
   }
 
