@@ -382,8 +382,8 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voter.id": user.id } },
-          winner: { user: {} },
-          loser: { user: {} },
+          winner: { user: {} } as any,
+          loser: { user: {} } as any,
         },
       });
 
@@ -395,11 +395,11 @@ async function handler(req: Request): Promise<Response> {
         const loserPhotoUrls = JSON.parse(loser?.photoUrls ?? "[]");
         return {
           comparisonId: c.id,
-          winnerId: winner?.user?.id ?? "",
+          winnerId: (winner?.user as any)?.id ?? "",
           winnerName: winner?.name ?? "Unknown",
           winnerAge: winner?.age ?? 0,
           winnerPhotoUrl: winner?.photoUrl ?? winnerPhotoUrls[0] ?? undefined,
-          loserId: loser?.user?.id ?? "",
+          loserId: (loser?.user as any)?.id ?? "",
           loserName: loser?.name ?? "Unknown",
           loserAge: loser?.age ?? 0,
           loserPhotoUrl: loser?.photoUrl ?? loserPhotoUrls[0] ?? undefined,
@@ -632,7 +632,7 @@ async function handler(req: Request): Promise<Response> {
       const { eloRatings } = await adminDb.query({
         eloRatings: {
           $: { where: { "rater.id": targetUserId } },
-          target: { profiles: {} },
+          target: { profiles: {} } as any,
         },
       });
 
@@ -641,7 +641,7 @@ async function handler(req: Request): Promise<Response> {
           const targetProfile = r.target?.profiles?.[0];
           return {
             targetUserId: r.target?.id ?? "",
-            targetName: targetProfile?.name ?? "Unknown",
+            targetName: (targetProfile as any)?.name ?? "Unknown",
             score: r.score,
             comparisonsCount: r.comparisonsCount ?? 0,
           };
