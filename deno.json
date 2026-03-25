@@ -26,6 +26,7 @@
   },
   "nodeModulesDir": "auto",
   "deploy": {
-    "entrypoint": "server/src/main.ts"
+    "org": "uriva",
+    "app": "nofobo-api-new"
   }
 }
