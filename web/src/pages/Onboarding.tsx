@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { id } from "@instantdb/react";
 import db from "../db.ts";
 
+const VALID_COMMUNITY_CODES = ["burningdesire"];
+
 const RELATIONSHIP_STATUSES = [
   "Very single",
   "Somewhat single",
@@ -27,8 +29,12 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
 
+  // Step: "code" or "profile"
+  const [step, setStep] = useState<"code" | "profile">("code");
+
   // Form state
   const [communityCode, setCommunityCode] = useState("");
+  const [codeError, setCodeError] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
@@ -62,6 +68,20 @@ export default function Onboarding() {
     }
   }, [data]);
 
+  const handleCodeSubmit = () => {
+    const code = communityCode.trim().toLowerCase();
+    if (!code) {
+      setCodeError("Please enter a community code");
+      return;
+    }
+    if (!VALID_COMMUNITY_CODES.includes(code)) {
+      setCodeError("Invalid community code. Check with your organizer.");
+      return;
+    }
+    setCodeError("");
+    setStep("profile");
+  };
+
   const handlePhotoSelect = (e: { target: HTMLInputElement }) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,16 +100,16 @@ export default function Onboarding() {
   };
 
   const toggleMatchStatus = (status: string) => {
-    setMatchWithStatuses((prev) =>
+    setMatchWithStatuses((prev: string[]) =>
       prev.includes(status)
-        ? prev.filter((s) => s !== status)
+        ? prev.filter((s: string) => s !== status)
         : [...prev, status],
     );
   };
 
   const toggleKinkTag = (tag: string) => {
-    setKinkTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    setKinkTags((prev: string[]) =>
+      prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -156,6 +176,62 @@ export default function Onboarding() {
 
   if (!user) return null;
 
+  // Step 1: Community code gate
+  if (step === "code") {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
+        <div className="border-b border-grape-900/50 px-6 py-4">
+          <div className="max-w-2xl mx-auto">
+            <span
+              onClick={() => navigate("/")}
+              className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
+            >
+              NOFOBO
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="max-w-md w-full text-center">
+            <h1 className="text-4xl font-black text-white mb-3">
+              Enter your community code
+            </h1>
+            <p className="text-grape-400 mb-8">
+              Your organizer should have shared a code with you.
+              This keeps your community private.
+            </p>
+
+            <input
+              type="text"
+              value={communityCode}
+              onChange={(e) => {
+                setCommunityCode(e.target.value);
+                setCodeError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleCodeSubmit()}
+              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500 mb-3"
+              placeholder="community code"
+              autoFocus
+            />
+
+            {codeError && (
+              <p className="text-red-400 text-sm mb-3">{codeError}</p>
+            )}
+
+            <button
+              onClick={handleCodeSubmit}
+              disabled={!communityCode.trim()}
+              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Profile form
   return (
     <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
       {/* Header */}
@@ -182,23 +258,6 @@ export default function Onboarding() {
         </div>
 
         <div className="space-y-8">
-          {/* Community Code */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Community code
-            </label>
-            <input
-              type="text"
-              value={communityCode}
-              onChange={(e) => setCommunityCode(e.target.value)}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
-              placeholder="Enter your community code"
-            />
-            <p className="text-grape-600 text-xs mt-1">
-              This keeps your community separate from others
-            </p>
-          </div>
-
           {/* Name */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
