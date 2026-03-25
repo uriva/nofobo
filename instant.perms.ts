@@ -71,6 +71,19 @@ const rules = {
       "auth.id == data.ref('sender.id') && (auth.id in data.ref('match.user1.id') || auth.id in data.ref('match.user2.id'))",
     ],
   },
+  $files: {
+    allow: {
+      view: "true",
+      create: "isLoggedIn",
+      delete: "isOwner",
+    },
+    bind: [
+      "isLoggedIn",
+      "auth.id != ''",
+      "isOwner",
+      "auth.id == data.creator",
+    ],
+  },
 } satisfies InstantRules;
 
 export default rules;

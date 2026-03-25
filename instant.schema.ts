@@ -15,6 +15,8 @@ const _schema = i.schema({
       kinkTags: i.string().optional(), // JSON array of kink tags
       bio: i.string(), // user-written bio
       photoUrl: i.string().optional(),
+      photoUrls: i.string().optional(), // JSON array of photo URLs
+      location: i.string().optional(), // free-text location
       communityCode: i.string().indexed().optional(), // community gating
       onboardingComplete: i.boolean().indexed(),
       createdAt: i.number().indexed(),

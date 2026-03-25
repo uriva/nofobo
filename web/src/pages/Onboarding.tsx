@@ -25,6 +25,13 @@ const KINK_TAGS = [
   "Group play",
 ];
 
+const MAX_PHOTOS = 6;
+
+interface PhotoItem {
+  file: File;
+  preview: string;
+}
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
@@ -40,12 +47,12 @@ export default function Onboarding() {
   const [gender, setGender] = useState("");
   const [attractedTo, setAttractedTo] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState("");
-  const [matchWithStatuses, setMatchWithStatuses] = useState<string[]>([]);
   const [kinkTags, setKinkTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [location, setLocation] = useState("");
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Check if already onboarded
@@ -83,33 +90,37 @@ export default function Onboarding() {
   };
 
   const handlePhotoSelect = (e: { target: HTMLInputElement }) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return;
-    setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
-  };
+    const files = e.target.files;
+    if (!files) return;
+    const newPhotos: PhotoItem[] = [];
+    const remaining = MAX_PHOTOS - photos.length;
+    const toAdd = Math.min(files.length, remaining);
 
-  const removePhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview(null);
+    for (let i = 0; i < toAdd; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) continue;
+      if (file.size > 5 * 1024 * 1024) continue;
+      newPhotos.push({ file, preview: URL.createObjectURL(file) });
+    }
+
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    // Reset input so selecting the same file again works
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
-  const toggleMatchStatus = (status: string) => {
-    setMatchWithStatuses((prev: string[]) =>
-      prev.includes(status)
-        ? prev.filter((s: string) => s !== status)
-        : [...prev, status],
-    );
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => {
+      const removed = prev[index];
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const toggleKinkTag = (tag: string) => {
     setKinkTags((prev: string[]) =>
-      prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag],
+      prev.includes(tag)
+        ? prev.filter((t: string) => t !== tag)
+        : [...prev, tag],
     );
   };
 
@@ -121,27 +132,28 @@ export default function Onboarding() {
     gender &&
     attractedTo &&
     relationshipStatus &&
-    matchWithStatuses.length > 0 &&
     bio.trim();
 
   const saveProfile = async () => {
     if (!user || !isFormValid) return;
     setSaving(true);
+    setSaveError("");
     try {
       const profileId = id();
 
-      // Upload photo if selected
-      let photoUrl: string | undefined;
-      if (photoFile) {
-        const photoPath = `profiles/${user.id}/photo`;
-        await db.storage.uploadFile(photoPath, photoFile);
+      // Upload photos
+      const photoUrls: string[] = [];
+      for (let i = 0; i < photos.length; i++) {
+        const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
+        await db.storage.uploadFile(photoPath, photos[i].file);
         // deno-lint-ignore no-explicit-any
         const fileResult = await (db as any).queryOnce({
           $files: { $: { where: { path: photoPath } } },
         });
         const files = fileResult.data?.$files;
         if (files && files.length > 0) {
-          photoUrl = (files[0] as { url?: string }).url;
+          const url = (files[0] as { url?: string }).url;
+          if (url) photoUrls.push(url);
         }
       }
 
@@ -151,24 +163,28 @@ export default function Onboarding() {
         gender,
         attractedTo,
         relationshipStatus,
-        matchWithStatuses: JSON.stringify(matchWithStatuses),
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
+        location: location.trim() || undefined,
         communityCode: communityCode.trim().toLowerCase(),
         onboardingComplete: true,
         createdAt: Date.now(),
       };
-      if (photoUrl) profileData.photoUrl = photoUrl;
+      if (photoUrls.length > 0) {
+        profileData.photoUrl = photoUrls[0]; // backward compat
+        profileData.photoUrls = JSON.stringify(photoUrls);
+      }
 
       await db.transact([
-        db.tx.profiles[profileId]
-          .update(profileData)
-          .link({ user: user.id }),
+        db.tx.profiles[profileId].update(profileData).link({ user: user.id }),
       ]);
 
       navigate("/app/compare");
     } catch (e) {
       console.error("Save profile error:", e);
+      setSaveError(
+        e instanceof Error ? e.message : "Failed to save profile. Try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -197,8 +213,8 @@ export default function Onboarding() {
               Enter your community code
             </h1>
             <p className="text-grape-400 mb-8">
-              Your organizer should have shared a code with you.
-              This keeps your community private.
+              Your organizer should have shared a code with you. This keeps your
+              community private.
             </p>
 
             <input
@@ -288,6 +304,20 @@ export default function Onboarding() {
             />
           </div>
 
+          {/* Location */}
+          <div>
+            <label className="block text-grape-300 text-sm mb-2 font-medium">
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+              placeholder="San Francisco, CA"
+            />
+          </div>
+
           {/* Gender */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
@@ -358,28 +388,6 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Match With Statuses */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              I'm open to matching with (select all that apply)
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {RELATIONSHIP_STATUSES.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => toggleMatchStatus(status)}
-                  className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
-                    matchWithStatuses.includes(status)
-                      ? "border-grape-500 bg-grape-600/20 text-white"
-                      : "border-grape-800 text-grape-400 hover:border-grape-600"
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Kink Tags */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
@@ -402,66 +410,61 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Photo */}
+          {/* Photos */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Your photo
+              Photos ({photos.length}/{MAX_PHOTOS})
             </label>
             <input
               ref={photoInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handlePhotoSelect}
               className="hidden"
             />
-            {photoPreview ? (
-              <div className="flex items-center gap-4">
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-grape-600"
-                />
-                <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-3 gap-3">
+              {photos.map((photo, i) => (
+                <div key={i} className="relative aspect-square">
+                  <img
+                    src={photo.preview}
+                    alt={`Photo ${i + 1}`}
+                    className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
+                  />
                   <button
                     type="button"
-                    onClick={() => photoInputRef.current?.click()}
-                    className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
+                    onClick={() => removePhoto(i)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors"
                   >
-                    Change photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={removePhoto}
-                    className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
-                  >
-                    Remove
+                    x
                   </button>
                 </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-grape-800 rounded-xl px-4 py-6 text-grape-500 hover:border-grape-600 hover:text-grape-400 transition-colors flex flex-col items-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="aspect-square border-2 border-dashed border-grape-800 rounded-xl text-grape-500 hover:border-grape-600 hover:text-grape-400 transition-colors flex flex-col items-center justify-center gap-1"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Upload a photo</span>
-                <span className="text-xs text-grape-600">Max 5MB</span>
-              </button>
-            )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  <span className="text-xs">Add photo</span>
+                </button>
+              )}
+            </div>
+            <p className="text-grape-600 text-xs mt-2">Max 5MB each</p>
           </div>
 
           {/* Bio */}
@@ -476,6 +479,11 @@ export default function Onboarding() {
               placeholder="Write a bit about yourself, what you're into, what you're looking for..."
             />
           </div>
+
+          {/* Error */}
+          {saveError && (
+            <p className="text-red-400 text-sm text-center">{saveError}</p>
+          )}
 
           {/* Submit */}
           <button
