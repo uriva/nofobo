@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
+import Layout from "../components/Layout.tsx";
 
 interface Decision {
   comparisonId: string;
@@ -19,7 +19,6 @@ interface Decision {
 const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
 
 export default function MyDecisions() {
-  const navigate = useNavigate();
   const { user } = db.useAuth();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,35 +104,7 @@ export default function MyDecisions() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-grape-900/50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span
-            onClick={() => navigate("/")}
-            className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
-          >
-            NOFOBO
-          </span>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/app/compare")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              Back to Compare
-            </button>
-            {user?.email && ADMIN_EMAILS.includes(user.email) && (
-              <button
-                onClick={() => navigate("/app/admin")}
-                className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-              >
-                Admin
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
+    <Layout>
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-8">
         <h1 className="text-2xl font-bold text-white mb-2">My Decisions</h1>
         <p className="text-grape-400 mb-6">
@@ -224,6 +195,6 @@ export default function MyDecisions() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

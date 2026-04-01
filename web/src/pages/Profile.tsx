@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
+import Layout from "../components/Layout.tsx";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -69,39 +70,7 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-grape-900/50 px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <span
-            onClick={() => navigate("/")}
-            className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
-          >
-            NOFOBO
-          </span>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/app/compare")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              Compare
-            </button>
-            <button
-              onClick={() => navigate("/app/match")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              My Match
-            </button>
-            <button
-              onClick={() => db.auth.signOut()}
-              className="text-grape-600 hover:text-grape-400 text-sm transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <Layout>
       <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-white mb-2">Your Profile</h1>
@@ -172,6 +141,6 @@ export default function Profile() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

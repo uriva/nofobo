@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
+import Layout from "../components/Layout.tsx";
 
 interface AdminProfile {
   userId: string;
@@ -31,7 +31,6 @@ interface MatchPair {
 }
 
 export default function Admin() {
-  const navigate = useNavigate();
   const { user } = db.useAuth();
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,46 +115,16 @@ export default function Admin() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0f0a1a] flex flex-col items-center justify-center">
-        <p className="text-red-400 text-lg mb-4">{error}</p>
-        <button
-          onClick={() => navigate("/app/compare")}
-          className="text-grape-400 hover:text-grape-300 text-sm"
-        >
-          Back to Compare
-        </button>
-      </div>
+      <Layout>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <p className="text-red-400 text-lg mb-4">{error}</p>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-grape-900/50 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <span
-            onClick={() => navigate("/")}
-            className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
-          >
-            NOFOBO <span className="text-grape-500 text-sm font-normal ml-2">Admin</span>
-          </span>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/app/compare")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              Compare
-            </button>
-            <button
-              onClick={() => db.auth.signOut()}
-              className="text-grape-600 hover:text-grape-400 text-sm transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <Layout>
       <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -291,6 +260,6 @@ export default function Admin() {
           </>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

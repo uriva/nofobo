@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import { API_URL, MIN_COMPARISONS_FOR_MATCHING } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
+import Layout from "../components/Layout.tsx";
 
 interface PairProfile {
   userId: string;
@@ -30,7 +30,6 @@ const RELATIONSHIP_STATUSES = [
 ];
 
 export default function Compare() {
-  const navigate = useNavigate();
   const { user } = db.useAuth();
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,42 +136,16 @@ export default function Compare() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-grape-900/50 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span onClick={() => navigate("/")} className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors">NOFOBO</span>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/app/decisions")}
-              className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-            >
-              My Decisions
-            </button>
-            {user?.email && ADMIN_EMAILS.includes(user.email) && (
-              <button
-                onClick={() => navigate("/app/admin")}
-                className="text-grape-400 hover:text-grape-300 text-sm font-medium transition-colors"
-              >
-                Admin
-              </button>
-            )}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`text-sm font-medium transition-colors ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}
-            >
-              Filters {hasActiveFilters ? `(active)` : ""}
-            </button>
-            <button
-              onClick={() => db.auth.signOut()}
-              className="text-grape-600 hover:text-grape-400 text-sm transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <Layout
+      headerActions={
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`text-sm font-medium transition-colors whitespace-nowrap ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}
+        >
+          Filters {hasActiveFilters ? `(active)` : ""}
+        </button>
+      }
+    >
       {/* Filters panel */}
       {showFilters && (
         <div className="border-b border-grape-900/50 px-6 py-4 bg-grape-950/50">
@@ -355,6 +328,6 @@ export default function Compare() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }
