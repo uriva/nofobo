@@ -289,12 +289,16 @@ export default function Compare() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-white text-center mb-2">
-          Who do you vibe with more?
-        </h1>
-        <p className="text-grape-400 text-center mb-8">
-          Just go with your gut. There are no wrong answers.
-        </p>
+        {!message && (
+          <>
+            <h1 className="text-2xl font-bold text-white text-center mb-2">
+              Who do you vibe with more?
+            </h1>
+            <p className="text-grape-400 text-center mb-8">
+              Just go with your gut. There are no wrong answers.
+            </p>
+          </>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
