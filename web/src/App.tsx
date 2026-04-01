@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import db from "./db.ts";
 import Landing from "./pages/Landing.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -6,8 +6,10 @@ import Onboarding from "./pages/Onboarding.tsx";
 import Compare from "./pages/Compare.tsx";
 import MyDecisions from "./pages/MyDecisions.tsx";
 import Admin from "./pages/Admin.tsx";
+import Profile from "./pages/Profile.tsx";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
+
   const { isLoading, user, error } = db.useAuth();
   if (isLoading) {
     return (
@@ -27,13 +29,13 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = db.useQuery(
     user
       ? {
-          profiles: {
-            $: {
-              where: { "user.id": user.id, onboardingComplete: true },
-              limit: 1,
-            },
+        profiles: {
+          $: {
+            where: { "user.id": user.id, onboardingComplete: true },
+            limit: 1,
           },
-        }
+        },
+      }
       : null,
   );
 
@@ -92,6 +94,16 @@ export default function App() {
             <ProtectedRoute>
               <OnboardedRoute>
                 <Admin />
+              </OnboardedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/profile"
+          element={
+            <ProtectedRoute>
+              <OnboardedRoute>
+                <Profile />
               </OnboardedRoute>
             </ProtectedRoute>
           }
