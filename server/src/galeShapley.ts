@@ -4,7 +4,7 @@
 // We use ELO ratings from those comparisons to build approximate preference
 // rankings, then run standard Gale-Shapley on the inferred rankings.
 
-import { ELO_K_FACTOR, ELO_DEFAULT } from "../../constants.ts";
+import { ELO_DEFAULT, ELO_K_FACTOR } from "../../constants.ts";
 
 // --- ELO Rating System ---
 
@@ -189,13 +189,11 @@ export interface UserEloData {
 
 // Returns true if user A and user B have mutual attraction compatibility
 function isAttractionCompatible(a: UserEloData, b: UserEloData): boolean {
-  const aLikesB =
-    a.attractedTo === "both" ||
+  const aLikesB = a.attractedTo === "both" ||
     (a.attractedTo === "men" && b.gender === "man") ||
     (a.attractedTo === "women" && b.gender === "woman");
 
-  const bLikesA =
-    b.attractedTo === "both" ||
+  const bLikesA = b.attractedTo === "both" ||
     (b.attractedTo === "men" && a.gender === "man") ||
     (b.attractedTo === "women" && a.gender === "woman");
 
@@ -208,7 +206,9 @@ export function runMatching(users: UserEloData[]): MatchResult {
 
   for (const user of users) {
     const candidates = users
-      .filter((other) => other.userId !== user.userId && isAttractionCompatible(user, other))
+      .filter((other) =>
+        other.userId !== user.userId && isAttractionCompatible(user, other)
+      )
       .map((other) => other.userId);
 
     const ranked = eloToPreferenceList(user.ratings, candidates);

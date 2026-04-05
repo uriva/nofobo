@@ -1,0 +1,6 @@
+{
+  "deploy": {
+    "org": "uriva",
+    "app": "nofobo-api-v6"
+  }
+}

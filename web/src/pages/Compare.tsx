@@ -136,20 +136,26 @@ export default function Compare() {
   );
 
   return (
-    <Layout
-      headerActions={
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`text-sm font-medium transition-colors whitespace-nowrap ${showFilters ? "text-grape-300" : "text-grape-400 hover:text-grape-300"}`}
-        >
-          Filters {hasActiveFilters ? `(active)` : ""}
-        </button>
-      }
-    >
-      {/* Filters panel */}
-      {showFilters && (
-        <div className="border-b border-grape-900/50 px-6 py-4 bg-grape-950/50">
-          <div className="max-w-4xl mx-auto space-y-4">
+    <Layout>
+      <div className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
+        {/* Filters Toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-full border ${
+              showFilters 
+                ? "bg-grape-900 border-grape-700 text-white" 
+                : "bg-grape-950 border-grape-800 text-grape-400 hover:border-grape-600 hover:text-grape-300"
+            }`}
+          >
+            Filters {hasActiveFilters ? `(active)` : ""}
+          </button>
+        </div>
+
+        {/* Filters panel */}
+        {showFilters && (
+          <div className="mb-8 border border-grape-800 rounded-2xl p-6 bg-grape-950/50 shadow-xl shadow-black/20">
+            <div className="space-y-6">
             {/* Age range */}
             <div>
               <label className="text-grape-400 text-sm font-medium block mb-2">Age Range</label>
@@ -235,10 +241,8 @@ export default function Compare() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         {/* Progress */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">

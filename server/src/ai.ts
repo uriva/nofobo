@@ -34,7 +34,8 @@ async function callAI(messages: ChatMessage[]): Promise<string> {
 // --- Onboarding Chat ---
 // AI asks questions to get to know the user, then generates their profile.
 
-const ONBOARDING_SYSTEM_PROMPT = `You are the onboarding assistant for NOFOBO, a dating app that uses the Gale-Shapley algorithm to find stable matches.
+const ONBOARDING_SYSTEM_PROMPT =
+  `You are the onboarding assistant for NOFOBO, a dating app that uses the Gale-Shapley algorithm to find stable matches.
 
 Your job is to have a short conversation with the user to collect facts about them. You'll use these facts to write their dating profile.
 
@@ -98,7 +99,8 @@ export function extractUrls(text: string): string[] {
 
 // --- Profile Generation from Links/Bio ---
 
-const PROFILE_FROM_LINKS_PROMPT = `You are a dating profile writer for NOFOBO. Given a user's bio and links (social media, personal website, portfolio, etc.), write a factual, informational dating profile.
+const PROFILE_FROM_LINKS_PROMPT =
+  `You are a dating profile writer for NOFOBO. Given a user's bio and links (social media, personal website, portfolio, etc.), write a factual, informational dating profile.
 
 The profile should:
 - Be written in third person
@@ -150,7 +152,8 @@ export async function fetchLinkSummary(url: string): Promise<string> {
 // --- AI Profile Editing ---
 // User describes what they want changed; AI returns updated profile text.
 
-const PROFILE_EDIT_PROMPT = `You are the profile editor for NOFOBO, a dating app. The user has an existing AI-generated dating profile and wants to make changes to it.
+const PROFILE_EDIT_PROMPT =
+  `You are the profile editor for NOFOBO, a dating app. The user has an existing AI-generated dating profile and wants to make changes to it.
 
 Your job: take the current profile and the user's requested change, and return the updated profile.
 
@@ -172,7 +175,8 @@ export async function editProfile(
     { role: "system", content: PROFILE_EDIT_PROMPT },
     {
       role: "user",
-      content: `Current profile:\n\n${currentProfile}\n\nRequested change: ${editRequest}`,
+      content:
+        `Current profile:\n\n${currentProfile}\n\nRequested change: ${editRequest}`,
     },
   ]);
 }

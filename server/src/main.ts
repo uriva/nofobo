@@ -4,15 +4,18 @@
 import { id } from "@instantdb/admin";
 import adminDb from "./db.ts";
 import {
-  updateElo,
-  selectNextPair,
   runMatching,
+  selectNextPair,
+  updateElo,
   type UserEloData,
 } from "./galeShapley.ts";
 import { ELO_DEFAULT } from "../../constants.ts";
 
 // Admin email whitelist
-const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
+const ADMIN_EMAILS = [
+  "uri.valevski@gmail.com",
+  "BurningMan@alumni.stanford.edu",
+];
 
 // --- CORS ---
 const corsHeaders = {
@@ -52,14 +55,12 @@ function isAttractionCompatible(
   theirAttractedTo: string,
 ): boolean {
   // Check: I'm attracted to their gender
-  const iLikeThem =
-    myAttractedTo === "both" ||
+  const iLikeThem = myAttractedTo === "both" ||
     (myAttractedTo === "men" && theirGender === "man") ||
     (myAttractedTo === "women" && theirGender === "woman");
 
   // Check: they're attracted to my gender
-  const theyLikeMe =
-    theirAttractedTo === "both" ||
+  const theyLikeMe = theirAttractedTo === "both" ||
     (theirAttractedTo === "men" && myGender === "man") ||
     (theirAttractedTo === "women" && myGender === "woman");
 
@@ -121,7 +122,7 @@ async function handler(req: Request): Promise<Response> {
       });
 
       // Filter: not self, attraction compatible, relationship status match, age, tags
-      const eligible = candidates.filter((p) => {
+      const eligible = candidates.filter((p: any) => {
         if (p.user?.id === user.id) return false;
 
         // Attraction compatibility (mutual)
@@ -132,8 +133,9 @@ async function handler(req: Request): Promise<Response> {
             p.gender,
             p.attractedTo ?? "both",
           )
-        )
+        ) {
           return false;
+        }
 
         // Relationship status filter: their status must be in my "match with" list
         if (myMatchStatuses.length > 0 && p.relationshipStatus) {
@@ -148,14 +150,15 @@ async function handler(req: Request): Promise<Response> {
         if (filterTags) {
           const required = filterTags.split(",").map((t) => t.trim());
           const theirTags: string[] = JSON.parse(p.kinkTags ?? "[]");
-          if (!required.some((r) => theirTags.includes(r))) return false;
+          if (!required.some((r: any) => theirTags.includes(r))) return false;
         }
 
         // Relationship status filter (from query params)
         if (filterStatuses) {
           const allowed = filterStatuses.split(",").map((s) => s.trim());
-          if (p.relationshipStatus && !allowed.includes(p.relationshipStatus))
+          if (p.relationshipStatus && !allowed.includes(p.relationshipStatus)) {
             return false;
+          }
         }
 
         return true;
@@ -200,7 +203,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Select next pair using user IDs
       const candidateUserIds = eligible
-        .map((p) => p.user?.id)
+        .map((p: any) => p.user?.id)
         .filter(Boolean) as string[];
 
       const pair = selectNextPair(userElo, comparedPairs, candidateUserIds);
@@ -213,17 +216,18 @@ async function handler(req: Request): Promise<Response> {
 
       // Return full profile data for both candidates
       const pairProfiles = pair.map((userId) =>
-        eligible.find((p) => p.user?.id === userId),
+        eligible.find((p: any) => p.user?.id === userId)
       );
 
       return json({
-        pair: pairProfiles.map((p) => ({
+        pair: pairProfiles.map((p: any) => ({
           userId: p?.user?.id,
           profileId: p?.id,
           name: p?.name,
           age: p?.age,
           bio: p?.bio ?? p?.aiDescription ?? "",
           photoUrl: p?.photoUrl,
+          photoUrls: JSON.parse(p?.photoUrls ?? "[]"),
           relationshipStatus: p?.relationshipStatus,
           kinkTags: JSON.parse(p?.kinkTags ?? "[]"),
         })),
@@ -290,9 +294,10 @@ async function handler(req: Request): Promise<Response> {
         txns.push(
           adminDb.tx.eloRatings[winnerRatingId].update({
             score: newElo.winner,
-            comparisonsCount:
-              (eloRatings.find((r) => r.id === winnerRatingId)
-                ?.comparisonsCount ?? 0) + 1,
+            comparisonsCount: (eloRatings.find((r: any) =>
+              r.id === winnerRatingId
+            )
+              ?.comparisonsCount ?? 0) + 1,
           }),
         );
       } else {
@@ -308,9 +313,10 @@ async function handler(req: Request): Promise<Response> {
         txns.push(
           adminDb.tx.eloRatings[loserRatingId].update({
             score: newElo.loser,
-            comparisonsCount:
-              (eloRatings.find((r) => r.id === loserRatingId)
-                ?.comparisonsCount ?? 0) + 1,
+            comparisonsCount: (eloRatings.find((r: any) =>
+              r.id === loserRatingId
+            )
+              ?.comparisonsCount ?? 0) + 1,
           }),
         );
       } else {
@@ -388,7 +394,7 @@ async function handler(req: Request): Promise<Response> {
       });
 
       // Map winner/loser profile IDs to user IDs and profile data
-      const result = comparisons.map((c) => {
+      const result = comparisons.map((c: any) => {
         const winner = c.winner;
         const loser = c.loser;
         const winnerPhotoUrls = JSON.parse(winner?.photoUrls ?? "[]");
@@ -408,7 +414,7 @@ async function handler(req: Request): Promise<Response> {
       });
 
       // Sort newest first
-      result.sort((a, b) => b.createdAt - a.createdAt);
+      result.sort((a: any, b: any) => b.createdAt - a.createdAt);
 
       return json({ comparisons: result });
     } catch (e) {
@@ -424,8 +430,9 @@ async function handler(req: Request): Promise<Response> {
 
     const body = await req.json();
     const { comparisonId } = body;
-    if (!comparisonId)
+    if (!comparisonId) {
       return json({ error: "comparisonId required" }, 400);
+    }
 
     try {
       // Get the comparison and verify ownership
@@ -437,15 +444,17 @@ async function handler(req: Request): Promise<Response> {
         },
       });
 
-      if (comparisons.length === 0)
+      if (comparisons.length === 0) {
         return json({ error: "Comparison not found" }, 404);
+      }
 
       const comp = comparisons[0];
       const oldWinnerId = comp.winner?.id;
       const oldLoserId = comp.loser?.id;
 
-      if (!oldWinnerId || !oldLoserId)
+      if (!oldWinnerId || !oldLoserId) {
         return json({ error: "Invalid comparison data" }, 500);
+      }
 
       // Swap the winner/loser links
       await adminDb.transact([
@@ -518,8 +527,9 @@ async function handler(req: Request): Promise<Response> {
 
     const body = await req.json();
     const { comparisonId } = body;
-    if (!comparisonId)
+    if (!comparisonId) {
       return json({ error: "comparisonId required" }, 400);
+    }
 
     try {
       // Verify ownership
@@ -529,8 +539,9 @@ async function handler(req: Request): Promise<Response> {
         },
       });
 
-      if (comparisons.length === 0)
+      if (comparisons.length === 0) {
         return json({ error: "Comparison not found" }, 404);
+      }
 
       // Delete the comparison
       await adminDb.transact([
@@ -552,8 +563,9 @@ async function handler(req: Request): Promise<Response> {
   if (path === "/api/admin/profiles" && req.method === "GET") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email))
+    if (!ADMIN_EMAILS.includes(user.email)) {
       return json({ error: "Forbidden" }, 403);
+    }
 
     try {
       // Get admin's profile to find their community
@@ -561,8 +573,9 @@ async function handler(req: Request): Promise<Response> {
         profiles: { $: { where: { "user.id": user.id } } },
       });
       const myCommunity = myProfiles[0]?.communityCode;
-      if (!myCommunity)
+      if (!myCommunity) {
         return json({ error: "Admin has no community" }, 400);
+      }
 
       // Get all profiles in community
       const { profiles } = await adminDb.query({
@@ -587,11 +600,12 @@ async function handler(req: Request): Promise<Response> {
       const compCountByUser = new Map<string, number>();
       for (const c of allComps) {
         const voterId = c.voter?.id;
-        if (voterId)
+        if (voterId) {
           compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
+        }
       }
 
-      const result = profiles.map((p) => {
+      const result = profiles.map((p: any) => {
         const photoUrls = JSON.parse(p.photoUrls ?? "[]");
         return {
           userId: p.user?.id ?? "",
@@ -620,12 +634,14 @@ async function handler(req: Request): Promise<Response> {
   if (path.startsWith("/api/admin/rankings/") && req.method === "GET") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email))
+    if (!ADMIN_EMAILS.includes(user.email)) {
       return json({ error: "Forbidden" }, 403);
+    }
 
     const targetUserId = path.replace("/api/admin/rankings/", "");
-    if (!targetUserId)
+    if (!targetUserId) {
       return json({ error: "userId required" }, 400);
+    }
 
     try {
       // Get the target user's ELO ratings
@@ -637,7 +653,7 @@ async function handler(req: Request): Promise<Response> {
       });
 
       const rankings = eloRatings
-        .map((r) => {
+        .map((r: any) => {
           const targetProfile = r.target?.profiles?.[0];
           return {
             targetUserId: r.target?.id ?? "",
@@ -646,7 +662,7 @@ async function handler(req: Request): Promise<Response> {
             comparisonsCount: r.comparisonsCount ?? 0,
           };
         })
-        .sort((a, b) => b.score - a.score);
+        .sort((a: any, b: any) => b.score - a.score);
 
       return json({ rankings });
     } catch (e) {
@@ -659,8 +675,9 @@ async function handler(req: Request): Promise<Response> {
   if (path === "/api/admin/match" && req.method === "POST") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email))
+    if (!ADMIN_EMAILS.includes(user.email)) {
       return json({ error: "Forbidden" }, 403);
+    }
 
     try {
       // Get admin's community
@@ -668,8 +685,9 @@ async function handler(req: Request): Promise<Response> {
         profiles: { $: { where: { "user.id": user.id } } },
       });
       const myCommunity = myProfiles[0]?.communityCode;
-      if (!myCommunity)
+      if (!myCommunity) {
         return json({ error: "Admin has no community" }, 400);
+      }
 
       // Get all completed profiles in community
       const { profiles } = await adminDb.query({
@@ -686,7 +704,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Get all ELO ratings for these users
       const userIds = profiles
-        .map((p) => p.user?.id)
+        .map((p: any) => p.user?.id)
         .filter(Boolean) as string[];
 
       const { eloRatings: allRatings } = await adminDb.query({
@@ -698,7 +716,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Build UserEloData for each user
       const userIdSet = new Set(userIds);
-      const users: UserEloData[] = profiles.map((p) => {
+      const users: UserEloData[] = profiles.map((p: any) => {
         const userId = p.user?.id ?? "";
         const ratings = new Map<string, number>();
 

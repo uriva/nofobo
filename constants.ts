@@ -6,8 +6,11 @@ export const INSTANT_APP_ID = "6818f05d-46f3-4622-9aaf-dcd14e067e9e";
 // In dev mode with Vite proxy, use empty string (relative URLs go through proxy).
 const _viteApiUrl =
   typeof (globalThis as Record<string, unknown>).Deno === "undefined"
-    ? ((import.meta as unknown as Record<string, unknown>).env as Record<string, string>)
-        ?.VITE_API_URL ?? ""
+    ? ((import.meta as unknown as Record<string, unknown>).env as Record<
+      string,
+      string
+    >)
+      ?.VITE_API_URL ?? ""
     : "";
 export const API_URL = _viteApiUrl ||
   (typeof Deno !== "undefined" ? Deno.env?.get?.("API_URL") ?? "" : "");
