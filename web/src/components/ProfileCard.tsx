@@ -1,9 +1,12 @@
+import { useState } from "react";
+
 interface ProfileCardProps {
   name: string;
   age: number;
   bio?: string;
   description?: string;
   photoUrl?: string;
+  photoUrls?: string[];
   relationshipStatus?: string;
   kinkTags?: string[];
   large?: boolean;
@@ -15,23 +18,75 @@ export default function ProfileCard({
   bio,
   description,
   photoUrl,
+  photoUrls = [],
   relationshipStatus,
   kinkTags,
   large,
 }: ProfileCardProps) {
   const displayBio = bio || description || "";
-  
+  const [photoIdx, setPhotoIdx] = useState(0);
+
+  // Use photoUrls if available, otherwise fallback to photoUrl as a single-element array
+  const validPhotos = photoUrls.length > 0 ? photoUrls : (photoUrl ? [photoUrl] : []);
+  const currentPhoto = validPhotos[photoIdx];
+
+  const handlePrevPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPhotoIdx((prev) => (prev > 0 ? prev - 1 : validPhotos.length - 1));
+  };
+
+  const handleNextPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPhotoIdx((prev) => (prev < validPhotos.length - 1 ? prev + 1 : 0));
+  };
+
   return (
     <div
       className={`bg-grape-950 border border-grape-800 rounded-2xl overflow-hidden transition-all flex flex-col h-full`}
     >
       {/* Big Photo Area */}
-      {photoUrl ? (
-        <img
-          src={photoUrl}
-          alt={name}
-          className="w-full aspect-[4/5] object-cover bg-grape-900"
-        />
+      {validPhotos.length > 0 ? (
+        <div className="relative w-full aspect-[4/5] bg-grape-900 group">
+          <img
+            src={currentPhoto}
+            alt={`${name} photo ${photoIdx + 1}`}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Photo Navigation Overlays */}
+          {validPhotos.length > 1 && (
+            <>
+              <div className="absolute top-2 left-0 right-0 flex justify-center gap-1.5 px-4 z-10">
+                {validPhotos.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1.5 rounded-full flex-1 shadow-sm transition-all ${
+                      i === photoIdx ? "bg-white" : "bg-white/40"
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <button
+                onClick={handlePrevPhoto}
+                className="absolute top-0 bottom-0 left-0 w-1/3 flex items-center justify-start px-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-black/30 to-transparent"
+              >
+                <div className="bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </div>
+              </button>
+              
+              <button
+                onClick={handleNextPhoto}
+                className="absolute top-0 bottom-0 right-0 w-1/3 flex items-center justify-end px-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-black/30 to-transparent"
+              >
+                <div className="bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </div>
+              </button>
+            </>
+          )}
+        </div>
       ) : (
         <div className="w-full aspect-[4/5] bg-gradient-to-br from-grape-600 to-purple-800 flex items-center justify-center text-white text-6xl font-bold shadow-inner">
           {name.charAt(0).toUpperCase()}

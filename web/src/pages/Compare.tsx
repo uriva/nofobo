@@ -11,6 +11,7 @@ interface PairProfile {
   age: number;
   bio: string;
   photoUrl?: string;
+  photoUrls?: string[];
   relationshipStatus?: string;
   kinkTags?: string[];
 }
@@ -295,27 +296,41 @@ export default function Compare() {
         ) : pair ? (
           <div className="grid md:grid-cols-2 gap-6">
             {pair.map((profile, idx) => (
-              <button
+              <div
                 key={profile.userId}
-                onClick={() => handleChoice(idx)}
-                disabled={submitting}
-                className={`text-left transition-all duration-300 ${
+                className={`flex flex-col transition-all duration-300 ${
                   chosen === idx
-                    ? "scale-105 ring-2 ring-grape-400"
+                    ? "scale-[1.02]"
                     : chosen !== null
                       ? "opacity-40 scale-95"
-                      : "hover:scale-[1.02]"
+                      : "hover:-translate-y-1"
                 }`}
               >
-                <ProfileCard
-                  name={profile.name}
-                  age={profile.age}
-                  bio={profile.bio}
-                  photoUrl={profile.photoUrl}
-                  relationshipStatus={profile.relationshipStatus}
-                  kinkTags={profile.kinkTags}
-                />
-              </button>
+                <div className={`flex-1 ${chosen === idx ? "ring-2 ring-grape-400 rounded-2xl" : ""}`}>
+                  <ProfileCard
+                    name={profile.name}
+                    age={profile.age}
+                    bio={profile.bio}
+                    photoUrl={profile.photoUrl}
+                    photoUrls={profile.photoUrls}
+                    relationshipStatus={profile.relationshipStatus}
+                    kinkTags={profile.kinkTags}
+                  />
+                </div>
+                <button
+                  onClick={() => handleChoice(idx)}
+                  disabled={submitting}
+                  className={`mt-4 py-3 px-6 rounded-xl font-bold text-lg transition-colors ${
+                    chosen === idx
+                      ? "bg-grape-500 text-white"
+                      : chosen !== null
+                        ? "bg-grape-900 text-grape-500"
+                        : "bg-grape-600 hover:bg-grape-500 text-white shadow-lg shadow-grape-900/50"
+                  }`}
+                >
+                  {chosen === idx ? "Chosen!" : `Choose ${profile.name}`}
+                </button>
+              </div>
             ))}
           </div>
         ) : null}
