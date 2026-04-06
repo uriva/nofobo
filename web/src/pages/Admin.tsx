@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
+import { useCommunity } from "../components/CommunityContext.tsx";
+import ProfileModal from "../components/ProfileModal.tsx";
 
 interface AdminProfile {
   userId: string;
@@ -32,9 +34,11 @@ interface MatchPair {
 
 export default function Admin() {
   const { user } = db.useAuth();
+  const { activeCommunityCode } = useCommunity();
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Rankings for expanded profile
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
@@ -184,39 +188,46 @@ export default function Admin() {
               {profiles.map((p) => (
                 <div key={p.profileId} className="bg-grape-950 border border-grape-800 rounded-xl overflow-hidden">
                   {/* Profile row */}
-                  <button
-                    onClick={() => loadRankings(p.userId)}
-                    className="w-full text-left p-4 flex items-center gap-4 hover:bg-grape-900/30 transition-colors"
-                  >
-                    {p.photoUrl ? (
-                      <img
-                        src={p.photoUrl}
-                        alt={p.name}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {p.name.charAt(0)}
+                  <div className="w-full text-left flex items-center gap-4 hover:bg-grape-900/30 transition-colors pr-4">
+                    <button
+                      onClick={() => setSelectedUserId(p.userId)}
+                      className="p-4 cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
+                    >
+                      {p.photoUrl ? (
+                        <img
+                          src={p.photoUrl}
+                          alt={p.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm">
+                          {p.name.charAt(0)}
+                        </div>
+                      )}
+                    </button>
+                    <button 
+                      onClick={() => loadRankings(p.userId)}
+                      className="flex-1 flex items-center min-w-0 py-4"
+                    >
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-white font-medium text-sm">
+                          {p.name}, {p.age}
+                          {p.location && (
+                            <span className="text-grape-500 ml-2">{p.location}</span>
+                          )}
+                        </div>
+                        <div className="text-grape-400 text-xs">
+                          {p.gender} · attracted to {p.attractedTo} · {p.relationshipStatus}
+                        </div>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium text-sm">
-                        {p.name}, {p.age}
-                        {p.location && (
-                          <span className="text-grape-500 ml-2">{p.location}</span>
-                        )}
+                      <div className="text-grape-500 text-xs flex-shrink-0 px-4">
+                        {p.comparisonsCount} comparisons
                       </div>
-                      <div className="text-grape-400 text-xs">
-                        {p.gender} · attracted to {p.attractedTo} · {p.relationshipStatus}
+                      <div className="text-grape-600 flex-shrink-0">
+                        {expandedUserId === p.userId ? "▲" : "▼"}
                       </div>
-                    </div>
-                    <div className="text-grape-500 text-xs flex-shrink-0">
-                      {p.comparisonsCount} comparisons
-                    </div>
-                    <div className="text-grape-600 flex-shrink-0">
-                      {expandedUserId === p.userId ? "▲" : "▼"}
-                    </div>
-                  </button>
+                    </button>
+                  </div>
 
                   {/* Expanded rankings */}
                   {expandedUserId === p.userId && (
@@ -260,6 +271,14 @@ export default function Admin() {
           </>
         )}
       </div>
+
+      {selectedUserId && activeCommunityCode && (
+        <ProfileModal
+          userId={selectedUserId}
+          communityCode={activeCommunityCode}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </Layout>
   );
 }

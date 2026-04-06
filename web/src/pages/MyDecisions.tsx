@@ -3,6 +3,7 @@ import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
+import ProfileModal from "../components/ProfileModal.tsx";
 
 interface Decision {
   comparisonId: string;
@@ -26,6 +27,7 @@ export default function MyDecisions() {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
   const [flipping, setFlipping] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const getAuthToken = () => user?.refresh_token ?? "";
 
@@ -136,7 +138,10 @@ export default function MyDecisions() {
                 className="bg-grape-950 border border-grape-800 rounded-xl p-4 flex items-center gap-4"
               >
                 {/* Winner */}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div 
+                  className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:bg-grape-900/50 p-1.5 rounded-lg transition-colors -ml-1.5"
+                  onClick={() => setSelectedUserId(d.winnerId)}
+                >
                   {d.winnerPhotoUrl ? (
                     <img
                       src={d.winnerPhotoUrl}
@@ -157,10 +162,13 @@ export default function MyDecisions() {
                 </div>
 
                 {/* VS */}
-                <div className="text-grape-600 text-xs font-medium flex-shrink-0">vs</div>
+                <div className="text-grape-600 text-xs font-medium flex-shrink-0 px-2">vs</div>
 
                 {/* Loser */}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div 
+                  className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:bg-grape-900/50 p-1.5 rounded-lg transition-colors -ml-1.5"
+                  onClick={() => setSelectedUserId(d.loserId)}
+                >
                   {d.loserPhotoUrl ? (
                     <img
                       src={d.loserPhotoUrl}
@@ -203,6 +211,14 @@ export default function MyDecisions() {
           </div>
         )}
       </div>
+
+      {selectedUserId && activeCommunityCode && (
+        <ProfileModal
+          userId={selectedUserId}
+          communityCode={activeCommunityCode}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </Layout>
   );
 }
