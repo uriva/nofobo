@@ -50,6 +50,16 @@ export default function Admin() {
   const [unmatchedNames, setUnmatchedNames] = useState<string[]>([]);
   const [runningMatch, setRunningMatch] = useState(false);
 
+  // Tags
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [editingTagsInput, setEditingTagsInput] = useState("");
+  const [savingTags, setSavingTags] = useState(false);
+  
+  const { data: communityData } = db.useQuery(activeCommunityCode ? {
+    communities: { $: { where: { code: activeCommunityCode } } }
+  } : null);
+  const community = communityData?.communities?.[0];
+
   const getAuthToken = () => user?.refresh_token ?? "";
 
   const loadProfiles = async () => {
@@ -113,9 +123,30 @@ export default function Admin() {
     }
   };
 
+  const handleSaveTags = async () => {
+    if (!community || !activeCommunityCode) return;
+    setSavingTags(true);
+    try {
+      const tagsArray = editingTagsInput
+        ? editingTagsInput.split(",").map(t => t.trim()).filter(Boolean)
+        : null;
+
+      await db.transact([
+        db.tx.communities[community.id]
+          .update({ tags: tagsArray ? JSON.stringify(tagsArray) : undefined }),
+      ]);
+      setIsEditingTags(false);
+    } catch (e) {
+      console.error("Save tags error:", e);
+      alert("Failed to save tags");
+    } finally {
+      setSavingTags(false);
+    }
+  };
+
   useEffect(() => {
     if (user) loadProfiles();
-  }, [user]);
+  }, [user, activeCommunityCode]);
 
   if (error) {
     return (
@@ -137,7 +168,7 @@ export default function Admin() {
         ) : (
           <>
             {/* Stats + Actions */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-white">Community Admin</h1>
                 <p className="text-grape-400 text-sm mt-1">
@@ -151,6 +182,66 @@ export default function Admin() {
               >
                 {runningMatch ? "Computing..." : "Run Matching"}
               </button>
+            </div>
+
+            {/* Community Tags */}
+            <div className="mb-8 bg-grape-950 border border-grape-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Community Tags</h2>
+                {!isEditingTags && (
+                  <button
+                    onClick={() => {
+                      setEditingTagsInput(
+                        community?.tags ? JSON.parse(community.tags).join(", ") : ""
+                      );
+                      setIsEditingTags(true);
+                    }}
+                    className="text-grape-400 hover:text-white text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+              
+              {isEditingTags ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editingTagsInput}
+                    onChange={(e) => setEditingTagsInput(e.target.value)}
+                    placeholder="e.g. tag1, tag2, tag3"
+                    className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setIsEditingTags(false)}
+                      disabled={savingTags}
+                      className="px-4 py-2 rounded-lg text-grape-400 hover:text-white text-sm font-medium disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveTags}
+                      disabled={savingTags}
+                      className="bg-grape-600 hover:bg-grape-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                    >
+                      {savingTags ? "Saving..." : "Save Tags"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {community?.tags ? (
+                    JSON.parse(community.tags).map((tag: string) => (
+                      <span key={tag} className="bg-grape-900 text-grape-300 px-3 py-1 rounded-full text-sm">
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-grape-500 text-sm">No custom tags set.</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Match Results */}
