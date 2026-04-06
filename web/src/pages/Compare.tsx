@@ -33,8 +33,16 @@ const RELATIONSHIP_STATUSES = [
 export default function Compare() {
   const { user } = db.useAuth();
 
-  const { data: myData } = db.useQuery(user ? { profiles: { $: { where: { "user.id": user.id } } } } : null);
-  const myCommunityCode = myData?.profiles?.[0]?.communityCode;
+  const { data: myData } = db.useQuery(user ? { 
+    profiles: { $: { where: { "user.id": user.id } } },
+    communities: {}
+  } : null);
+  const myProfile = myData?.profiles?.[0];
+  const myCommunityCode = myProfile?.communityCode;
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const myCommunity = myData?.communities?.find((c: any) => c.code === myCommunityCode);
+  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : KINK_TAG_OPTIONS;
 
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -206,9 +214,9 @@ export default function Compare() {
 
             {/* Kink tags */}
             <div>
-              <label className="text-grape-400 text-sm font-medium block mb-2">Kink Tags (at least one overlap)</label>
+              <label className="text-grape-400 text-sm font-medium block mb-2">Tags (at least one overlap)</label>
               <div className="flex flex-wrap gap-2">
-                {KINK_TAG_OPTIONS.map((tag) => (
+                {availableTags.map((tag: string) => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}

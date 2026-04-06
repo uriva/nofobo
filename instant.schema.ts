@@ -34,6 +34,7 @@ const _schema = i.schema({
       name: i.string(),
       code: i.string().unique().indexed(),
       createdAt: i.number().indexed(),
+      tags: i.string().optional(),
     }),
     comparisons: i.entity({
       createdAt: i.number().indexed(),

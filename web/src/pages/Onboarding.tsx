@@ -43,6 +43,7 @@ export default function Onboarding() {
   const [communityCode, setCommunityCode] = useState("");
   const [newCommunityName, setNewCommunityName] = useState("");
   const [newCommunityCode, setNewCommunityCode] = useState("");
+  const [newCommunityTags, setNewCommunityTags] = useState("");
   const [codeError, setCodeError] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -115,10 +116,17 @@ export default function Onboarding() {
 
     try {
       const commId = id();
+      
+      const tagsList = newCommunityTags
+        .split(",")
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+
       await db.transact([
         db.tx.communities[commId].update({
           name: name,
           code: code,
+          tags: tagsList.length > 0 ? JSON.stringify(tagsList) : undefined,
           createdAt: Date.now()
         }).link({ creator: user.id })
       ]);
@@ -176,6 +184,11 @@ export default function Onboarding() {
     attractedTo &&
     relationshipStatus &&
     bio.trim();
+
+  // Determine which tags to show for this community
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
+  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : KINK_TAGS;
 
   const saveProfile = async () => {
     if (!user || !isFormValid) return;
@@ -358,6 +371,19 @@ export default function Onboarding() {
                 />
                 <p className="text-grape-600 text-xs mt-2">Only letters, numbers, hyphens, and underscores</p>
               </div>
+
+              <div>
+                <input
+                  type="text"
+                  value={newCommunityTags}
+                  onChange={(e) => {
+                    setNewCommunityTags(e.target.value);
+                  }}
+                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  placeholder="Custom tags (e.g. Burner, Raver, Sub)"
+                />
+                <p className="text-grape-600 text-xs mt-2">Optional. Comma separated list of tags for your community members to pick from.</p>
+              </div>
             </div>
 
             {codeError && (
@@ -524,7 +550,7 @@ export default function Onboarding() {
               Tags (select all that apply)
             </label>
             <div className="flex flex-wrap gap-2">
-              {KINK_TAGS.map((tag) => (
+              {availableTags.map((tag: string) => (
                 <button
                   key={tag}
                   onClick={() => toggleKinkTag(tag)}
