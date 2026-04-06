@@ -87,10 +87,13 @@ export default function Compare() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      
+      // Always update eligibleCount and totalComparisons if available
+      if (data.totalComparisons !== undefined) setTotalComparisons(data.totalComparisons);
+      if (data.eligibleCount !== undefined) setEligibleCount(data.eligibleCount);
+
       if (data.pair) {
         setPair(data.pair);
-        setTotalComparisons(data.totalComparisons ?? 0);
-        setEligibleCount(data.eligibleCount ?? 0);
         setMessage("");
       } else {
         setPair(null);

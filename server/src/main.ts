@@ -172,13 +172,6 @@ async function handler(req: Request): Promise<Response> {
         return true;
       });
 
-      if (eligible.length < 2) {
-        return json({
-          pair: null,
-          reason: "Not enough compatible profiles yet. Check back later!",
-        });
-      }
-
       // Get user's existing comparisons
       const { comparisons } = await adminDb.query({
         comparisons: {
@@ -187,6 +180,15 @@ async function handler(req: Request): Promise<Response> {
           loser: {},
         },
       });
+
+      if (eligible.length < 2) {
+        return json({
+          pair: null,
+          reason: "Not enough compatible profiles yet. Check back later!",
+          eligibleCount: eligible.length,
+          totalComparisons: comparisons.length,
+        });
+      }
 
       const comparedPairs = new Set<string>();
       for (const c of comparisons) {
@@ -219,6 +221,8 @@ async function handler(req: Request): Promise<Response> {
         return json({
           pair: null,
           reason: "You've compared all available profiles!",
+          eligibleCount: eligible.length,
+          totalComparisons: comparisons.length,
         });
       }
 
