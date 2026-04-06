@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import Layout from "../components/Layout.tsx";
+import { useCommunity } from "../components/CommunityContext.tsx";
 
 const RELATIONSHIP_STATUSES = [
   "Very single",
@@ -10,7 +11,7 @@ const RELATIONSHIP_STATUSES = [
   "In a committed relationship but open to play",
 ];
 
-const KINK_TAGS = [
+const TAG_OPTIONS = [
   "Dom",
   "Sub",
   "Switch",
@@ -34,20 +35,16 @@ interface PhotoItem {
 export default function Profile() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
+  const { activeCommunityCode, myProfiles } = useCommunity();
 
-  // Query user's profile
-  const { data, isLoading } = db.useQuery(
-    user
-      ? {
-          profiles: {
-            $: { where: { "user.id": user.id }, limit: 1 },
-          },
-        }
-      : null,
+  const profile = myProfiles.find(p => p.communityCode === activeCommunityCode);
+
+  const { data: communityData, isLoading } = db.useQuery(
+    activeCommunityCode ? { communities: { $: { where: { code: activeCommunityCode } } } } : null
   );
 
-  // deno-lint-ignore no-explicit-any
-  const profile = data?.profiles?.[0] as any;
+  const myCommunity = communityData?.communities?.[0];
+  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : TAG_OPTIONS;
 
   // Form state
   const [name, setName] = useState("");
@@ -319,13 +316,13 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Kink Tags */}
+            {/* Tags */}
             <div>
               <label className="block text-grape-300 text-sm mb-2 font-medium">
                 Tags (select all that apply)
               </label>
               <div className="flex flex-wrap gap-2">
-                {KINK_TAGS.map((tag) => (
+                {availableTags.map((tag: string) => (
                   <button
                     key={tag}
                     onClick={() => toggleKinkTag(tag)}

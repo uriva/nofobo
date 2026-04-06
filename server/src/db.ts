@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { init } from "@instantdb/admin";
 import schema from "../../instant.schema.ts";
 

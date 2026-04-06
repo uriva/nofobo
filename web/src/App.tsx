@@ -7,6 +7,7 @@ import Compare from "./pages/Compare.tsx";
 import MyDecisions from "./pages/MyDecisions.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
+import { CommunityProvider } from "./components/CommunityContext.tsx";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
@@ -51,7 +52,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/app/onboarding" replace />;
   }
 
-  return <>{children}</>;
+  return <CommunityProvider>{children}</CommunityProvider>;
 }
 
 export default function App() {

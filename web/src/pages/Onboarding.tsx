@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { id } from "@instantdb/react";
 import db from "../db.ts";
 
@@ -12,7 +12,7 @@ const RELATIONSHIP_STATUSES = [
   "In a committed relationship but open to play",
 ];
 
-const KINK_TAGS = [
+const TAG_OPTIONS = [
   "Dom",
   "Sub",
   "Switch",
@@ -54,9 +54,13 @@ export default function Onboarding() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const [searchParams] = useSearchParams();
+  const isNew = searchParams.get("new") === "1";
 
   // Check if already onboarded
   const { data } = db.useQuery(
@@ -65,7 +69,6 @@ export default function Onboarding() {
           profiles: {
             $: {
               where: { "user.id": user.id, onboardingComplete: true },
-              limit: 1,
             },
           },
           communities: {}
@@ -75,97 +78,47 @@ export default function Onboarding() {
 
   const communities = data?.communities || [];
 
+  // Determine which tags to show for this community
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
+  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : TAG_OPTIONS;
+
   useEffect(() => {
     if (data?.profiles?.length) {
-      navigate("/app/compare");
+      if (!isNew) {
+        navigate("/app/compare");
+      } else {
+        // Pre-fill form for the new community
+        const p = data.profiles[0];
+        setName(prev => prev || p.name || "");
+        setAge(prev => prev || p.age?.toString() || "");
+        setGender(prev => prev || p.gender || "");
+        setAttractedTo(prev => prev || p.attractedTo || "");
+        setRelationshipStatus(prev => prev || p.relationshipStatus || "");
+        setBio(prev => prev || p.bio || "");
+        setLocation(prev => prev || p.location || "");
+        
+        if (kinkTags.length === 0) {
+          try {
+            const parsedTags = JSON.parse(p.kinkTags || "[]");
+            // Only keep tags that are available in the new community
+            const filteredTags = parsedTags.filter((t: string) => availableTags.includes(t));
+            setKinkTags(filteredTags);
+          } catch { setKinkTags([]); }
+        }
+
+        if (existingPhotoUrls.length === 0 && photos.length === 0) {
+          try {
+            const urls = JSON.parse(p.photoUrls || "[]");
+            if (urls.length > 0) setExistingPhotoUrls(urls);
+            else if (p.photoUrl) setExistingPhotoUrls([p.photoUrl]);
+          } catch { 
+            if (p.photoUrl) setExistingPhotoUrls([p.photoUrl]);
+          }
+        }
+      }
     }
-  }, [data]);
-
-  const handleCodeSubmit = () => {
-    const code = communityCode.trim().toLowerCase();
-    if (!code) {
-      setCodeError("Please enter a community code");
-      return;
-    }
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isValid = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
-    if (!isValid) {
-      setCodeError("Invalid community code. Ask your organizer or create a new community.");
-      return;
-    }
-    setCodeError("");
-    setStep("profile");
-  };
-
-  const handleCreateCommunity = async () => {
-    const name = newCommunityName.trim();
-    const code = newCommunityCode.trim().toLowerCase();
-    
-    if (!name || !code) {
-      setCodeError("Please enter both a name and a code.");
-      return;
-    }
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const exists = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
-    if (exists) {
-      setCodeError("This code is already taken. Please choose another.");
-      return;
-    }
-
-    try {
-      const commId = id();
-      
-      const tagsList = newCommunityTags
-        .split(",")
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-
-      await db.transact([
-        db.tx.communities[commId].update({
-          name: name,
-          code: code,
-          tags: tagsList.length > 0 ? JSON.stringify(tagsList) : undefined,
-          createdAt: Date.now()
-        }).link({ creator: user.id })
-      ]);
-      
-      setCommunityCode(code);
-      setCodeError("");
-      setStep("profile");
-    } catch (e) {
-      console.error(e);
-      setCodeError("Failed to create community. Try again.");
-    }
-  };
-
-  const handlePhotoSelect = (e: { target: HTMLInputElement }) => {
-    const files = e.target.files;
-    if (!files) return;
-    const newPhotos: PhotoItem[] = [];
-    const remaining = MAX_PHOTOS - photos.length;
-    const toAdd = Math.min(files.length, remaining);
-
-    for (let i = 0; i < toAdd; i++) {
-      const file = files[i];
-      if (!file.type.startsWith("image/")) continue;
-      if (file.size > 5 * 1024 * 1024) continue;
-      newPhotos.push({ file, preview: URL.createObjectURL(file) });
-    }
-
-    setPhotos((prev) => [...prev, ...newPhotos]);
-    // Reset input so selecting the same file again works
-    if (photoInputRef.current) photoInputRef.current.value = "";
-  };
-
-  const removePhoto = (index: number) => {
-    setPhotos((prev) => {
-      const removed = prev[index];
-      if (removed) URL.revokeObjectURL(removed.preview);
-      return prev.filter((_, i) => i !== index);
-    });
-  };
+  }, [data, isNew, navigate, availableTags]);
 
   const toggleKinkTag = (tag: string) => {
     setKinkTags((prev: string[]) =>
@@ -185,11 +138,6 @@ export default function Onboarding() {
     relationshipStatus &&
     bio.trim();
 
-  // Determine which tags to show for this community
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
-  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : KINK_TAGS;
-
   const saveProfile = async () => {
     if (!user || !isFormValid) return;
     setSaving(true);
@@ -198,7 +146,7 @@ export default function Onboarding() {
       const profileId = id();
 
       // Upload photos
-      const photoUrls: string[] = [];
+      const finalPhotoUrls: string[] = [...existingPhotoUrls];
       for (let i = 0; i < photos.length; i++) {
         const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
         await db.storage.uploadFile(photoPath, photos[i].file);
@@ -206,7 +154,7 @@ export default function Onboarding() {
         const downloadData = await (db as any).storage.getDownloadUrl(photoPath);
         const url = downloadData?.url || downloadData;
         if (url && typeof url === "string") {
-          photoUrls.push(url);
+          finalPhotoUrls.push(url);
         }
       }
 
@@ -223,9 +171,9 @@ export default function Onboarding() {
         onboardingComplete: true,
         createdAt: Date.now(),
       };
-      if (photoUrls.length > 0) {
-        profileData.photoUrl = photoUrls[0]; // backward compat
-        profileData.photoUrls = JSON.stringify(photoUrls);
+      if (finalPhotoUrls.length > 0) {
+        profileData.photoUrl = finalPhotoUrls[0]; // backward compat
+        profileData.photoUrls = JSON.stringify(finalPhotoUrls);
       }
 
       await db.transact([
@@ -544,7 +492,7 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* Kink Tags */}
+          {/* Tags */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
               Tags (select all that apply)
@@ -569,7 +517,7 @@ export default function Onboarding() {
           {/* Photos */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Photos ({photos.length}/{MAX_PHOTOS})
+              Photos ({existingPhotoUrls.length + photos.length}/{MAX_PHOTOS})
             </label>
             <input
               ref={photoInputRef}
@@ -580,8 +528,24 @@ export default function Onboarding() {
               className="hidden"
             />
             <div className="grid grid-cols-3 gap-3">
+              {existingPhotoUrls.map((url, i) => (
+                <div key={`existing-${i}`} className="relative aspect-square">
+                  <img
+                    src={url}
+                    alt={`Existing Photo ${i + 1}`}
+                    className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingPhoto(i)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
               {photos.map((photo, i) => (
-                <div key={i} className="relative aspect-square">
+                <div key={`new-${i}`} className="relative aspect-square">
                   <img
                     src={photo.preview}
                     alt={`Photo ${i + 1}`}
@@ -596,7 +560,7 @@ export default function Onboarding() {
                   </button>
                 </div>
               ))}
-              {photos.length < MAX_PHOTOS && (
+              {(existingPhotoUrls.length + photos.length) < MAX_PHOTOS && (
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}

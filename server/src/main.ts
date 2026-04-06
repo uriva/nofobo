@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 // NOFOBO Backend - Deno Server
 // Handles profile creation, community-scoped pair selection, and ELO ranking
 
@@ -92,7 +93,14 @@ async function handler(req: Request): Promise<Response> {
       const { profiles: myProfiles } = await adminDb.query({
         profiles: { $: { where: { "user.id": user.id } } },
       });
-      const myProfile = myProfiles[0];
+      const requestedCommunity = url.searchParams.get("community");
+      let myProfile = myProfiles[0];
+      if (requestedCommunity) {
+        myProfile = myProfiles.find((p: any) =>
+          p.communityCode === requestedCommunity
+        ) ?? myProfiles[0];
+      }
+
       if (!myProfile) return json({ error: "Profile not found" }, 404);
 
       const myCommunity = myProfile.communityCode;
@@ -406,11 +414,14 @@ async function handler(req: Request): Promise<Response> {
           winnerId: winner?.id ?? "",
           winnerName: winnerProfile?.name ?? "Unknown",
           winnerAge: winnerProfile?.age ?? 0,
-          winnerPhotoUrl: winnerProfile?.photoUrl ?? winnerPhotoUrls[0] ?? undefined,
+          winnerPhotoUrl: winnerProfile?.photoUrl ?? winnerPhotoUrls[0] ??
+            undefined,
           loserId: loser?.id ?? "",
           loserName: loserProfile?.name ?? "Unknown",
           loserAge: loserProfile?.age ?? 0,
-          loserPhotoUrl: loserProfile?.photoUrl ?? loserPhotoUrls[0] ?? undefined,
+          loserPhotoUrl: loserProfile?.photoUrl ?? loserPhotoUrls[0] ??
+            undefined,
+          communityCode: winnerProfile?.communityCode ?? "",
           createdAt: c.createdAt ?? 0,
         };
       });

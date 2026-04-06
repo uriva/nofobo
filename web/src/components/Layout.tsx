@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import db from "../db.ts";
+import { useCommunity } from "./CommunityContext.tsx";
 
 const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
 
@@ -8,6 +9,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = db.useAuth();
+  const { activeCommunityCode, setActiveCommunityCode, myProfiles } = useCommunity();
 
   const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
 
@@ -27,12 +29,34 @@ export default function Layout({ children, headerActions }: { children: ReactNod
       {/* Header */}
       <div className="border-b border-grape-900/50 px-6 py-4 sticky top-0 bg-[#0f0a1a] z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span
-            onClick={() => navigate("/app/compare")}
-            className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
-          >
-            NOFOBO
-          </span>
+          <div className="flex items-center gap-4">
+            <span
+              onClick={() => navigate("/app/compare")}
+              className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
+            >
+              NOFOBO
+            </span>
+            {myProfiles.length > 0 && activeCommunityCode && (
+              <select
+                value={activeCommunityCode}
+                onChange={(e) => {
+                  if (e.target.value === "new") {
+                    navigate("/app/onboarding?new=1");
+                  } else {
+                    setActiveCommunityCode(e.target.value);
+                  }
+                }}
+                className="bg-grape-900 border border-grape-800 text-grape-300 text-sm rounded-lg focus:ring-grape-500 focus:border-grape-500 block px-2.5 py-1.5"
+              >
+                {myProfiles.map((p) => (
+                  <option key={p.communityCode} value={p.communityCode}>
+                    {p.communityCode}
+                  </option>
+                ))}
+                <option value="new">+ Join/Create new community</option>
+              </select>
+            )}
+          </div>
           <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
             {navLinks.map((link) => (
               <button

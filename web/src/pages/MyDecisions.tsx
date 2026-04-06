@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import db from "../db.ts";
 import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
+import { useCommunity } from "../components/CommunityContext.tsx";
 
 interface Decision {
   comparisonId: string;
@@ -13,6 +14,7 @@ interface Decision {
   loserName: string;
   loserAge: number;
   loserPhotoUrl?: string;
+  communityCode: string;
   createdAt: number;
 }
 
@@ -20,6 +22,7 @@ const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"
 
 export default function MyDecisions() {
   const { user } = db.useAuth();
+  const { activeCommunityCode } = useCommunity();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
   const [flipping, setFlipping] = useState<string | null>(null);
@@ -44,6 +47,11 @@ export default function MyDecisions() {
   useEffect(() => {
     if (user) loadDecisions();
   }, [user]);
+
+  const filteredDecisions = useMemo(() => {
+    if (!activeCommunityCode) return [];
+    return decisions.filter(d => d.communityCode === activeCommunityCode);
+  }, [decisions, activeCommunityCode]);
 
   const flipDecision = async (comparisonId: string) => {
     setFlipping(comparisonId);
@@ -108,7 +116,7 @@ export default function MyDecisions() {
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-8">
         <h1 className="text-2xl font-bold text-white mb-2">My Decisions</h1>
         <p className="text-grape-400 mb-6">
-          {decisions.length} comparison{decisions.length !== 1 ? "s" : ""} made.
+          {filteredDecisions.length} comparison{filteredDecisions.length !== 1 ? "s" : ""} made.
           Tap the swap button to change your mind, or delete to remove.
         </p>
 
@@ -116,13 +124,13 @@ export default function MyDecisions() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-pulse text-grape-400 text-xl">Loading...</div>
           </div>
-        ) : decisions.length === 0 ? (
+        ) : filteredDecisions.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-grape-400">No comparisons yet. Go compare some profiles!</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {decisions.map((d) => (
+            {filteredDecisions.map((d) => (
               <div
                 key={d.comparisonId}
                 className="bg-grape-950 border border-grape-800 rounded-xl p-4 flex items-center gap-4"

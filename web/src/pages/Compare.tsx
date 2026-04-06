@@ -3,6 +3,7 @@ import db from "../db.ts";
 import { API_URL, MIN_COMPARISONS_FOR_MATCHING } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
 import Layout from "../components/Layout.tsx";
+import { useCommunity } from "../components/CommunityContext.tsx";
 
 interface PairProfile {
   userId: string;
@@ -16,7 +17,7 @@ interface PairProfile {
   kinkTags?: string[];
 }
 
-const KINK_TAG_OPTIONS = [
+const TAG_OPTIONS = [
   "Dom", "Sub", "Switch", "Voyeur", "Exhibitionist",
   "Bondage", "Role play", "Sensory play", "Impact play", "Group play",
 ];
@@ -32,17 +33,21 @@ const RELATIONSHIP_STATUSES = [
 
 export default function Compare() {
   const { user } = db.useAuth();
+  const { activeCommunityCode, myProfiles } = useCommunity();
 
-  const { data: myData } = db.useQuery(user ? { 
-    profiles: { $: { where: { "user.id": user.id } } },
-    communities: {}
-  } : null);
-  const myProfile = myData?.profiles?.[0];
-  const myCommunityCode = myProfile?.communityCode;
+  const { data: myData } = db.useQuery(
+    user && activeCommunityCode
+      ? {
+          communities: { $: { where: { code: activeCommunityCode } } },
+        }
+      : null,
+  );
+  
+  const myProfile = myProfiles.find(p => p.communityCode === activeCommunityCode);
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const myCommunity = myData?.communities?.find((c: any) => c.code === myCommunityCode);
-  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : KINK_TAG_OPTIONS;
+  const myCommunity = myData?.communities?.[0];
+  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : TAG_OPTIONS;
 
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,11 +69,13 @@ export default function Compare() {
   };
 
   const loadPair = useCallback(async () => {
+    if (!activeCommunityCode) return;
     setLoading(true);
     setChosen(null);
     try {
       const token = getAuthToken();
       const params = new URLSearchParams();
+      params.set("community", activeCommunityCode);
       if (minAge) params.set("minAge", minAge);
       if (maxAge) params.set("maxAge", maxAge);
       if (filterTags.length > 0) params.set("tags", filterTags.join(","));
@@ -95,11 +102,11 @@ export default function Compare() {
     } finally {
       setLoading(false);
     }
-  }, [minAge, maxAge, filterTags, filterStatuses]);
+  }, [minAge, maxAge, filterTags, filterStatuses, activeCommunityCode]);
 
   useEffect(() => {
-    if (user) loadPair();
-  }, [user]);
+    if (user && activeCommunityCode) loadPair();
+  }, [user, activeCommunityCode, loadPair]);
 
   const handleChoice = async (winnerIdx: number) => {
     if (!pair || submitting) return;
@@ -117,7 +124,7 @@ export default function Compare() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ winnerId, loserId }),
+        body: JSON.stringify({ winnerId, loserId, community: activeCommunityCode }),
       });
 
       setTimeout(() => {
@@ -212,7 +219,7 @@ export default function Compare() {
               </div>
             </div>
 
-            {/* Kink tags */}
+            {/* Tags */}
             <div>
               <label className="text-grape-400 text-sm font-medium block mb-2">Tags (at least one overlap)</label>
               <div className="flex flex-wrap gap-2">
@@ -265,9 +272,9 @@ export default function Compare() {
               {totalComparisons} comparisons made
             </span>
             <span className="text-grape-400 text-sm flex items-center gap-2">
-              {myCommunityCode && (
+              {activeCommunityCode && (
                 <span className="bg-grape-900 border border-grape-800 px-2 py-0.5 rounded text-xs" title="Share this code with your friends!">
-                  Code: <strong className="text-white">{myCommunityCode}</strong>
+                  Code: <strong className="text-white">{activeCommunityCode}</strong>
                 </span>
               )}
               {eligibleCount} people in your pool

@@ -65,7 +65,7 @@ const _schema = i.schema({
         label: "user",
         onDelete: "cascade",
       },
-      reverse: { on: "$users", has: "one", label: "profile" },
+      reverse: { on: "$users", has: "many", label: "profiles" },
     },
     onboardingChatUser: {
       forward: {
