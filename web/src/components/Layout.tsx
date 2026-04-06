@@ -11,14 +11,35 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const { user } = db.useAuth();
   const { activeCommunityCode, setActiveCommunityCode, myProfiles } = useCommunity();
 
+  const { data: userData } = db.useQuery(
+    user?.id
+      ? {
+          $users: {
+            $: { where: { id: user.id } },
+            matchesAsUser1: {},
+            matchesAsUser2: {},
+          },
+        }
+      : null
+  );
+
+  const hasMatch =
+    userData?.$users[0] &&
+    ((userData.$users[0].matchesAsUser1?.length ?? 0) > 0 ||
+      (userData.$users[0].matchesAsUser2?.length ?? 0) > 0);
+
   const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
 
   const navLinks = [
     { name: "Compare", path: "/app/compare" },
     { name: "Decisions", path: "/app/decisions" },
-    { name: "Match", path: "/app/match" },
     { name: "Profile", path: "/app/profile" },
   ];
+
+  if (hasMatch) {
+    // Insert Match before Profile
+    navLinks.splice(2, 0, { name: "Match", path: "/app/match" });
+  }
 
   if (isAdmin) {
     navLinks.push({ name: "Admin", path: "/app/admin" });
