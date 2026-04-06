@@ -36,11 +36,13 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
 
-  // Step: "code" or "profile"
-  const [step, setStep] = useState<"code" | "profile">("code");
+  // Step: "code" or "profile" or "create_community"
+  const [step, setStep] = useState<"code" | "profile" | "create_community">("code");
 
   // Form state
   const [communityCode, setCommunityCode] = useState("");
+  const [newCommunityName, setNewCommunityName] = useState("");
+  const [newCommunityCode, setNewCommunityCode] = useState("");
   const [codeError, setCodeError] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -65,9 +67,12 @@ export default function Onboarding() {
               limit: 1,
             },
           },
+          communities: {}
         }
       : null,
   );
+
+  const communities = data?.communities || [];
 
   useEffect(() => {
     if (data?.profiles?.length) {
@@ -81,12 +86,50 @@ export default function Onboarding() {
       setCodeError("Please enter a community code");
       return;
     }
-    if (!VALID_COMMUNITY_CODES.includes(code)) {
-      setCodeError("Invalid community code. Check with your organizer.");
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isValid = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
+    if (!isValid) {
+      setCodeError("Invalid community code. Ask your organizer or create a new community.");
       return;
     }
     setCodeError("");
     setStep("profile");
+  };
+
+  const handleCreateCommunity = async () => {
+    const name = newCommunityName.trim();
+    const code = newCommunityCode.trim().toLowerCase();
+    
+    if (!name || !code) {
+      setCodeError("Please enter both a name and a code.");
+      return;
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const exists = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
+    if (exists) {
+      setCodeError("This code is already taken. Please choose another.");
+      return;
+    }
+
+    try {
+      const commId = id();
+      await db.transact([
+        db.tx.communities[commId].update({
+          name: name,
+          code: code,
+          createdAt: Date.now()
+        }).link({ creator: user.id })
+      ]);
+      
+      setCommunityCode(code);
+      setCodeError("");
+      setStep("profile");
+    } catch (e) {
+      console.error(e);
+      setCodeError("Failed to create community. Try again.");
+    }
   };
 
   const handlePhotoSelect = (e: { target: HTMLInputElement }) => {
@@ -234,9 +277,99 @@ export default function Onboarding() {
             <button
               onClick={handleCodeSubmit}
               disabled={!communityCode.trim()}
-              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
+              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all mb-4"
             >
               Continue
+            </button>
+
+            <button
+              onClick={() => {
+                setStep("create_community");
+                setCodeError("");
+              }}
+              className="w-full bg-transparent border border-grape-700 hover:border-grape-500 hover:bg-grape-900 text-grape-300 py-3 rounded-xl font-medium transition-all"
+            >
+              Or create a new community
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 1.5: Create Community
+  if (step === "create_community") {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
+        <div className="border-b border-grape-900/50 px-6 py-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <span
+              onClick={() => navigate("/")}
+              className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
+            >
+              NOFOBO
+            </span>
+            <button
+              onClick={() => {
+                setStep("code");
+                setCodeError("");
+              }}
+              className="text-grape-400 text-sm hover:text-white"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="max-w-md w-full text-center">
+            <h1 className="text-4xl font-black text-white mb-3">
+              Create a community
+            </h1>
+            <p className="text-grape-400 mb-8">
+              Give your community a name, and choose a unique code that people can use to join.
+            </p>
+
+            <div className="space-y-4 mb-8">
+              <div>
+                <input
+                  type="text"
+                  value={newCommunityName}
+                  onChange={(e) => {
+                    setNewCommunityName(e.target.value);
+                    setCodeError("");
+                  }}
+                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  placeholder="Community Name (e.g. Burners)"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <input
+                  type="text"
+                  value={newCommunityCode}
+                  onChange={(e) => {
+                    setNewCommunityCode(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''));
+                    setCodeError("");
+                  }}
+                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  placeholder="unique-code"
+                />
+                <p className="text-grape-600 text-xs mt-2">Only letters, numbers, hyphens, and underscores</p>
+              </div>
+            </div>
+
+            {codeError && (
+              <p className="text-red-400 text-sm mb-3">{codeError}</p>
+            )}
+
+            <button
+              onClick={handleCreateCommunity}
+              disabled={!newCommunityName.trim() || !newCommunityCode.trim()}
+              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
+            >
+              Create & Continue
             </button>
           </div>
         </div>

@@ -30,6 +30,11 @@ const _schema = i.schema({
       content: i.string(),
       createdAt: i.number().indexed(),
     }),
+    communities: i.entity({
+      name: i.string(),
+      code: i.string().unique().indexed(),
+      createdAt: i.number().indexed(),
+    }),
     comparisons: i.entity({
       createdAt: i.number().indexed(),
     }),
@@ -69,6 +74,10 @@ const _schema = i.schema({
         onDelete: "cascade",
       },
       reverse: { on: "$users", has: "many", label: "onboardingChats" },
+    },
+    communityCreator: {
+      forward: { on: "communities", has: "one", label: "creator" },
+      reverse: { on: "$users", has: "many", label: "createdCommunities" },
     },
     comparisonVoter: {
       forward: { on: "comparisons", has: "one", label: "voter" },

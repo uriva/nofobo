@@ -32,6 +32,10 @@ const RELATIONSHIP_STATUSES = [
 
 export default function Compare() {
   const { user } = db.useAuth();
+
+  const { data: myData } = db.useQuery(user ? { profiles: { $: { where: { "user.id": user.id } } } } : null);
+  const myCommunityCode = myData?.profiles?.[0]?.communityCode;
+
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -252,7 +256,12 @@ export default function Compare() {
             <span className="text-grape-400 text-sm">
               {totalComparisons} comparisons made
             </span>
-            <span className="text-grape-400 text-sm">
+            <span className="text-grape-400 text-sm flex items-center gap-2">
+              {myCommunityCode && (
+                <span className="bg-grape-900 border border-grape-800 px-2 py-0.5 rounded text-xs" title="Share this code with your friends!">
+                  Code: <strong className="text-white">{myCommunityCode}</strong>
+                </span>
+              )}
               {eligibleCount} people in your pool
             </span>
           </div>
