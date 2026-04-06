@@ -83,6 +83,92 @@ export default function Onboarding() {
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
   const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : TAG_OPTIONS;
 
+  const handleCodeSubmit = () => {
+    const code = communityCode.trim().toLowerCase();
+    if (!code) {
+      setCodeError("Please enter a community code");
+      return;
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isValid = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
+    if (!isValid) {
+      setCodeError("Invalid community code. Ask your organizer or create a new community.");
+      return;
+    }
+
+    setStep("profile");
+  };
+
+  const handleCreateCommunity = async () => {
+    const code = newCommunityCode.trim().toLowerCase();
+    if (!newCommunityName.trim() || !code) {
+      setCodeError("Please fill out all required fields");
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code)) {
+      setCodeError("That code is already taken. Please pick another.");
+      return;
+    }
+
+    try {
+      const communityId = id();
+      const tagsArray = newCommunityTags
+        ? newCommunityTags.split(",").map(t => t.trim()).filter(Boolean)
+        : null;
+
+      await db.transact([
+        db.tx.communities[communityId]
+          .update({
+            name: newCommunityName.trim(),
+            code,
+            tags: tagsArray ? JSON.stringify(tagsArray) : undefined,
+            createdAt: Date.now(),
+          })
+          .link({ creator: user!.id }),
+      ]);
+      setCommunityCode(code);
+      setStep("profile");
+    } catch (e) {
+      setCodeError(e instanceof Error ? e.message : "Failed to create community");
+    }
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    
+    const remainingSlots = MAX_PHOTOS - existingPhotoUrls.length - photos.length;
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    const newPhotos = filesToAdd.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+
+    setPhotos(prev => [...prev, ...newPhotos]);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => {
+      const newPhotos = [...prev];
+      URL.revokeObjectURL(newPhotos[index].preview);
+      newPhotos.splice(index, 1);
+      return newPhotos;
+    });
+  };
+
+  const removeExistingPhoto = (index: number) => {
+    setExistingPhotoUrls(prev => {
+      const newUrls = [...prev];
+      newUrls.splice(index, 1);
+      return newUrls;
+    });
+  };
+
   useEffect(() => {
     if (data?.profiles?.length) {
       if (!isNew) {
