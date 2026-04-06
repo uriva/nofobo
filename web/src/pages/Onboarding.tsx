@@ -12,19 +12,6 @@ const RELATIONSHIP_STATUSES = [
   "In a committed relationship but open to play",
 ];
 
-const TAG_OPTIONS = [
-  "Dom",
-  "Sub",
-  "Switch",
-  "Voyeur",
-  "Exhibitionist",
-  "Bondage",
-  "Role play",
-  "Sensory play",
-  "Impact play",
-  "Group play",
-];
-
 const MAX_PHOTOS = 6;
 
 interface PhotoItem {
@@ -81,7 +68,7 @@ export default function Onboarding() {
   // Determine which tags to show for this community
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
-  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : TAG_OPTIONS;
+  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : [];
 
   const handleCodeSubmit = () => {
     const code = communityCode.trim().toLowerCase();
@@ -584,19 +571,23 @@ export default function Onboarding() {
               Tags (select all that apply)
             </label>
             <div className="flex flex-wrap gap-2">
-              {availableTags.map((tag: string) => (
-                <button
-                  key={tag}
-                  onClick={() => toggleKinkTag(tag)}
-                  className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                    kinkTags.includes(tag)
-                      ? "border-grape-500 bg-grape-600/20 text-white"
-                      : "border-grape-800 text-grape-400 hover:border-grape-600"
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+              {availableTags.length > 0 ? (
+                availableTags.map((tag: string) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleKinkTag(tag)}
+                    className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                      kinkTags.includes(tag)
+                        ? "border-grape-500 bg-grape-600/20 text-white"
+                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))
+              ) : (
+                <p className="text-grape-500 text-sm italic">No custom tags set for this community.</p>
+              )}
             </div>
           </div>
 

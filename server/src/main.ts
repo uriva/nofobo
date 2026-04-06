@@ -661,16 +661,30 @@ async function handler(req: Request): Promise<Response> {
       const { eloRatings } = await adminDb.query({
         eloRatings: {
           $: { where: { "rater.id": targetUserId } },
-          target: { profiles: {} } as any,
+          target: {},
         },
       });
 
+      // Get all profiles to map user IDs to names
+      const { profiles } = await adminDb.query({
+        profiles: {
+          user: {},
+        },
+      });
+
+      const userProfileMap = new Map<string, any>();
+      for (const p of profiles) {
+        const uid = p.user?.[0]?.id;
+        if (uid) userProfileMap.set(uid, p);
+      }
+
       const rankings = eloRatings
         .map((r: any) => {
-          const targetProfile = r.target?.profiles?.[0];
+          const tUserId = r.target?.[0]?.id ?? "";
+          const targetProfile = userProfileMap.get(tUserId);
           return {
-            targetUserId: r.target?.id ?? "",
-            targetName: (targetProfile as any)?.name ?? "Unknown",
+            targetUserId: tUserId,
+            targetName: targetProfile?.name ?? "Unknown",
             score: r.score,
             comparisonsCount: r.comparisonsCount ?? 0,
           };
