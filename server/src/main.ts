@@ -388,8 +388,8 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voter.id": user.id } },
-          winner: { user: {} } as any,
-          loser: { user: {} } as any,
+          winner: { profile: {} } as any,
+          loser: { profile: {} } as any,
         },
       });
 
@@ -397,18 +397,20 @@ async function handler(req: Request): Promise<Response> {
       const result = comparisons.map((c: any) => {
         const winner = c.winner;
         const loser = c.loser;
-        const winnerPhotoUrls = JSON.parse(winner?.photoUrls ?? "[]");
-        const loserPhotoUrls = JSON.parse(loser?.photoUrls ?? "[]");
+        const winnerProfile = winner?.profile;
+        const loserProfile = loser?.profile;
+        const winnerPhotoUrls = JSON.parse(winnerProfile?.photoUrls ?? "[]");
+        const loserPhotoUrls = JSON.parse(loserProfile?.photoUrls ?? "[]");
         return {
           comparisonId: c.id,
-          winnerId: (winner?.user as any)?.id ?? "",
-          winnerName: winner?.name ?? "Unknown",
-          winnerAge: winner?.age ?? 0,
-          winnerPhotoUrl: winner?.photoUrl ?? winnerPhotoUrls[0] ?? undefined,
-          loserId: (loser?.user as any)?.id ?? "",
-          loserName: loser?.name ?? "Unknown",
-          loserAge: loser?.age ?? 0,
-          loserPhotoUrl: loser?.photoUrl ?? loserPhotoUrls[0] ?? undefined,
+          winnerId: winner?.id ?? "",
+          winnerName: winnerProfile?.name ?? "Unknown",
+          winnerAge: winnerProfile?.age ?? 0,
+          winnerPhotoUrl: winnerProfile?.photoUrl ?? winnerPhotoUrls[0] ?? undefined,
+          loserId: loser?.id ?? "",
+          loserName: loserProfile?.name ?? "Unknown",
+          loserAge: loserProfile?.age ?? 0,
+          loserPhotoUrl: loserProfile?.photoUrl ?? loserPhotoUrls[0] ?? undefined,
           createdAt: c.createdAt ?? 0,
         };
       });

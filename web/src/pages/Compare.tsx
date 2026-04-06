@@ -61,6 +61,7 @@ export default function Compare() {
       if (maxAge) params.set("maxAge", maxAge);
       if (filterTags.length > 0) params.set("tags", filterTags.join(","));
       if (filterStatuses.length > 0) params.set("statuses", filterStatuses.join(","));
+      params.set("_t", Date.now().toString());
       const qs = params.toString() ? `?${params.toString()}` : "";
 
       const res = await fetch(`${API_URL}/api/compare/pair${qs}`, {
@@ -240,6 +241,7 @@ export default function Compare() {
                   Clear All
                 </button>
               )}
+            </div>
             </div>
           </div>
         )}
