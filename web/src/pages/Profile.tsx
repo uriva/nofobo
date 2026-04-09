@@ -129,7 +129,8 @@ export default function Profile() {
     gender &&
     attractedTo &&
     relationshipStatus &&
-    bio.trim();
+    bio.trim() &&
+    photos.length > 0;
 
   const saveProfile = async () => {
     if (!user || !profile || !isFormValid) return;
