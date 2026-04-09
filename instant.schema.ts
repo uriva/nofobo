@@ -17,6 +17,7 @@ const _schema = i.schema({
       photoUrl: i.string().optional(),
       photoUrls: i.string().optional(), // JSON array of photo URLs
       location: i.string().optional(), // free-text location
+      phone: i.string().optional(), // user's phone number
       communityCode: i.string().indexed().optional(), // community gating
       onboardingComplete: i.boolean().indexed(),
       createdAt: i.number().indexed(),
@@ -35,6 +36,8 @@ const _schema = i.schema({
       code: i.string().unique().indexed(),
       createdAt: i.number().indexed(),
       tags: i.string().optional(),
+      adminEmails: i.string().optional(),
+      requirePhone: i.boolean().optional(),
     }),
     comparisons: i.entity({
       createdAt: i.number().indexed(),

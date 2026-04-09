@@ -17,6 +17,7 @@ interface AdminProfile {
   bio: string;
   photoUrl?: string;
   location?: string;
+  phone?: string;
   comparisonsCount: number;
 }
 
@@ -54,6 +55,11 @@ export default function Admin() {
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [editingTagsInput, setEditingTagsInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+
+  // Settings
+  const [isEditingAdmins, setIsEditingAdmins] = useState(false);
+  const [editingAdminsInput, setEditingAdminsInput] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
   
   const { data: communityData } = db.useQuery(activeCommunityCode ? {
     communities: { $: { where: { code: activeCommunityCode } } }
@@ -63,10 +69,11 @@ export default function Admin() {
   const getAuthToken = () => user?.refresh_token ?? "";
 
   const loadProfiles = async () => {
+    if (!activeCommunityCode) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/api/admin/profiles`, {
+      const res = await fetch(`${API_URL}/api/admin/profiles?community=${activeCommunityCode}`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       if (res.status === 403) {
@@ -88,10 +95,11 @@ export default function Admin() {
       setExpandedUserId(null);
       return;
     }
+    if (!activeCommunityCode) return;
     setExpandedUserId(userId);
     setLoadingRankings(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/rankings/${userId}`, {
+      const res = await fetch(`${API_URL}/api/admin/rankings/${userId}?community=${activeCommunityCode}`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
       const data = await res.json();
@@ -104,9 +112,10 @@ export default function Admin() {
   };
 
   const runMatching = async () => {
+    if (!activeCommunityCode) return;
     setRunningMatch(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/match`, {
+      const res = await fetch(`${API_URL}/api/admin/match?community=${activeCommunityCode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,6 +151,35 @@ export default function Admin() {
     } finally {
       setSavingTags(false);
     }
+  };
+
+  const handleSaveAdmins = async () => {
+    if (!community || !activeCommunityCode) return;
+    setSavingSettings(true);
+    try {
+      const adminArray = editingAdminsInput
+        ? editingAdminsInput.split(",").map(t => t.trim().toLowerCase()).filter(Boolean)
+        : null;
+
+      await db.transact([
+        db.tx.communities[community.id]
+          .update({ adminEmails: adminArray ? JSON.stringify(adminArray) : undefined }),
+      ]);
+      setIsEditingAdmins(false);
+    } catch (e) {
+      console.error("Save admins error:", e);
+      alert("Failed to save admins");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleToggleRequirePhone = async () => {
+    if (!community || !activeCommunityCode) return;
+    const current = !!community.requirePhone;
+    await db.transact([
+      db.tx.communities[community.id].update({ requirePhone: !current }),
+    ]);
   };
 
   useEffect(() => {
@@ -244,6 +282,98 @@ export default function Admin() {
               )}
             </div>
 
+            {/* Community Settings */}
+            <div className="mb-8 bg-grape-950 border border-grape-800 rounded-xl p-6">
+              <h2 className="text-lg font-bold text-white mb-6">Community Settings</h2>
+              
+              <div className="space-y-6">
+                {/* Require Phone Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-medium">Require Phone Number</h3>
+                    <p className="text-grape-400 text-sm">Users must provide a phone number during onboarding</p>
+                  </div>
+                  <button
+                    onClick={handleToggleRequirePhone}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      community?.requirePhone ? "bg-grape-500" : "bg-grape-800"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        community?.requirePhone ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="border-t border-grape-800" />
+
+                {/* Admins Editor */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-white font-medium">Community Admins</h3>
+                      <p className="text-grape-400 text-sm">Users who can access this dashboard</p>
+                    </div>
+                    {!isEditingAdmins && (
+                      <button
+                        onClick={() => {
+                          setEditingAdminsInput(
+                            community?.adminEmails ? JSON.parse(community.adminEmails).join(", ") : ""
+                          );
+                          setIsEditingAdmins(true);
+                        }}
+                        className="text-grape-400 hover:text-white text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditingAdmins ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={editingAdminsInput}
+                        onChange={(e) => setEditingAdminsInput(e.target.value)}
+                        placeholder="e.g. user1@example.com, user2@example.com"
+                        className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setIsEditingAdmins(false)}
+                          disabled={savingSettings}
+                          className="px-4 py-2 rounded-lg text-grape-400 hover:text-white text-sm font-medium disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveAdmins}
+                          disabled={savingSettings}
+                          className="bg-grape-600 hover:bg-grape-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          {savingSettings ? "Saving..." : "Save Admins"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {community?.adminEmails ? (
+                        JSON.parse(community.adminEmails).map((email: string) => (
+                          <span key={email} className="bg-grape-900 text-grape-300 px-3 py-1 rounded-full text-sm">
+                            {email}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-grape-500 text-sm">No additional admins assigned.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Match Results */}
             {matchResults && (
               <div className="mb-8 bg-grape-950 border border-grape-800 rounded-xl p-6">
@@ -284,11 +414,14 @@ export default function Admin() {
                       onClick={() => setSelectedUserId(p.userId)}
                       className="p-4 cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
                     >
-                      {p.photoUrl ? (
+                      {p.photoUrl && !p.photoUrl.includes("pic-unavailable") ? (
                         <img
                           src={p.photoUrl}
                           alt={p.name}
                           className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-grape-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm">
@@ -310,6 +443,11 @@ export default function Admin() {
                         <div className="text-grape-400 text-xs">
                           {p.gender} · attracted to {p.attractedTo} · {p.relationshipStatus}
                         </div>
+                        {p.phone && (
+                          <div className="text-grape-400 text-xs mt-1">
+                            📞 {p.phone}
+                          </div>
+                        )}
                       </div>
                       <div className="text-grape-500 text-xs flex-shrink-0 px-4">
                         {p.comparisonsCount} comparisons

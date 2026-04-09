@@ -40,6 +40,7 @@ export default function Onboarding() {
   const [kinkTags, setKinkTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
+  const [phone, setPhone] = useState("");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -69,6 +70,7 @@ export default function Onboarding() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
   const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : [];
+  const requirePhone = !!currentCommunity?.requirePhone;
 
   const handleCodeSubmit = () => {
     const code = communityCode.trim().toLowerCase();
@@ -170,6 +172,7 @@ export default function Onboarding() {
         setRelationshipStatus(prev => prev || p.relationshipStatus || "");
         setBio(prev => prev || p.bio || "");
         setLocation(prev => prev || p.location || "");
+        setPhone(prev => prev || p.phone || "");
         
         if (kinkTags.length === 0) {
           try {
@@ -202,17 +205,20 @@ export default function Onboarding() {
   };
 
   const isFormValid =
-    communityCode.trim() &&
     name.trim() &&
     age &&
-    parseInt(age) >= 18 &&
+    !isNaN(parseInt(age)) &&
     gender &&
     attractedTo &&
     relationshipStatus &&
-    bio.trim();
+    bio.trim() &&
+    (!requirePhone || phone.trim()) &&
+    (photos.length > 0 || existingPhotoUrls.length > 0);
 
-  const saveProfile = async () => {
-    if (!user || !isFormValid) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !isFormValid || saving) return;
+
     setSaving(true);
     setSaveError("");
     try {
@@ -240,6 +246,7 @@ export default function Onboarding() {
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
+        phone: phone.trim() || undefined,
         communityCode: communityCode.trim().toLowerCase(),
         onboardingComplete: true,
         createdAt: Date.now(),
@@ -495,6 +502,23 @@ export default function Onboarding() {
             />
           </div>
 
+          {/* Phone */}
+          {(requirePhone || phone.trim() !== "") && (
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">
+                Phone Number {requirePhone && <span className="text-red-400">*</span>}
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                placeholder="+1 (555) 123-4567"
+              />
+              <p className="text-grape-500 text-xs mt-2">Only visible to community admins.</p>
+            </div>
+          )}
+
           {/* Gender */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
@@ -684,7 +708,7 @@ export default function Onboarding() {
 
           {/* Submit */}
           <button
-            onClick={saveProfile}
+            onClick={handleSubmit}
             disabled={!isFormValid || saving}
             className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
           >

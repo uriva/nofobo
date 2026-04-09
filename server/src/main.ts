@@ -33,6 +33,21 @@ function json(data: unknown, status = 200) {
 }
 
 // --- Auth helper ---
+async function verifyAdmin(email: string, communityCode: string): Promise<boolean> {
+  if (ADMIN_EMAILS.includes(email)) return true;
+  if (!communityCode) return false;
+  
+  const { communities } = await adminDb.query({
+    communities: { $: { where: { code: communityCode } } }
+  });
+  
+  if (communities.length === 0) return false;
+  
+  const community = communities[0];
+  const adminEmails: string[] = JSON.parse(community.adminEmails || "[]");
+  return adminEmails.includes(email);
+}
+
 async function verifyAuth(
   req: Request,
 ): Promise<{ id: string; email: string } | null> {
@@ -580,26 +595,21 @@ async function handler(req: Request): Promise<Response> {
   if (path === "/api/admin/profiles" && req.method === "GET") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email)) {
+    const requestedCommunity = url.searchParams.get("community");
+    if (!requestedCommunity) return json({ error: "Community required" }, 400);
+
+    const isAdmin = await verifyAdmin(user.email, requestedCommunity);
+    if (!isAdmin) {
       return json({ error: "Forbidden" }, 403);
     }
 
     try {
-      // Get admin's profile to find their community
-      const { profiles: myProfiles } = await adminDb.query({
-        profiles: { $: { where: { "user.id": user.id } } },
-      });
-      const myCommunity = myProfiles[0]?.communityCode;
-      if (!myCommunity) {
-        return json({ error: "Admin has no community" }, 400);
-      }
-
       // Get all profiles in community
       const { profiles } = await adminDb.query({
         profiles: {
           $: {
             where: {
-              communityCode: myCommunity,
+              communityCode: requestedCommunity,
               onboardingComplete: true,
             },
           },
@@ -622,7 +632,18 @@ async function handler(req: Request): Promise<Response> {
         }
       }
 
-      const result = profiles.map((p: any) => {
+      // Deduplicate profiles by user.id (keep most recently created if duplicates exist)
+      const uniqueProfiles = new Map<string, any>();
+      for (const p of profiles) {
+        const uid = p.user?.id;
+        if (!uid) continue;
+        const existing = uniqueProfiles.get(uid);
+        if (!existing || (p.createdAt > existing.createdAt)) {
+          uniqueProfiles.set(uid, p);
+        }
+      }
+
+      const result = Array.from(uniqueProfiles.values()).map((p: any) => {
         const photoUrls = JSON.parse(p.photoUrls ?? "[]");
         return {
           userId: p.user?.id ?? "",
@@ -636,6 +657,7 @@ async function handler(req: Request): Promise<Response> {
           bio: p.bio ?? p.aiDescription ?? "",
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,
+          phone: p.phone ?? undefined,
           comparisonsCount: compCountByUser.get(p.user?.id ?? "") ?? 0,
         };
       });
@@ -651,7 +673,12 @@ async function handler(req: Request): Promise<Response> {
   if (path.startsWith("/api/admin/rankings/") && req.method === "GET") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email)) {
+    
+    const requestedCommunity = url.searchParams.get("community");
+    if (!requestedCommunity) return json({ error: "Community required" }, 400);
+
+    const isAdmin = await verifyAdmin(user.email, requestedCommunity);
+    if (!isAdmin) {
       return json({ error: "Forbidden" }, 403);
     }
 
@@ -706,26 +733,22 @@ async function handler(req: Request): Promise<Response> {
   if (path === "/api/admin/match" && req.method === "POST") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    if (!ADMIN_EMAILS.includes(user.email)) {
+    
+    const requestedCommunity = url.searchParams.get("community");
+    if (!requestedCommunity) return json({ error: "Community required" }, 400);
+
+    const isAdmin = await verifyAdmin(user.email, requestedCommunity);
+    if (!isAdmin) {
       return json({ error: "Forbidden" }, 403);
     }
 
     try {
-      // Get admin's community
-      const { profiles: myProfiles } = await adminDb.query({
-        profiles: { $: { where: { "user.id": user.id } } },
-      });
-      const myCommunity = myProfiles[0]?.communityCode;
-      if (!myCommunity) {
-        return json({ error: "Admin has no community" }, 400);
-      }
-
       // Get all completed profiles in community
       const { profiles } = await adminDb.query({
         profiles: {
           $: {
             where: {
-              communityCode: myCommunity,
+              communityCode: requestedCommunity,
               onboardingComplete: true,
             },
           },

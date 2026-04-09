@@ -9,6 +9,7 @@ interface ProfileCardProps {
   photoUrls?: string[];
   relationshipStatus?: string;
   kinkTags?: string[];
+  phone?: string;
   large?: boolean;
 }
 
@@ -21,6 +22,7 @@ export default function ProfileCard({
   photoUrls = [],
   relationshipStatus,
   kinkTags,
+  phone,
   large,
 }: ProfileCardProps) {
   const displayBio = bio || description || "";
@@ -106,6 +108,11 @@ export default function ProfileCard({
           {relationshipStatus && (
             <div className="text-grape-400 text-sm mt-1 font-medium">
               {relationshipStatus}
+            </div>
+          )}
+          {phone && (
+            <div className="text-grape-400 text-sm mt-1 font-medium flex items-center gap-1.5">
+              📞 {phone}
             </div>
           )}
         </div>
