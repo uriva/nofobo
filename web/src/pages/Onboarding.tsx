@@ -222,7 +222,8 @@ export default function Onboarding() {
     setSaving(true);
     setSaveError("");
     try {
-      const profileId = id();
+      const existingProfileId = data?.profiles?.[0]?.id;
+      const profileId = existingProfileId || id();
 
       // Upload photos
       const finalPhotoUrls: string[] = [...existingPhotoUrls];
