@@ -324,11 +324,11 @@ export default function Compare() {
             </p>
           </div>
         ) : pair ? (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="flex md:grid md:grid-cols-2 gap-4 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-8 pt-2 -mx-6 px-6 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {pair.map((profile, idx) => (
               <div
                 key={profile.userId}
-                className={`flex flex-col transition-all duration-300 ${
+                className={`flex-none w-[85vw] sm:w-[400px] md:w-auto snap-center flex flex-col transition-all duration-300 ${
                   chosen === idx
                     ? "scale-[1.02]"
                     : chosen !== null
@@ -350,18 +350,24 @@ export default function Compare() {
                 <button
                   onClick={() => handleChoice(idx)}
                   disabled={submitting}
-                  className={`mt-4 py-3 px-6 rounded-xl font-bold text-lg transition-colors ${
+                  className={`mt-4 py-4 px-6 rounded-xl font-bold text-lg transition-colors ${
                     chosen === idx
                       ? "bg-grape-500 text-white"
                       : chosen !== null
                         ? "bg-grape-900 text-grape-500"
-                        : "bg-grape-600 hover:bg-grape-500 text-white shadow-lg shadow-grape-900/50"
+                        : "bg-grape-600 hover:bg-grape-500 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)]"
                   }`}
                 >
                   {chosen === idx ? "Chosen!" : `Choose ${profile.name}`}
                 </button>
               </div>
             ))}
+          </div>
+          {/* Mobile Swipe Hint */}
+          <div className="md:hidden text-center mt-2 flex justify-center gap-2 items-center text-grape-500 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Swipe to compare
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </div>
         ) : null}
 
