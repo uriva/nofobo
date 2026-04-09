@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import db from "../db.ts";
+import Spinner from "../components/Spinner.tsx";
 import { API_URL, MIN_COMPARISONS_FOR_MATCHING } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
 import Layout from "../components/Layout.tsx";

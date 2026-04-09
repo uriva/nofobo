@@ -8,6 +8,7 @@ import MyDecisions from "./pages/MyDecisions.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
 import { CommunityProvider } from "./components/CommunityContext.tsx";
+import Spinner from "./components/Spinner.tsx";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
@@ -15,7 +16,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0f0a1a] flex items-center justify-center">
-        <div className="animate-pulse text-grape-400 text-xl">Loading...</div>
+        <Spinner message="Loading..." size="lg" />
       </div>
     );
   }
@@ -43,7 +44,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0f0a1a] flex items-center justify-center">
-        <div className="animate-pulse text-grape-400 text-xl">Loading...</div>
+        <Spinner message="Loading..." size="lg" />
       </div>
     );
   }

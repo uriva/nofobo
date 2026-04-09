@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import db from "../db.ts";
+import Spinner from "./Spinner.tsx";
 import ProfileCard from "./ProfileCard.tsx";
 
 interface ProfileModalProps {
@@ -51,7 +52,7 @@ export default function ProfileModal({ userId, communityCode, onClose }: Profile
 
         {isLoading ? (
           <div className="bg-grape-950 aspect-[4/5] rounded-2xl flex items-center justify-center border border-grape-800">
-            <div className="animate-pulse text-grape-400">Loading profile...</div>
+            <Spinner message="Loading profile..." size="md" />
           </div>
         ) : profile ? (
           <ProfileCard

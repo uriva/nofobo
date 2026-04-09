@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import db from "../db.ts";
+import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
@@ -124,7 +125,7 @@ export default function MyDecisions() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-pulse text-grape-400 text-xl">Loading...</div>
+            <Spinner message="Loading..." size="lg" />
           </div>
         ) : filteredDecisions.length === 0 ? (
           <div className="text-center py-20">

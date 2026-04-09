@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
+import Spinner from "../components/Spinner.tsx";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
 
@@ -199,7 +200,7 @@ export default function Profile() {
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-pulse text-grape-400 text-xl">
-              Loading your profile...
+              <Spinner message="Loading your profile..." size="md" />
             </div>
           </div>
         ) : !profile ? (

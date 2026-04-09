@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { id } from "@instantdb/react";
 import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
+import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
 import Layout from "../components/Layout.tsx";

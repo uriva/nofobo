@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import db from "../db.ts";
+import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
@@ -201,7 +202,7 @@ export default function Admin() {
       <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-pulse text-grape-400 text-xl">Loading...</div>
+            <Spinner message="Loading..." size="lg" />
           </div>
         ) : (
           <>
@@ -477,7 +478,7 @@ export default function Admin() {
                         <p className="text-grape-300 text-xs mb-3 italic">"{p.bio}"</p>
                       )}
                       {loadingRankings ? (
-                        <div className="text-grape-500 text-sm animate-pulse">Loading rankings...</div>
+                        <div className="py-2 scale-75 origin-left"><Spinner message="Loading rankings..." size="sm" /></div>
                       ) : rankings.length === 0 ? (
                         <div className="text-grape-500 text-sm">No rankings yet (no comparisons made).</div>
                       ) : (
