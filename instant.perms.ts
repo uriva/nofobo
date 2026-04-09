@@ -19,6 +19,14 @@ const rules = {
     },
     bind: ["isOwner", "auth.id in data.ref('user.id')"],
   },
+  communities: {
+    allow: {
+      view: "true",
+      create: "true",
+      update: "true",
+      delete: "false",
+    },
+  },
   comparisons: {
     allow: {
       view: "isVoter",
