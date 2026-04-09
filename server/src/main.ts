@@ -705,16 +705,16 @@ async function handler(req: Request): Promise<Response> {
 
       const userProfileMap = new Map<string, any>();
       for (const p of profiles) {
-        const uid = p.user?.[0]?.id;
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
         if (uid) userProfileMap.set(uid, p);
       }
 
       const rankings = eloRatings
         .map((r: any) => {
-          const tUserId = r.target?.[0]?.id ?? "";
-          const targetProfile = userProfileMap.get(tUserId);
+          const tUserId = Array.isArray(r.target) ? r.target[0]?.id : r.target?.id;
+          const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
-            targetUserId: tUserId,
+            targetUserId: tUserId ?? "",
             targetName: targetProfile?.name ?? "Unknown",
             score: r.score,
             comparisonsCount: r.comparisonsCount ?? 0,
