@@ -51,7 +51,7 @@ export default function Profile() {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-  const [attractedTo, setAttractedTo] = useState("");
+  const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [kinkTags, setKinkTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
@@ -68,7 +68,13 @@ export default function Profile() {
       setName(profile.name || "");
       setAge(profile.age ? String(profile.age) : "");
       setGender(profile.gender || "");
-      setAttractedTo(profile.attractedTo || "");
+      setAttractedTo(() => {
+        const raw = profile.attractedTo || "";
+        if (raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
+        if (raw === "both") return ["men", "women"];
+        if (raw) return [raw];
+        return [];
+      });
       setRelationshipStatus(profile.relationshipStatus || "");
       try {
         setKinkTags(JSON.parse(profile.kinkTags || "[]"));
@@ -127,7 +133,7 @@ export default function Profile() {
     age &&
     parseInt(age) >= 18 &&
     gender &&
-    attractedTo &&
+    attractedTo.length > 0 &&
     relationshipStatus &&
     bio.trim() &&
     photos.length > 0;
@@ -157,7 +163,7 @@ export default function Profile() {
         name: name.trim(),
         age: parseInt(age),
         gender,
-        attractedTo,
+        attractedTo: JSON.stringify(attractedTo),
         relationshipStatus,
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
@@ -252,48 +258,53 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Gender & Attracted To */}
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <label className="block text-grape-300 text-sm mb-2 font-medium">I am</label>
-                <div className="flex flex-col gap-2">
-                  {["man", "woman"].map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setGender(g)}
-                      className={`py-3 rounded-xl border font-medium capitalize transition-all ${
-                        gender === g
-                          ? "border-grape-500 bg-grape-600/20 text-white"
-                          : "border-grape-800 text-grape-400 hover:border-grape-600"
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
+            {/* Gender */}
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">I look like a</label>
+              <div className="grid grid-cols-3 gap-3">
+                {["man", "woman", "nonbinary"].map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(g)}
+                    className={`py-3 rounded-xl border font-medium capitalize transition-all ${
+                      gender === g
+                        ? "border-grape-500 bg-grape-600/20 text-white"
+                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                    }`}
+                  >
+                    {g === "nonbinary" ? "non-binary" : g}
+                  </button>
+                ))}
               </div>
-              <div>
-                <label className="block text-grape-300 text-sm mb-2 font-medium">Attracted to</label>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { value: "men", label: "Men" },
-                    { value: "women", label: "Women" },
-                    { value: "both", label: "Both" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setAttractedTo(opt.value)}
-                      className={`py-3 rounded-xl border font-medium transition-all ${
-                        attractedTo === opt.value
-                          ? "border-grape-500 bg-grape-600/20 text-white"
-                          : "border-grape-800 text-grape-400 hover:border-grape-600"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+            </div>
+
+            {/* Attracted To */}
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">I'm attracted to people who look like</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: "men", label: "Men" },
+                  { value: "women", label: "Women" },
+                  { value: "nonbinary", label: "Non-binary" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setAttractedTo((prev) =>
+                      prev.includes(opt.value)
+                        ? prev.filter((v) => v !== opt.value)
+                        : [...prev, opt.value]
+                    )}
+                    className={`py-3 rounded-xl border font-medium transition-all ${
+                      attractedTo.includes(opt.value)
+                        ? "border-grape-500 bg-grape-600/20 text-white"
+                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
+              <p className="text-grape-500 text-xs mt-2">Select all that apply</p>
             </div>
 
             {/* Relationship Status */}

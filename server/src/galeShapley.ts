@@ -187,15 +187,29 @@ export interface UserEloData {
   ratings: Map<string, number>; // targetId -> ELO score
 }
 
+// Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
+function parseAttractedTo(raw: string): string[] {
+  if (raw.startsWith("[")) {
+    try { return JSON.parse(raw); } catch { /* fall through */ }
+  }
+  if (raw === "both") return ["men", "women"];
+  return [raw];
+}
+
+// Map a gender value to what appears in an attractedTo list
+const GENDER_TO_ATTRACTION: Record<string, string> = {
+  man: "men",
+  woman: "women",
+  nonbinary: "nonbinary",
+};
+
 // Returns true if user A and user B have mutual attraction compatibility
 function isAttractionCompatible(a: UserEloData, b: UserEloData): boolean {
-  const aLikesB = a.attractedTo === "both" ||
-    (a.attractedTo === "men" && b.gender === "man") ||
-    (a.attractedTo === "women" && b.gender === "woman");
+  const aList = parseAttractedTo(a.attractedTo);
+  const bList = parseAttractedTo(b.attractedTo);
 
-  const bLikesA = b.attractedTo === "both" ||
-    (b.attractedTo === "men" && a.gender === "man") ||
-    (b.attractedTo === "women" && a.gender === "woman");
+  const aLikesB = aList.includes(GENDER_TO_ATTRACTION[b.gender] ?? b.gender);
+  const bLikesA = bList.includes(GENDER_TO_ATTRACTION[a.gender] ?? a.gender);
 
   return aLikesB && bLikesA;
 }

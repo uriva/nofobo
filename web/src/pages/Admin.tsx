@@ -442,7 +442,7 @@ export default function Admin() {
                           )}
                         </div>
                         <div className="text-grape-400 text-xs">
-                          {p.gender} · attracted to {p.attractedTo} · {p.relationshipStatus}
+                          {p.gender} · attracted to {(() => { try { const a = JSON.parse(p.attractedTo); return Array.isArray(a) ? a.join(", ") : p.attractedTo; } catch { return p.attractedTo === "both" ? "men, women" : p.attractedTo; } })()} · {p.relationshipStatus}
                         </div>
                         {p.phone && (
                           <div className="text-grape-400 text-xs mt-1">

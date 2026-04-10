@@ -35,7 +35,7 @@ export default function Onboarding() {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
-  const [attractedTo, setAttractedTo] = useState("");
+  const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [kinkTags, setKinkTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
@@ -168,7 +168,14 @@ export default function Onboarding() {
         setName(prev => prev || p.name || "");
         setAge(prev => prev || p.age?.toString() || "");
         setGender(prev => prev || p.gender || "");
-        setAttractedTo(prev => prev || p.attractedTo || "");
+        setAttractedTo(prev => {
+          if (prev.length > 0) return prev;
+          const raw = p.attractedTo || "";
+          if (raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
+          if (raw === "both") return ["men", "women"];
+          if (raw) return [raw];
+          return [];
+        });
         setRelationshipStatus(prev => prev || p.relationshipStatus || "");
         setBio(prev => prev || p.bio || "");
         setLocation(prev => prev || p.location || "");
@@ -209,7 +216,7 @@ export default function Onboarding() {
     age &&
     !isNaN(parseInt(age)) &&
     gender &&
-    attractedTo &&
+    attractedTo.length > 0 &&
     relationshipStatus &&
     bio.trim() &&
     (!requirePhone || phone.trim()) &&
@@ -242,8 +249,7 @@ export default function Onboarding() {
         name: name.trim(),
         age: parseInt(age),
         gender,
-        attractedTo,
-        relationshipStatus,
+        attractedTo: JSON.stringify(attractedTo),        relationshipStatus,
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
@@ -523,10 +529,10 @@ export default function Onboarding() {
           {/* Gender */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              I am
+              I look like a
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              {["man", "woman"].map((g) => (
+            <div className="grid grid-cols-3 gap-3">
+              {["man", "woman", "nonbinary"].map((g) => (
                 <button
                   key={g}
                   onClick={() => setGender(g)}
@@ -536,7 +542,7 @@ export default function Onboarding() {
                       : "border-grape-800 text-grape-400 hover:border-grape-600"
                   }`}
                 >
-                  {g}
+                  {g === "nonbinary" ? "non-binary" : g}
                 </button>
               ))}
             </div>
@@ -545,19 +551,23 @@ export default function Onboarding() {
           {/* Attracted To */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Attracted to
+              I'm attracted to people who look like
             </label>
             <div className="grid grid-cols-3 gap-3">
               {[
                 { value: "men", label: "Men" },
                 { value: "women", label: "Women" },
-                { value: "both", label: "Both" },
+                { value: "nonbinary", label: "Non-binary" },
               ].map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => setAttractedTo(opt.value)}
+                  onClick={() => setAttractedTo((prev) =>
+                    prev.includes(opt.value)
+                      ? prev.filter((v) => v !== opt.value)
+                      : [...prev, opt.value]
+                  )}
                   className={`py-3 rounded-xl border font-medium transition-all ${
-                    attractedTo === opt.value
+                    attractedTo.includes(opt.value)
                       ? "border-grape-500 bg-grape-600/20 text-white"
                       : "border-grape-800 text-grape-400 hover:border-grape-600"
                   }`}
@@ -566,6 +576,7 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+            <p className="text-grape-500 text-xs mt-2">Select all that apply</p>
           </div>
 
           {/* Relationship Status */}

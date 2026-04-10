@@ -33,16 +33,19 @@ function json(data: unknown, status = 200) {
 }
 
 // --- Auth helper ---
-async function verifyAdmin(email: string, communityCode: string): Promise<boolean> {
+async function verifyAdmin(
+  email: string,
+  communityCode: string,
+): Promise<boolean> {
   if (ADMIN_EMAILS.includes(email)) return true;
   if (!communityCode) return false;
-  
+
   const { communities } = await adminDb.query({
-    communities: { $: { where: { code: communityCode } } }
+    communities: { $: { where: { code: communityCode } } },
   });
-  
+
   if (communities.length === 0) return false;
-  
+
   const community = communities[0];
   const adminEmails: string[] = JSON.parse(community.adminEmails || "[]");
   return adminEmails.includes(email);
@@ -63,6 +66,23 @@ async function verifyAuth(
 }
 
 // --- Attraction compatibility ---
+
+// Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
+function parseAttractedTo(raw: string): string[] {
+  if (raw.startsWith("[")) {
+    try { return JSON.parse(raw); } catch { /* fall through */ }
+  }
+  if (raw === "both") return ["men", "women"];
+  return [raw];
+}
+
+// Map a gender value to what appears in an attractedTo list
+const GENDER_TO_ATTRACTION: Record<string, string> = {
+  man: "men",
+  woman: "women",
+  nonbinary: "nonbinary",
+};
+
 // Returns true if user A can see user B in comparisons
 function isAttractionCompatible(
   myGender: string,
@@ -70,15 +90,11 @@ function isAttractionCompatible(
   theirGender: string,
   theirAttractedTo: string,
 ): boolean {
-  // Check: I'm attracted to their gender
-  const iLikeThem = myAttractedTo === "both" ||
-    (myAttractedTo === "men" && theirGender === "man") ||
-    (myAttractedTo === "women" && theirGender === "woman");
+  const myList = parseAttractedTo(myAttractedTo);
+  const theirList = parseAttractedTo(theirAttractedTo);
 
-  // Check: they're attracted to my gender
-  const theyLikeMe = theirAttractedTo === "both" ||
-    (theirAttractedTo === "men" && myGender === "man") ||
-    (theirAttractedTo === "women" && myGender === "woman");
+  const iLikeThem = myList.includes(GENDER_TO_ATTRACTION[theirGender] ?? theirGender);
+  const theyLikeMe = theirList.includes(GENDER_TO_ATTRACTION[myGender] ?? myGender);
 
   return iLikeThem && theyLikeMe;
 }
@@ -673,7 +689,7 @@ async function handler(req: Request): Promise<Response> {
   if (path.startsWith("/api/admin/rankings/") && req.method === "GET") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    
+
     const requestedCommunity = url.searchParams.get("community");
     if (!requestedCommunity) return json({ error: "Community required" }, 400);
 
@@ -711,7 +727,9 @@ async function handler(req: Request): Promise<Response> {
 
       const rankings = eloRatings
         .map((r: any) => {
-          const tUserId = Array.isArray(r.target) ? r.target[0]?.id : r.target?.id;
+          const tUserId = Array.isArray(r.target)
+            ? r.target[0]?.id
+            : r.target?.id;
           const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
             targetUserId: tUserId ?? "",
@@ -733,7 +751,7 @@ async function handler(req: Request): Promise<Response> {
   if (path === "/api/admin/match" && req.method === "POST") {
     const user = await verifyAuth(req);
     if (!user) return json({ error: "Unauthorized" }, 401);
-    
+
     const requestedCommunity = url.searchParams.get("community");
     if (!requestedCommunity) return json({ error: "Community required" }, 400);
 
