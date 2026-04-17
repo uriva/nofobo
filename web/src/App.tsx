@@ -11,7 +11,6 @@ import { CommunityProvider } from "./components/CommunityContext.tsx";
 import Spinner from "./components/Spinner.tsx";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-
   const { isLoading, user, error } = db.useAuth();
   if (isLoading) {
     return (
