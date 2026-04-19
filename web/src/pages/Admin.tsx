@@ -61,6 +61,12 @@ export default function Admin() {
   const [isEditingAdmins, setIsEditingAdmins] = useState(false);
   const [editingAdminsInput, setEditingAdminsInput] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Community info
+  const [isEditingCommunityInfo, setIsEditingCommunityInfo] = useState(false);
+  const [editingCommunityName, setEditingCommunityName] = useState("");
+  const [editingCommunityCode, setEditingCommunityCode] = useState("");
+  const [savingCommunityInfo, setSavingCommunityInfo] = useState(false);
   
   const { data: communityData } = db.useQuery(activeCommunityCode ? {
     communities: { $: { where: { code: activeCommunityCode } } }
@@ -181,6 +187,37 @@ export default function Admin() {
     await db.transact([
       db.tx.communities[community.id].update({ requirePhone: !current }),
     ]);
+  };
+
+  const handleSaveCommunityInfo = async () => {
+    if (!community || !activeCommunityCode) return;
+    setSavingCommunityInfo(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/community?community=${activeCommunityCode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAuthToken()}`,
+        },
+        body: JSON.stringify({
+          name: editingCommunityName.trim(),
+          code: editingCommunityCode.trim().toLowerCase(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to update community info");
+        return;
+      }
+
+      setIsEditingCommunityInfo(false);
+    } catch (e) {
+      console.error("Save community info error:", e);
+      alert("Failed to save community info");
+    } finally {
+      setSavingCommunityInfo(false);
+    }
   };
 
   useEffect(() => {
@@ -306,6 +343,72 @@ export default function Admin() {
                       }`}
                     />
                   </button>
+                </div>
+
+                <div className="border-t border-grape-800" />
+
+                {/* Community Name & Code Editor */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-white font-medium">Community Name & Code</h3>
+                      <p className="text-grape-400 text-sm">Name: <span className="text-white">{community?.name}</span> · Code: <span className="text-white">{community?.code}</span></p>
+                    </div>
+                    {!isEditingCommunityInfo && (
+                      <button
+                        onClick={() => {
+                          setEditingCommunityName(community?.name || "");
+                          setEditingCommunityCode(community?.code || "");
+                          setIsEditingCommunityInfo(true);
+                        }}
+                        className="text-grape-400 hover:text-white text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+
+                  {isEditingCommunityInfo ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-grape-400 text-sm mb-2">Community Name</label>
+                        <input
+                          type="text"
+                          value={editingCommunityName}
+                          onChange={(e) => setEditingCommunityName(e.target.value)}
+                          placeholder="e.g. Burning Desire"
+                          className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-grape-400 text-sm mb-2">Community Code</label>
+                        <input
+                          type="text"
+                          value={editingCommunityCode}
+                          onChange={(e) => setEditingCommunityCode(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ''))}
+                          placeholder="e.g. burning-desire"
+                          className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
+                        />
+                        <p className="text-grape-600 text-xs mt-1">Only lowercase letters, numbers, hyphens, and underscores</p>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setIsEditingCommunityInfo(false)}
+                          disabled={savingCommunityInfo}
+                          className="px-4 py-2 rounded-lg text-grape-400 hover:text-white text-sm font-medium disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveCommunityInfo}
+                          disabled={savingCommunityInfo}
+                          className="bg-grape-600 hover:bg-grape-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          {savingCommunityInfo ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="border-t border-grape-800" />

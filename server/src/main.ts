@@ -840,6 +840,81 @@ async function handler(req: Request): Promise<Response> {
     }
   }
 
+  // --- Admin: Update Community Info ---
+  if (path === "/api/admin/community" && req.method === "POST") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    const requestedCommunity = url.searchParams.get("community");
+    if (!requestedCommunity) return json({ error: "Community required" }, 400);
+
+    const isAdmin = await verifyAdmin(user.email, requestedCommunity);
+    if (!isAdmin) {
+      return json({ error: "Forbidden" }, 403);
+    }
+
+    try {
+      const body = await req.json();
+      const { name, code } = body;
+
+      if (!name || !code) {
+        return json({ error: "Name and code are required" }, 400);
+      }
+
+      // Validate code format (alphanumeric, hyphens, underscores only)
+      if (!/^[a-z0-9-_]+$/.test(code)) {
+        return json({ error: "Code must contain only lowercase letters, numbers, hyphens, and underscores" }, 400);
+      }
+
+      // Get current community
+      const { communities } = await adminDb.query({
+        communities: { $: { where: { code: requestedCommunity } } },
+      });
+
+      if (communities.length === 0) {
+        return json({ error: "Community not found" }, 404);
+      }
+
+      const community = communities[0];
+
+      // If code is changing, check if new code already exists
+      if (code !== requestedCommunity) {
+        const { communities: existingCommunities } = await adminDb.query({
+          communities: { $: { where: { code } } },
+        });
+
+        if (existingCommunities.length > 0) {
+          return json({ error: "Code already exists" }, 400);
+        }
+
+        // Update all profiles with the old community code to the new code
+        const { profiles } = await adminDb.query({
+          profiles: { $: { where: { communityCode: requestedCommunity } } },
+        });
+
+        const profileUpdates = profiles.map((p: any) =>
+          adminDb.tx.profiles[p.id].update({ communityCode: code })
+        );
+
+        // Update the community
+        await adminDb.transact([
+          adminDb.tx.communities[community.id].update({ name, code }),
+          ...profileUpdates,
+        ]);
+      } else {
+        // Just update the name
+        await adminDb.transact([
+          adminDb.tx.communities[community.id].update({ name }),
+        ]);
+      }
+
+      return json({ success: true });
+    } catch (e) {
+      console.error("Admin community update error:", e);
+      return json({ error: "Failed to update community" }, 500);
+    }
+  }
+
   return json({ error: "Not found" }, 404);
 }
 
