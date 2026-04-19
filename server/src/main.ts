@@ -138,7 +138,7 @@ async function handler(req: Request): Promise<Response> {
       if (requestedCommunity) {
         myProfile = myProfiles.find((p: any) =>
           p.communityCode === requestedCommunity
-        ) ?? myProfiles[0];
+        );
       }
 
       if (!myProfile) return json({ error: "Profile not found" }, 404);
