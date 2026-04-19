@@ -304,6 +304,7 @@ async function handler(req: Request): Promise<Response> {
               return [];
             }
           })(),
+          elo: Math.round(userElo.get(p?.user?.id) ?? ELO_DEFAULT),
         })),
         totalComparisons: comparisons.length,
         eligibleCount: eligible.length,

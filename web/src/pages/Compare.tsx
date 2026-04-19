@@ -16,6 +16,7 @@ interface PairProfile {
   photoUrls?: string[];
   relationshipStatus?: string;
   kinkTags?: string[];
+  elo?: number;
 }
 
 const TAG_OPTIONS = [
@@ -346,6 +347,7 @@ export default function Compare() {
                     photoUrls={profile.photoUrls}
                     relationshipStatus={profile.relationshipStatus}
                     kinkTags={profile.kinkTags}
+                    elo={profile.elo}
                   />
                 </div>
                 <button

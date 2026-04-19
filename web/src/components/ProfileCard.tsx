@@ -12,6 +12,7 @@ interface ProfileCardProps {
   kinkTags?: string[];
   phone?: string;
   large?: boolean;
+  elo?: number;
 }
 
 export default function ProfileCard({
@@ -25,6 +26,7 @@ export default function ProfileCard({
   kinkTags,
   phone,
   large,
+  elo,
 }: ProfileCardProps) {
   const displayBio = bio || description || "";
   const [photoIdx, setPhotoIdx] = useState(0);
@@ -99,12 +101,23 @@ export default function ProfileCard({
       {/* Content Area */}
       <div className={`flex flex-col flex-1 ${large ? "p-6" : "p-5"}`}>
         <div className="mb-3">
-          <div
-            className={`font-bold text-white leading-tight ${
-              large ? "text-2xl" : "text-xl"
-            }`}
-          >
-            {name}, {age}
+          <div className="flex items-start justify-between gap-2">
+            <div
+              className={`font-bold text-white leading-tight ${
+                large ? "text-2xl" : "text-xl"
+              }`}
+            >
+              {name}, {age}
+            </div>
+            {elo !== undefined && (
+              <div 
+                className="flex items-center gap-1 bg-grape-900/50 border border-grape-800 text-amber-400 font-bold px-2 py-1 rounded-lg text-sm flex-shrink-0 cursor-help"
+                title="Your personal Elo rating for this person. New users start at 1400."
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                {elo}
+              </div>
+            )}
           </div>
           {relationshipStatus && (
             <div className="text-grape-400 text-sm mt-1 font-medium">

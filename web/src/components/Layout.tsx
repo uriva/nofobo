@@ -85,7 +85,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             <span
-              onClick={() => navigate("/app/compare")}
+              onClick={() => navigate("/")}
               className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
             >
               NOFOBO
