@@ -99,7 +99,11 @@ export default function Compare() {
         setMessage("");
       } else {
         setPair(null);
-        setMessage(data.reason ?? "No pairs available right now");
+        if (res.status === 404 && data.error === "Profile not found") {
+          setMessage(`You don't have a profile in /${activeCommunityCode} yet. Please join the community first.`);
+        } else {
+          setMessage(data.reason ?? data.error ?? "No pairs available right now");
+        }
       }
     } catch (e) {
       console.error("Load pair error:", e);
