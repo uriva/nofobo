@@ -146,9 +146,13 @@ async function handler(req: Request): Promise<Response> {
       const myCommunity = myProfile.communityCode;
       const myGender = myProfile.gender;
       const myAttractedTo = myProfile.attractedTo ?? "both";
-      const myMatchStatuses: string[] = JSON.parse(
-        myProfile.matchWithStatuses ?? "[]",
-      );
+      const myMatchStatuses: string[] = (() => {
+        try {
+          return JSON.parse(myProfile.matchWithStatuses ?? "[]");
+        } catch {
+          return [];
+        }
+      })();
 
       // Get optional filters from query params
       const minAge = url.searchParams.get("minAge");
@@ -197,7 +201,13 @@ async function handler(req: Request): Promise<Response> {
         // Kink tag filter (if specified, at least one overlap required)
         if (filterTags) {
           const required = filterTags.split(",").map((t) => t.trim());
-          const theirTags: string[] = JSON.parse(p.kinkTags ?? "[]");
+          const theirTags: string[] = (() => {
+            try {
+              return JSON.parse(p.kinkTags ?? "[]");
+            } catch {
+              return [];
+            }
+          })();
           if (!required.some((r: any) => theirTags.includes(r))) return false;
         }
 
@@ -279,9 +289,21 @@ async function handler(req: Request): Promise<Response> {
           age: p?.age,
           bio: p?.bio ?? p?.aiDescription ?? "",
           photoUrl: p?.photoUrl,
-          photoUrls: JSON.parse(p?.photoUrls ?? "[]"),
+          photoUrls: (() => {
+            try {
+              return JSON.parse(p?.photoUrls ?? "[]");
+            } catch {
+              return [];
+            }
+          })(),
           relationshipStatus: p?.relationshipStatus,
-          kinkTags: JSON.parse(p?.kinkTags ?? "[]"),
+          kinkTags: (() => {
+            try {
+              return JSON.parse(p?.kinkTags ?? "[]");
+            } catch {
+              return [];
+            }
+          })(),
         })),
         totalComparisons: comparisons.length,
         eligibleCount: eligible.length,
@@ -451,8 +473,20 @@ async function handler(req: Request): Promise<Response> {
         const loser = c.loser;
         const winnerProfile = winner?.profile;
         const loserProfile = loser?.profile;
-        const winnerPhotoUrls = JSON.parse(winnerProfile?.photoUrls ?? "[]");
-        const loserPhotoUrls = JSON.parse(loserProfile?.photoUrls ?? "[]");
+        const winnerPhotoUrls = (() => {
+          try {
+            return JSON.parse(winnerProfile?.photoUrls ?? "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const loserPhotoUrls = (() => {
+          try {
+            return JSON.parse(loserProfile?.photoUrls ?? "[]");
+          } catch {
+            return [];
+          }
+        })();
         return {
           comparisonId: c.id,
           winnerId: winner?.id ?? "",
@@ -669,7 +703,13 @@ async function handler(req: Request): Promise<Response> {
       }
 
       const result = Array.from(uniqueProfiles.values()).map((p: any) => {
-        const photoUrls = JSON.parse(p.photoUrls ?? "[]");
+        const photoUrls = (() => {
+          try {
+            return JSON.parse(p.photoUrls ?? "[]");
+          } catch {
+            return [];
+          }
+        })();
         return {
           userId: p.user?.id ?? "",
           profileId: p.id,
@@ -678,7 +718,13 @@ async function handler(req: Request): Promise<Response> {
           gender: p.gender,
           attractedTo: p.attractedTo ?? "both",
           relationshipStatus: p.relationshipStatus ?? "",
-          kinkTags: JSON.parse(p.kinkTags ?? "[]"),
+          kinkTags: (() => {
+            try {
+              return JSON.parse(p.kinkTags ?? "[]");
+            } catch {
+              return [];
+            }
+          })(),
           bio: p.bio ?? p.aiDescription ?? "",
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,

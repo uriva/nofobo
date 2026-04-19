@@ -22,9 +22,10 @@ export function extractPath(urlOrPath: string): string {
   if (!urlOrPath) return "";
   if (!urlOrPath.startsWith("http")) return urlOrPath;
   
+  const decoded = decodeURIComponent(urlOrPath);
   // Try to extract the path starting with "profiles/"
-  const match = urlOrPath.match(/(profiles\/[^?]+)/);
-  if (match) return decodeURIComponent(match[1]);
+  const match = decoded.match(/(profiles\/[^?]+)/);
+  if (match) return match[1];
   
   return urlOrPath;
 }
