@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { id } from "@instantdb/react";
 import db from "../db.ts";
+import { getStorageUrl } from "../utils/storage.ts";
+import { getStorageUrl } from "../utils/storage.ts";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
 
@@ -237,12 +239,9 @@ export default function Onboarding() {
       for (let i = 0; i < photos.length; i++) {
         const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
         await db.storage.uploadFile(photoPath, photos[i].file);
-        // deno-lint-ignore no-explicit-any
-        const downloadData = await (db as any).storage.getDownloadUrl(photoPath);
-        const url = downloadData?.url || downloadData;
-        if (url && typeof url === "string") {
-          finalPhotoUrls.push(url);
-        }
+        // Use permanent Firebase Storage URL instead of signed URL (which expires)
+        const permanentUrl = getStorageUrl(photoPath);
+        finalPhotoUrls.push(permanentUrl);
       }
 
       const profileData: Record<string, unknown> = {

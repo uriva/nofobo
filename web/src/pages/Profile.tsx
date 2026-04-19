@@ -4,6 +4,7 @@ import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
+import { getStorageUrl } from "../utils/storage.ts";
 
 const RELATIONSHIP_STATUSES = [
   "Very single",
@@ -150,12 +151,9 @@ export default function Profile() {
         } else if (photos[i].file) {
           const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
           await db.storage.uploadFile(photoPath, photos[i].file!);
-          // deno-lint-ignore no-explicit-any
-          const downloadData = await (db as any).storage.getDownloadUrl(photoPath);
-          const url = downloadData?.url || downloadData;
-          if (url && typeof url === "string") {
-            photoUrls.push(url);
-          }
+          // Use permanent Firebase Storage URL instead of signed URL (which expires)
+          const permanentUrl = getStorageUrl(photoPath);
+          photoUrls.push(permanentUrl);
         }
       }
 
