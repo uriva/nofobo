@@ -37,7 +37,10 @@ async function verifyAdmin(
   email: string,
   communityCode: string,
 ): Promise<boolean> {
-  if (ADMIN_EMAILS.includes(email)) return true;
+  const normalizedEmail = email.toLowerCase();
+  if (ADMIN_EMAILS.some((e) => e.toLowerCase() === normalizedEmail)) {
+    return true;
+  }
   if (!communityCode) return false;
 
   const { communities } = await adminDb.query({
@@ -48,7 +51,7 @@ async function verifyAdmin(
 
   const community = communities[0];
   const adminEmails: string[] = JSON.parse(community.adminEmails || "[]");
-  return adminEmails.includes(email);
+  return adminEmails.some((e: string) => e.toLowerCase() === normalizedEmail);
 }
 
 async function verifyAuth(
@@ -70,7 +73,9 @@ async function verifyAuth(
 // Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
 function parseAttractedTo(raw: string): string[] {
   if (raw.startsWith("[")) {
-    try { return JSON.parse(raw); } catch { /* fall through */ }
+    try {
+      return JSON.parse(raw);
+    } catch { /* fall through */ }
   }
   if (raw === "both") return ["men", "women"];
   return [raw];
@@ -93,8 +98,12 @@ function isAttractionCompatible(
   const myList = parseAttractedTo(myAttractedTo);
   const theirList = parseAttractedTo(theirAttractedTo);
 
-  const iLikeThem = myList.includes(GENDER_TO_ATTRACTION[theirGender] ?? theirGender);
-  const theyLikeMe = theirList.includes(GENDER_TO_ATTRACTION[myGender] ?? myGender);
+  const iLikeThem = myList.includes(
+    GENDER_TO_ATTRACTION[theirGender] ?? theirGender,
+  );
+  const theyLikeMe = theirList.includes(
+    GENDER_TO_ATTRACTION[myGender] ?? myGender,
+  );
 
   return iLikeThem && theyLikeMe;
 }
@@ -863,7 +872,10 @@ async function handler(req: Request): Promise<Response> {
 
       // Validate code format (alphanumeric, hyphens, underscores only)
       if (!/^[a-z0-9-_]+$/.test(code)) {
-        return json({ error: "Code must contain only lowercase letters, numbers, hyphens, and underscores" }, 400);
+        return json({
+          error:
+            "Code must contain only lowercase letters, numbers, hyphens, and underscores",
+        }, 400);
       }
 
       // Get current community

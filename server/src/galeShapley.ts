@@ -190,7 +190,9 @@ export interface UserEloData {
 // Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
 function parseAttractedTo(raw: string): string[] {
   if (raw.startsWith("[")) {
-    try { return JSON.parse(raw); } catch { /* fall through */ }
+    try {
+      return JSON.parse(raw);
+    } catch { /* fall through */ }
   }
   if (raw === "both") return ["men", "women"];
   return [raw];

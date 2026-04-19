@@ -25,6 +25,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
             matchesAsUser1: {},
             matchesAsUser2: {},
           },
+          communities: activeCommunityCode ? { $: { where: { code: activeCommunityCode } } } : undefined,
         }
       : null
   );
@@ -34,7 +35,17 @@ export default function Layout({ children, headerActions }: { children: ReactNod
     ((userData.$users[0].matchesAsUser1?.length ?? 0) > 0 ||
       (userData.$users[0].matchesAsUser2?.length ?? 0) > 0);
 
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+  const isGlobalAdmin = user?.email ? ADMIN_EMAILS.some(e => e.toLowerCase() === user.email.toLowerCase()) : false;
+  let communityAdminEmails: string[] = [];
+  try {
+    communityAdminEmails = userData?.communities?.[0]?.adminEmails
+      ? JSON.parse(userData.communities[0].adminEmails)
+      : [];
+  } catch (e) {
+    console.error("Failed to parse admin emails", e);
+  }
+  const isCommunityAdmin = user?.email && communityAdminEmails.some(e => e.toLowerCase() === user.email.toLowerCase());
+  const isAdmin = isGlobalAdmin || isCommunityAdmin;
 
   const navLinks = [
     { name: "Compare", path: "/app/compare" },
