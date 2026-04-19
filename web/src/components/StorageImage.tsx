@@ -17,7 +17,7 @@ export default function StorageImage({ pathOrUrl, fallback, ...props }: StorageI
       return;
     }
 
-    if (pathOrUrl.startsWith("http") || pathOrUrl.startsWith("data:") || pathOrUrl.startsWith("blob:")) {
+    if (pathOrUrl.startsWith("data:") || pathOrUrl.startsWith("blob:")) {
       if (isMounted) setUrl(pathOrUrl);
       return;
     }
@@ -25,20 +25,27 @@ export default function StorageImage({ pathOrUrl, fallback, ...props }: StorageI
     // It's a path, or an old URL that needs to be extracted
     const path = extractPath(pathOrUrl);
     
-    if (!path.startsWith("profiles/")) {
-      // Unrecognized format
+    // If extractPath returned a path starting with "profiles/", fetch a fresh URL
+    if (path.startsWith("profiles/")) {
+      getStorageUrl(path)
+        .then((fetchedUrl) => {
+          if (isMounted) setUrl(fetchedUrl);
+        })
+        .catch((e) => {
+          console.error("Failed to load image for path:", path, e);
+          if (isMounted) setUrl(fallback);
+        });
+      return;
+    }
+
+    // If it's a regular http URL not matching our profiles format, just use it
+    if (pathOrUrl.startsWith("http")) {
       if (isMounted) setUrl(pathOrUrl);
       return;
     }
 
-    getStorageUrl(path)
-      .then((fetchedUrl) => {
-        if (isMounted) setUrl(fetchedUrl);
-      })
-      .catch((e) => {
-        console.error("Failed to load image for path:", path, e);
-        if (isMounted) setUrl(fallback);
-      });
+    // Unrecognized format
+    if (isMounted) setUrl(pathOrUrl);
 
     return () => { isMounted = false; };
   }, [pathOrUrl, fallback]);

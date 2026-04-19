@@ -4,6 +4,7 @@ import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import Layout from "../components/Layout.tsx";
 import StorageImage from "../components/StorageImage.tsx";
+import { normalizePhone } from "../utils/phone.ts";
 import { useCommunity } from "../components/CommunityContext.tsx";
 import { getStorageUrl, extractPath } from "../utils/storage.ts";
 
@@ -165,6 +166,7 @@ export default function Profile() {
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
+        phone: normalizePhone(phone) || undefined,
       };
 
       if (photoUrls.length > 0) {

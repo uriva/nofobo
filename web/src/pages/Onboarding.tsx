@@ -4,6 +4,7 @@ import { id } from "@instantdb/react";
 import db from "../db.ts";
 import { getStorageUrl, extractPath } from "../utils/storage.ts";
 import StorageImage from "../components/StorageImage.tsx";
+import { normalizePhone } from "../utils/phone.ts";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
 
@@ -246,11 +247,12 @@ export default function Onboarding() {
         name: name.trim(),
         age: parseInt(age),
         gender,
-        attractedTo: JSON.stringify(attractedTo),        relationshipStatus,
+        attractedTo: JSON.stringify(attractedTo),
+        relationshipStatus,
         kinkTags: JSON.stringify(kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
-        phone: phone.trim() || undefined,
+        phone: normalizePhone(phone) || undefined,
         communityCode: communityCode.trim().toLowerCase(),
         onboardingComplete: true,
         createdAt: Date.now(),
