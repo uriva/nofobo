@@ -56,6 +56,16 @@ export function selectNextPair(
 ): [string, string] | null {
   if (candidateIds.length < 2) return null;
 
+  // Find out how many times each candidate has been compared
+  const compCount = new Map<string, number>();
+  for (const id of candidateIds) compCount.set(id, 0);
+
+  for (const pair of comparedPairs) {
+    const [a, b] = pair.split(":");
+    if (compCount.has(a)) compCount.set(a, compCount.get(a)! + 1);
+    if (compCount.has(b)) compCount.set(b, compCount.get(b)! + 1);
+  }
+
   // Build list of uncompared pairs
   const uncompared: [string, string][] = [];
   for (let i = 0; i < candidateIds.length; i++) {
@@ -73,14 +83,28 @@ export function selectNextPair(
   if (uncompared.length === 0) return null;
 
   // Score each pair by how close their ELOs are (closer = more informative)
-  const scored = uncompared.map(([a, b]) => {
+  const scored = [];
+  for (const [a, b] of uncompared) {
     const eloA = userEloRatings.get(a) ?? ELO_DEFAULT;
     const eloB = userEloRatings.get(b) ?? ELO_DEFAULT;
     const diff = Math.abs(eloA - eloB);
+
+    const countA = compCount.get(a) ?? 0;
+    const countB = compCount.get(b) ?? 0;
+
+    // Skip needleess comparisons: if both candidates have a solid baseline (>= 3 comparisons)
+    // and their ELO diff is very large (> 300, meaning >85% predictability), it's highly
+    // likely the user's preference is already stable.
+    if (diff > 300 && countA >= 3 && countB >= 3) {
+      continue;
+    }
+
     // Lower diff = more informative, but add randomness for exploration
     const noise = Math.random() * 200;
-    return { pair: [a, b] as [string, string], score: diff + noise };
-  });
+    scored.push({ pair: [a, b] as [string, string], score: diff + noise });
+  }
+
+  if (scored.length === 0) return null;
 
   scored.sort((a, b) => a.score - b.score);
   return scored[0].pair;

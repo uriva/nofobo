@@ -5,8 +5,8 @@ on:
     branches:
       - master
     paths:
-      - 'instant.schema.ts'
-      - 'instant.perms.ts'
+      - "instant.schema.ts"
+      - "instant.perms.ts"
 
 jobs:
   deploy:
