@@ -226,9 +226,17 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voter.id": user.id } },
-          winner: {},
-          loser: {},
+          winner: { profile: {} } as any,
+          loser: { profile: {} } as any,
         },
+      });
+
+      // Filter comparisons to only count those relevant to the current community pool
+      const relevantComparisons = comparisons.filter((c: any) => {
+        const wProfile = c.winner?.[0]?.profile?.[0];
+        const lProfile = c.loser?.[0]?.profile?.[0];
+        return wProfile?.communityCode === myCommunity &&
+          lProfile?.communityCode === myCommunity;
       });
 
       if (eligible.length < 2) {
@@ -236,12 +244,12 @@ async function handler(req: Request): Promise<Response> {
           pair: null,
           reason: "Not enough compatible profiles yet. Check back later!",
           eligibleCount: eligible.length,
-          totalComparisons: comparisons.length,
+          totalComparisons: relevantComparisons.length,
         });
       }
 
       const comparedPairs = new Set<string>();
-      for (const c of comparisons) {
+      for (const c of relevantComparisons) {
         const wId = c.winner?.[0]?.id;
         const lId = c.loser?.[0]?.id;
         if (wId && lId) comparedPairs.add(`${wId}:${lId}`);
@@ -272,7 +280,7 @@ async function handler(req: Request): Promise<Response> {
           pair: null,
           reason: "You've compared all available profiles!",
           eligibleCount: eligible.length,
-          totalComparisons: comparisons.length,
+          totalComparisons: relevantComparisons.length,
         });
       }
 
@@ -306,7 +314,7 @@ async function handler(req: Request): Promise<Response> {
           })(),
           elo: Math.round(userElo.get(p?.user?.[0]?.id) ?? ELO_DEFAULT),
         })),
-        totalComparisons: comparisons.length,
+        totalComparisons: relevantComparisons.length,
         eligibleCount: eligible.length,
       });
     } catch (e) {
