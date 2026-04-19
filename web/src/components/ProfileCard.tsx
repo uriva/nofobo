@@ -1,4 +1,5 @@
 import { useState } from "react";
+import StorageImage from "./StorageImage.tsx";
 
 interface ProfileCardProps {
   name: string;
@@ -49,8 +50,8 @@ export default function ProfileCard({
       {/* Big Photo Area */}
       {validPhotos.length > 0 ? (
         <div className="relative w-full aspect-[4/5] bg-grape-900 group">
-          <img
-            src={currentPhoto}
+          <StorageImage
+            pathOrUrl={currentPhoto}
             alt={`${name} photo ${photoIdx + 1}`}
             className="w-full h-full object-cover"
           />

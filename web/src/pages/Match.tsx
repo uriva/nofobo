@@ -5,6 +5,7 @@ import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
+import StorageImage from "../components/StorageImage.tsx";
 import Layout from "../components/Layout.tsx";
 
 interface MatchData {
@@ -272,8 +273,8 @@ export default function Match() {
                       </svg>
                     </button>
                     {match.photoUrl ? (
-                      <img
-                        src={match.photoUrl}
+                      <StorageImage
+                        pathOrUrl={match.photoUrl}
                         alt={match.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />

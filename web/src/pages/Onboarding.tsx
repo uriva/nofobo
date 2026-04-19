@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { id } from "@instantdb/react";
 import db from "../db.ts";
-import { getStorageUrl } from "../utils/storage.ts";
-import { getStorageUrl } from "../utils/storage.ts";
+import { getStorageUrl, extractPath } from "../utils/storage.ts";
+import StorageImage from "../components/StorageImage.tsx";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
 
@@ -235,12 +235,11 @@ export default function Onboarding() {
       const profileId = existingProfileId || id();
 
       // Upload photos
-      const finalPhotoUrls: string[] = [...existingPhotoUrls];
+      const finalPhotoUrls: string[] = [...existingPhotoUrls].map(extractPath);
       for (let i = 0; i < photos.length; i++) {
         const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
         await db.storage.uploadFile(photoPath, photos[i].file);
-        const url = await getStorageUrl(photoPath);
-        finalPhotoUrls.push(url);
+        finalPhotoUrls.push(photoPath);
       }
 
       const profileData: Record<string, unknown> = {
@@ -641,8 +640,8 @@ export default function Onboarding() {
             <div className="grid grid-cols-3 gap-3">
               {existingPhotoUrls.map((url, i) => (
                 <div key={`existing-${i}`} className="relative aspect-square">
-                  <img
-                    src={url}
+                  <StorageImage
+                    pathOrUrl={url}
                     alt={`Existing Photo ${i + 1}`}
                     className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
                   />
@@ -657,8 +656,8 @@ export default function Onboarding() {
               ))}
               {photos.map((photo, i) => (
                 <div key={`new-${i}`} className="relative aspect-square">
-                  <img
-                    src={photo.preview}
+                  <StorageImage
+                    pathOrUrl={photo.preview}
                     alt={`Photo ${i + 1}`}
                     className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
                   />

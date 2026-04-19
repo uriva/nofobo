@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import Layout from "../components/Layout.tsx";
+import StorageImage from "../components/StorageImage.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
-import { getStorageUrl } from "../utils/storage.ts";
+import { getStorageUrl, extractPath } from "../utils/storage.ts";
 
 const RELATIONSHIP_STATUSES = [
   "Very single",
@@ -147,12 +148,11 @@ export default function Profile() {
       const photoUrls: string[] = [];
       for (let i = 0; i < photos.length; i++) {
         if (photos[i].existingUrl) {
-          photoUrls.push(photos[i].existingUrl!);
+          photoUrls.push(extractPath(photos[i].existingUrl!));
         } else if (photos[i].file) {
           const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
           await db.storage.uploadFile(photoPath, photos[i].file!);
-          const url = await getStorageUrl(photoPath);
-          photoUrls.push(url);
+          photoUrls.push(photoPath);
         }
       }
 
@@ -364,8 +364,8 @@ export default function Profile() {
               <div className="grid grid-cols-3 gap-3">
                 {photos.map((photo, i) => (
                   <div key={i} className="relative aspect-square">
-                    <img
-                      src={photo.preview}
+                    <StorageImage
+                      pathOrUrl={photo.preview}
                       alt={`Photo ${i + 1}`}
                       className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
                     />

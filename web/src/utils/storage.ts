@@ -18,3 +18,14 @@ export async function getStorageUrl(storagePath: string): Promise<string> {
   }
 }
 
+export function extractPath(urlOrPath: string): string {
+  if (!urlOrPath) return "";
+  if (!urlOrPath.startsWith("http")) return urlOrPath;
+  
+  // Try to extract the path starting with "profiles/"
+  const match = urlOrPath.match(/(profiles\/[^?]+)/);
+  if (match) return decodeURIComponent(match[1]);
+  
+  return urlOrPath;
+}
+

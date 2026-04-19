@@ -5,6 +5,7 @@ import { API_URL } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
 import ProfileModal from "../components/ProfileModal.tsx";
+import StorageImage from "../components/StorageImage.tsx";
 
 interface Decision {
   comparisonId: string;
@@ -144,8 +145,8 @@ export default function MyDecisions() {
                   onClick={() => setSelectedUserId(d.winnerId)}
                 >
                   {d.winnerPhotoUrl ? (
-                    <img
-                      src={d.winnerPhotoUrl}
+                    <StorageImage
+                      pathOrUrl={d.winnerPhotoUrl}
                       alt={d.winnerName}
                       className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                     />
@@ -171,8 +172,8 @@ export default function MyDecisions() {
                   onClick={() => setSelectedUserId(d.loserId)}
                 >
                   {d.loserPhotoUrl ? (
-                    <img
-                      src={d.loserPhotoUrl}
+                    <StorageImage
+                      pathOrUrl={d.loserPhotoUrl}
                       alt={d.loserName}
                       className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                     />
