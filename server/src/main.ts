@@ -175,7 +175,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Filter: not self, attraction compatible, relationship status match, age, tags
       const eligible = candidates.filter((p: any) => {
-        if (p.user?.id === user.id) return false;
+        if (p.user?.[0]?.id === user.id) return false;
 
         // Attraction compatibility (mutual)
         if (
@@ -242,8 +242,8 @@ async function handler(req: Request): Promise<Response> {
 
       const comparedPairs = new Set<string>();
       for (const c of comparisons) {
-        const wId = c.winner?.id;
-        const lId = c.loser?.id;
+        const wId = c.winner?.[0]?.id;
+        const lId = c.loser?.[0]?.id;
         if (wId && lId) comparedPairs.add(`${wId}:${lId}`);
       }
 
@@ -263,7 +263,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Select next pair using user IDs
       const candidateUserIds = eligible
-        .map((p: any) => p.user?.id)
+        .map((p: any) => p.user?.[0]?.id)
         .filter(Boolean) as string[];
 
       const pair = selectNextPair(userElo, comparedPairs, candidateUserIds);
@@ -278,12 +278,12 @@ async function handler(req: Request): Promise<Response> {
 
       // Return full profile data for both candidates
       const pairProfiles = pair.map((userId) =>
-        eligible.find((p: any) => p.user?.id === userId)
+        eligible.find((p: any) => p.user?.[0]?.id === userId)
       );
 
       return json({
         pair: pairProfiles.map((p: any) => ({
-          userId: p?.user?.id,
+          userId: p?.user?.[0]?.id,
           profileId: p?.id,
           name: p?.name,
           age: p?.age,
@@ -304,7 +304,7 @@ async function handler(req: Request): Promise<Response> {
               return [];
             }
           })(),
-          elo: Math.round(userElo.get(p?.user?.id) ?? ELO_DEFAULT),
+          elo: Math.round(userElo.get(p?.user?.[0]?.id) ?? ELO_DEFAULT),
         })),
         totalComparisons: comparisons.length,
         eligibleCount: eligible.length,
@@ -470,10 +470,10 @@ async function handler(req: Request): Promise<Response> {
 
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
-        const winner = c.winner;
-        const loser = c.loser;
-        const winnerProfile = winner?.profile;
-        const loserProfile = loser?.profile;
+        const winner = c.winner?.[0];
+        const loser = c.loser?.[0];
+        const winnerProfile = winner?.profile?.[0];
+        const loserProfile = loser?.profile?.[0];
         const winnerPhotoUrls = (() => {
           try {
             return JSON.parse(winnerProfile?.photoUrls ?? "[]");
@@ -541,8 +541,8 @@ async function handler(req: Request): Promise<Response> {
       }
 
       const comp = comparisons[0];
-      const oldWinnerId = comp.winner?.id;
-      const oldLoserId = comp.loser?.id;
+      const oldWinnerId = comp.winner?.[0]?.id;
+      const oldLoserId = comp.loser?.[0]?.id;
 
       if (!oldWinnerId || !oldLoserId) {
         return json({ error: "Invalid comparison data" }, 500);
@@ -686,7 +686,7 @@ async function handler(req: Request): Promise<Response> {
 
       const compCountByUser = new Map<string, number>();
       for (const c of allComps) {
-        const voterId = c.voter?.id;
+        const voterId = c.voter?.[0]?.id;
         if (voterId) {
           compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
         }
@@ -695,7 +695,7 @@ async function handler(req: Request): Promise<Response> {
       // Deduplicate profiles by user.id (keep most recently created if duplicates exist)
       const uniqueProfiles = new Map<string, any>();
       for (const p of profiles) {
-        const uid = p.user?.id;
+        const uid = p.user?.[0]?.id;
         if (!uid) continue;
         const existing = uniqueProfiles.get(uid);
         if (!existing || (p.createdAt > existing.createdAt)) {
@@ -712,7 +712,7 @@ async function handler(req: Request): Promise<Response> {
           }
         })();
         return {
-          userId: p.user?.id ?? "",
+          userId: p.user?.[0]?.id ?? "",
           profileId: p.id,
           name: p.name,
           age: p.age,
@@ -730,7 +730,7 @@ async function handler(req: Request): Promise<Response> {
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,
           phone: p.phone ?? undefined,
-          comparisonsCount: compCountByUser.get(p.user?.id ?? "") ?? 0,
+          comparisonsCount: compCountByUser.get(p.user?.[0]?.id ?? "") ?? 0,
         };
       });
 
@@ -832,7 +832,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Get all ELO ratings for these users
       const userIds = profiles
-        .map((p: any) => p.user?.id)
+        .map((p: any) => p.user?.[0]?.id)
         .filter(Boolean) as string[];
 
       const { eloRatings: allRatings } = await adminDb.query({
