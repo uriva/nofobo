@@ -239,9 +239,8 @@ export default function Onboarding() {
       for (let i = 0; i < photos.length; i++) {
         const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
         await db.storage.uploadFile(photoPath, photos[i].file);
-        // Use permanent Firebase Storage URL instead of signed URL (which expires)
-        const permanentUrl = getStorageUrl(photoPath);
-        finalPhotoUrls.push(permanentUrl);
+        const url = await getStorageUrl(photoPath);
+        finalPhotoUrls.push(url);
       }
 
       const profileData: Record<string, unknown> = {

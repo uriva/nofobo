@@ -151,9 +151,8 @@ export default function Profile() {
         } else if (photos[i].file) {
           const photoPath = `profiles/${user.id}/photo-${i}-${Date.now()}`;
           await db.storage.uploadFile(photoPath, photos[i].file!);
-          // Use permanent Firebase Storage URL instead of signed URL (which expires)
-          const permanentUrl = getStorageUrl(photoPath);
-          photoUrls.push(permanentUrl);
+          const url = await getStorageUrl(photoPath);
+          photoUrls.push(url);
         }
       }
 
