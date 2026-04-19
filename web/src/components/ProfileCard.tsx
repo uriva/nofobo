@@ -110,12 +110,19 @@ export default function ProfileCard({
               {name}, {age}
             </div>
             {elo !== undefined && (
-              <div 
-                className="flex items-center gap-1 bg-grape-900/50 border border-grape-800 text-amber-400 font-bold px-2 py-1 rounded-lg text-sm flex-shrink-0 cursor-help"
-                title="Your personal Elo rating for this person. New users start at 1400."
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                {elo}
+              <div className="relative group">
+                <div 
+                  className="flex items-center gap-1 bg-grape-900/50 border border-grape-800 text-amber-400 font-bold px-2 py-1 rounded-lg text-sm flex-shrink-0 cursor-help"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                  {elo}
+                </div>
+                
+                {/* Custom Tooltip */}
+                <div className="absolute right-0 top-full mt-2 w-48 bg-grape-900 text-white text-xs p-3 rounded-xl border border-grape-700 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none transform origin-top-right scale-95 group-hover:scale-100">
+                  <p className="font-bold text-amber-400 mb-1">Elo Rating</p>
+                  <p className="text-grape-300 leading-relaxed">This is your personal rating for this person based on past comparisons. New users start at 1400.</p>
+                </div>
               </div>
             )}
           </div>
