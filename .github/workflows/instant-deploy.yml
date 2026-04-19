@@ -1,0 +1,29 @@
+name: Deploy InstantDB Schema & Perms
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'instant.schema.ts'
+      - 'instant.perms.ts'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Push to InstantDB
+        env:
+          INSTANT_APP_ID: 6818f05d-46f3-4622-9aaf-dcd14e067e9e
+          INSTANT_ADMIN_TOKEN: ${{ secrets.INSTANT_ADMIN_TOKEN }}
+        run: npx instant-cli push all --yes
