@@ -1,30 +1,14 @@
 export function normalizePhone(phone?: string): string | undefined {
   if (!phone) return undefined;
   
-  // Remove all non-digit and non-plus characters
-  let cleaned = phone.replace(/[^\d+]/g, "");
-  
-  // Ensure only one plus sign at the beginning
-  if (cleaned.includes("+")) {
-    const hasLeadingPlus = cleaned.startsWith("+");
-    cleaned = cleaned.replace(/\+/g, "");
-    if (hasLeadingPlus) {
-      cleaned = "+" + cleaned;
-    }
-  }
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/[^\d]/g, "");
 
   if (!cleaned) return undefined;
 
-  // If it doesn't start with +, assume US (+1) if 10 digits
-  if (!cleaned.startsWith("+")) {
-    if (cleaned.length === 10) {
-      return `+1${cleaned}`;
-    }
-    if (cleaned.length === 11 && cleaned.startsWith("1")) {
-      return `+${cleaned}`;
-    }
-    // Fallback: just return the digits
-    return cleaned;
+  // If it's exactly 10 digits, assume it's a US number without the country code
+  if (cleaned.length === 10) {
+    return `1${cleaned}`;
   }
   
   return cleaned;
