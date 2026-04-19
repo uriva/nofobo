@@ -2,9 +2,9 @@ import { init } from "npm:@instantdb/admin";
 
 export function normalizePhone(phone?: string): string | undefined {
   if (!phone) return undefined;
-  
+
   let cleaned = phone.replace(/[^\d+]/g, "");
-  
+
   if (cleaned.includes("+")) {
     const hasLeadingPlus = cleaned.startsWith("+");
     cleaned = cleaned.replace(/\+/g, "");
@@ -24,7 +24,7 @@ export function normalizePhone(phone?: string): string | undefined {
     }
     return cleaned;
   }
-  
+
   return cleaned;
 }
 
@@ -50,7 +50,7 @@ async function main() {
   }
 
   console.log(`Found ${txs.length} profiles to update`);
-  
+
   if (txs.length > 0) {
     for (let i = 0; i < txs.length; i += 50) {
       const chunk = txs.slice(i, i + 50);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
@@ -57,6 +57,10 @@ export default function Admin() {
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [editingTagsInput, setEditingTagsInput] = useState("");
   const [savingTags, setSavingTags] = useState(false);
+
+  // Cover Image
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   // Settings
   const [isEditingAdmins, setIsEditingAdmins] = useState(false);
@@ -183,11 +187,35 @@ export default function Admin() {
   };
 
   const handleToggleRequirePhone = async () => {
-    if (!community || !activeCommunityCode) return;
     const current = !!community.requirePhone;
     await db.transact([
       db.tx.communities[community.id].update({ requirePhone: !current }),
     ]);
+  };
+
+  const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !community) return;
+    
+    const file = e.target.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image is too large. Max 5MB.");
+      return;
+    }
+
+    setUploadingCover(true);
+    try {
+      const coverPath = `communities/${community.id}/cover-${Date.now()}`;
+      await db.storage.uploadFile(coverPath, file);
+      await db.transact([
+        db.tx.communities[community.id].update({ coverImageUrl: coverPath }),
+      ]);
+    } catch (e) {
+      console.error("Cover image upload failed:", e);
+      alert("Failed to upload cover image.");
+    } finally {
+      setUploadingCover(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleSaveCommunityInfo = async () => {
@@ -410,6 +438,53 @@ export default function Admin() {
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="border-t border-grape-800" />
+
+                {/* Cover Image */}
+                <div>
+                  <h3 className="text-white font-medium mb-1">Community Cover Image</h3>
+                  <p className="text-grape-400 text-sm mb-3">Upload a cover image for your community landing page.</p>
+                  
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef} 
+                      onChange={handleCoverImageChange}
+                    />
+                    <div 
+                      className="w-full sm:w-48 aspect-video bg-grape-900 border-2 border-dashed border-grape-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-grape-500 overflow-hidden transition-colors"
+                      onClick={() => !uploadingCover && fileInputRef.current?.click()}
+                    >
+                      {uploadingCover ? (
+                        <Spinner message="" size="sm" />
+                      ) : community?.coverImageUrl ? (
+                        <StorageImage 
+                          pathOrUrl={community.coverImageUrl} 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <span className="text-grape-500 text-sm font-medium">+ Add Cover</span>
+                      )}
+                    </div>
+                    {community?.coverImageUrl && !uploadingCover && (
+                      <button 
+                        onClick={async () => {
+                          if (confirm("Remove cover image?")) {
+                            await db.transact([
+                              db.tx.communities[community.id].update({ coverImageUrl: undefined })
+                            ]);
+                          }
+                        }}
+                        className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="border-t border-grape-800" />

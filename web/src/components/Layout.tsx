@@ -9,7 +9,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = db.useAuth();
-  const { activeCommunityCode, setActiveCommunityCode, myProfiles } = useCommunity();
+  const { activeCommunityCode, setActiveCommunityCode, myProfiles, allCommunities } = useCommunity();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Close mobile menu when navigating
@@ -47,6 +47,22 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const isCommunityAdmin = user?.email && communityAdminEmails.some(e => e.toLowerCase() === user.email.toLowerCase());
   const isAdmin = isGlobalAdmin || isCommunityAdmin;
 
+  // Let admins see all communities they have access to in the dropdown
+  const adminCommunities = allCommunities.filter(c => {
+    if (isGlobalAdmin) return true;
+    try {
+      const admins = c.adminEmails ? JSON.parse(c.adminEmails) : [];
+      return user?.email && admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+    } catch {
+      return false;
+    }
+  });
+
+  const dropdownCommunities = Array.from(new Set([
+    ...myProfiles.map(p => p.communityCode),
+    ...adminCommunities.map(c => c.code)
+  ]));
+
   const navLinks = [
     { name: "Compare", path: "/app/compare" },
     { name: "Decisions", path: "/app/decisions" },
@@ -74,7 +90,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
             >
               NOFOBO
             </span>
-            {myProfiles.length > 0 && activeCommunityCode && (
+            {(dropdownCommunities.length > 0 || myProfiles.length > 0) && activeCommunityCode && (
               <select
                 value={activeCommunityCode}
                 onChange={(e) => {
@@ -86,12 +102,14 @@ export default function Layout({ children, headerActions }: { children: ReactNod
                 }}
                 className="bg-grape-900 border border-grape-800 text-grape-300 text-xs sm:text-sm rounded-lg focus:ring-grape-500 focus:border-grape-500 block px-2 py-1 sm:px-2.5 sm:py-1.5 truncate max-w-[140px] sm:max-w-xs"
               >
-                {myProfiles.map((p) => (
-                  <option key={p.communityCode} value={p.communityCode}>
-                    {p.communityCode}
+                {dropdownCommunities.map((code) => (
+                  <option key={code} value={code}>
+                    /{code}
                   </option>
                 ))}
-                <option value="new">+ Join/Create new community</option>
+                <option value="new" className="text-grape-500 font-bold border-t border-grape-800">
+                  + Add/Join Community
+                </option>
               </select>
             )}
           </div>

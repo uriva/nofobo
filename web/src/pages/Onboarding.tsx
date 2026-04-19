@@ -441,7 +441,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
       {/* Header */}
-      <div className="border-b border-grape-900/50 px-6 py-4">
+      <div className="border-b border-grape-900/50 px-6 py-4 relative z-10">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <span
             onClick={() => navigate("/")}
@@ -453,13 +453,23 @@ export default function Onboarding() {
         </div>
       </div>
 
-      <div className="flex-1 max-w-2xl mx-auto w-full px-6 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white mb-2">
-            Set up your profile
+      {currentCommunity?.coverImageUrl && (
+        <div className="w-full h-48 sm:h-64 relative border-b border-grape-900/50">
+          <StorageImage 
+            pathOrUrl={currentCommunity.coverImageUrl} 
+            className="w-full h-full object-cover" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f0a1a] to-transparent"></div>
+        </div>
+      )}
+
+      <div className={`flex-1 max-w-2xl mx-auto w-full px-6 ${currentCommunity?.coverImageUrl ? 'py-4' : 'py-8'}`}>
+        <div className="text-center mb-8 relative z-10">
+          <h1 className="text-3xl font-black text-white mb-2 drop-shadow-md">
+            Join {currentCommunity?.name || "the community"}
           </h1>
-          <p className="text-grape-400">
-            Fill in your details to start comparing and finding your match
+          <p className="text-grape-400 drop-shadow-md">
+            Set up your profile to start comparing and finding your match
           </p>
         </div>
 

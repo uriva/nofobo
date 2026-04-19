@@ -38,6 +38,7 @@ const _schema = i.schema({
       tags: i.string().optional(),
       adminEmails: i.string().optional(),
       requirePhone: i.boolean().optional(),
+      coverImageUrl: i.string().optional(),
     }),
     comparisons: i.entity({
       createdAt: i.number().indexed(),

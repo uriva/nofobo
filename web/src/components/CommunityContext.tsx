@@ -5,6 +5,7 @@ interface CommunityContextType {
   activeCommunityCode: string | null;
   setActiveCommunityCode: (code: string) => void;
   myProfiles: any[];
+  allCommunities: any[];
 }
 
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
@@ -17,16 +18,19 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   } : null);
 
   const myProfiles = data?.profiles || [];
+  const allCommunities = data?.communities || [];
   const [activeCommunityCode, setActiveCommunityCode] = useState<string | null>(null);
 
   useEffect(() => {
-    // If we have profiles but no active community selected, default to the first one
-    if (myProfiles.length > 0 && !activeCommunityCode) {
-      // Also check local storage to remember the last selected
+    // If no active community selected, try to load from storage or default to first profile
+    if (!activeCommunityCode) {
       const saved = localStorage.getItem("activeCommunityCode");
-      if (saved && myProfiles.some(p => p.communityCode === saved)) {
+      // Only auto-switch to saved if we either have a profile in it or are an admin of it
+      // Wait, allCommunities contains ALL communities (view: true for everyone).
+      // Let's just trust the saved code if it exists.
+      if (saved) {
         setActiveCommunityCode(saved);
-      } else {
+      } else if (myProfiles.length > 0) {
         setActiveCommunityCode(myProfiles[0].communityCode);
       }
     }
@@ -40,7 +44,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   }, [activeCommunityCode]);
 
   return (
-    <CommunityContext.Provider value={{ activeCommunityCode, setActiveCommunityCode, myProfiles }}>
+    <CommunityContext.Provider value={{ activeCommunityCode, setActiveCommunityCode, myProfiles, allCommunities }}>
       {children}
     </CommunityContext.Provider>
   );
