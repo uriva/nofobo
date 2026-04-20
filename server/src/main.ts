@@ -147,13 +147,7 @@ async function handler(req: Request): Promise<Response> {
       const myCommunity = myProfile.communityCode;
       const myGender = myProfile.gender;
       const myAttractedTo = myProfile.attractedTo ?? "both";
-      const myMatchStatuses: string[] = (() => {
-        try {
-          return myProfile.matchWithStatuses;
-        } catch {
-          return [];
-        }
-      })();
+      const myMatchStatuses: string[] = myProfile.matchWithStatuses || [];
 
       // Get optional filters from query params
       const minAge = url.searchParams.get("minAge");
@@ -202,13 +196,7 @@ async function handler(req: Request): Promise<Response> {
         // Kink tag filter (if specified, at least one overlap required)
         if (filterTags) {
           const required = filterTags.split(",").map((t) => t.trim());
-          const theirTags: string[] = (() => {
-            try {
-              return p.kinkTags;
-            } catch {
-              return [];
-            }
-          })();
+          const theirTags: string[] = p.kinkTags || [];
           if (!required.some((r: any) => theirTags.includes(r))) return false;
         }
 
@@ -226,9 +214,9 @@ async function handler(req: Request): Promise<Response> {
       // Get user's existing comparisons
       const { comparisons } = await adminDb.query({
         comparisons: {
-          $: { where: { "voter.id": user.id } },
-          winner: {},
-          loser: {},
+          $: { where: { "voterProfile.user.id": user.id } },
+          winnerProfile: { user: {} },
+          loserProfile: { user: {} },
         },
       });
 
@@ -264,8 +252,8 @@ async function handler(req: Request): Promise<Response> {
       // Get user's ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "rater.id": user.id } },
-          target: {},
+          $: { where: { "raterProfile.user.id": user.id } },
+          targetProfile: { user: {} }
         },
       });
 
@@ -303,21 +291,9 @@ async function handler(req: Request): Promise<Response> {
           age: p?.age,
           bio: p?.bio ?? p?.aiDescription ?? "",
           photoUrl: p?.photoUrl,
-          photoUrls: (() => {
-            try {
-              return p?.photoUrls;
-            } catch {
-              return [];
-            }
-          })(),
+          photoUrls: p?.photoUrls || [],
           relationshipStatus: p?.relationshipStatus,
-          kinkTags: (() => {
-            try {
-              return p?.kinkTags;
-            } catch {
-              return [];
-            }
-          })(),
+          kinkTags: p?.kinkTags || [],
           elo: Math.round(userElo.get(p?.user?.[0]?.id) ?? ELO_DEFAULT),
         })),
         totalComparisons: relevantComparisons.length,
@@ -353,8 +329,8 @@ async function handler(req: Request): Promise<Response> {
       // Update ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "rater.id": user.id } },
-          target: {},
+          $: { where: { "raterProfile.user.id": user.id } },
+          targetProfile: { user: {} },
         },
       });
 
@@ -442,7 +418,7 @@ async function handler(req: Request): Promise<Response> {
 
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "rater.id": user.id, "target.id": targetUserId } },
+          $: { where: { "raterProfile.user.id": user.id, "targetProfile.user.id": targetUserId } },
         },
       });
 
@@ -500,20 +476,8 @@ async function handler(req: Request): Promise<Response> {
         const loser = c.loser?.[0];
         const winnerProfile = winner?.id ? profileMap.get(winner.id)?.[0] : undefined;
         const loserProfile = loser?.id ? profileMap.get(loser.id)?.[0] : undefined;
-        const winnerPhotoUrls = (() => {
-          try {
-            return winnerProfile?.photoUrls;
-          } catch {
-            return [];
-          }
-        })();
-        const loserPhotoUrls = (() => {
-          try {
-            return loserProfile?.photoUrls;
-          } catch {
-            return [];
-          }
-        })();
+        const winnerPhotoUrls = winnerProfile?.photoUrls || [];
+        const loserPhotoUrls = loserProfile?.photoUrls || [];
         return {
           comparisonId: c.id,
           winnerId: winner?.id ?? "",
@@ -556,9 +520,9 @@ async function handler(req: Request): Promise<Response> {
       // Get the comparison and verify ownership
       const { comparisons } = await adminDb.query({
         comparisons: {
-          $: { where: { id: comparisonId, "voter.id": user.id } },
-          winner: {},
-          loser: {},
+          $: { where: { id: comparisonId, "voterProfile.user.id": user.id } },
+          winnerProfile: { user: {} },
+          loserProfile: { user: {} },
         },
       });
 
@@ -653,7 +617,7 @@ async function handler(req: Request): Promise<Response> {
       // Verify ownership
       const { comparisons } = await adminDb.query({
         comparisons: {
-          $: { where: { id: comparisonId, "voter.id": user.id } },
+          $: { where: { id: comparisonId, "voterProfile.user.id": user.id } },
         },
       });
 
@@ -706,13 +670,13 @@ async function handler(req: Request): Promise<Response> {
       // Get comparison counts per user
       const { comparisons: allComps } = await adminDb.query({
         comparisons: {
-          voter: {},
+          voterProfile: { user: {} },
         },
       });
 
       const compCountByUser = new Map<string, number>();
       for (const c of allComps) {
-        const voterId = c.voter?.[0]?.id;
+        const voterId = c.voterProfile?.[0]?.user?.[0]?.id || c.voterProfile?.[0]?.user?.id;
         if (voterId) {
           compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
         }
@@ -730,13 +694,7 @@ async function handler(req: Request): Promise<Response> {
       }
 
       const result = Array.from(uniqueProfiles.values()).map((p: any) => {
-        const photoUrls = (() => {
-          try {
-            return p.photoUrls;
-          } catch {
-            return [];
-          }
-        })();
+        const photoUrls = p.photoUrls || [];
         return {
           userId: p.user?.[0]?.id ?? "",
           profileId: p.id,
@@ -745,13 +703,7 @@ async function handler(req: Request): Promise<Response> {
           gender: p.gender,
           attractedTo: p.attractedTo ?? "both",
           relationshipStatus: p.relationshipStatus ?? "",
-          kinkTags: (() => {
-            try {
-              return p.kinkTags;
-            } catch {
-              return [];
-            }
-          })(),
+          kinkTags: p.kinkTags || [],
           bio: p.bio ?? p.aiDescription ?? "",
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,
@@ -789,8 +741,8 @@ async function handler(req: Request): Promise<Response> {
       // Get the target user's ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "rater.id": targetUserId } },
-          target: {},
+          $: { where: { "raterProfile.user.id": targetUserId } },
+          targetProfile: { user: {} },
         },
       });
 
@@ -809,9 +761,7 @@ async function handler(req: Request): Promise<Response> {
 
       const rankings = eloRatings
         .map((r: any) => {
-          const tUserId = Array.isArray(r.target)
-            ? r.target[0]?.id
-            : r.target?.id;
+          const tUserId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
           const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
             targetUserId: tUserId ?? "",
@@ -863,8 +813,8 @@ async function handler(req: Request): Promise<Response> {
 
       const { eloRatings: allRatings } = await adminDb.query({
         eloRatings: {
-          rater: {},
-          target: {},
+          raterProfile: { user: {} },
+          targetProfile: { user: {} },
         },
       });
 
@@ -875,8 +825,10 @@ async function handler(req: Request): Promise<Response> {
         const ratings = new Map<string, number>();
 
         for (const r of allRatings) {
-          if (r.rater?.id === userId && userIdSet.has(r.target?.id ?? "")) {
-            ratings.set(r.target!.id, r.score);
+          const rId = r.raterProfile?.[0]?.user?.[0]?.id || r.raterProfile?.[0]?.user?.id;
+          const tId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+          if (rId === userId && userIdSet.has(tId ?? "")) {
+            ratings.set(tId!, r.score);
           }
         }
 
