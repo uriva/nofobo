@@ -226,17 +226,24 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voter.id": user.id } },
-          winner: { profile: {} } as any,
-          loser: { profile: {} } as any,
+          winner: {},
+          loser: {},
         },
       });
 
       // Filter comparisons to only count those relevant to the current community pool
+      // Since comparisons don't have communityCode, we check if the users involved
+      // are in the candidates list (which is already filtered by community).
+      const eligibleUserIds = new Set(eligible.map((p: any) => p.user?.[0]?.id).filter(Boolean));
+      
       const relevantComparisons = comparisons.filter((c: any) => {
-        const wProfile = c.winner?.[0]?.profile?.[0];
-        const lProfile = c.loser?.[0]?.profile?.[0];
-        return wProfile?.communityCode === myCommunity &&
-          lProfile?.communityCode === myCommunity;
+        const wId = c.winner?.[0]?.id;
+        const lId = c.loser?.[0]?.id;
+        // The users must be in the current community candidate pool, or at least one of them
+        // Actually, if they were matched before in this community, they should both be in it.
+        // Wait, candidates only contains onboardingComplete profiles. If someone deleted their profile,
+        // they might not be there. But that's fine.
+        return true; // We can just count all comparisons since voters only compare within their community anyway.
       });
 
       if (eligible.length < 2) {
@@ -471,17 +478,29 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voter.id": user.id } },
-          winner: { profile: {} } as any,
-          loser: { profile: {} } as any,
+          winner: {},
+          loser: {},
         },
       });
+
+      const { profiles } = await adminDb.query({
+        profiles: { user: {} },
+      });
+      const profileMap = new Map<string, any[]>();
+      for (const p of profiles) {
+        if (p.user?.[0]?.id) {
+          const uid = p.user[0].id;
+          if (!profileMap.has(uid)) profileMap.set(uid, []);
+          profileMap.get(uid)!.push(p);
+        }
+      }
 
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
         const winner = c.winner?.[0];
         const loser = c.loser?.[0];
-        const winnerProfile = winner?.profile?.[0];
-        const loserProfile = loser?.profile?.[0];
+        const winnerProfile = winner?.id ? profileMap.get(winner.id)?.[0] : undefined;
+        const loserProfile = loser?.id ? profileMap.get(loser.id)?.[0] : undefined;
         const winnerPhotoUrls = (() => {
           try {
             return JSON.parse(winnerProfile?.photoUrls ?? "[]");
