@@ -317,25 +317,50 @@ async function handler(req: Request): Promise<Response> {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { winnerId, loserId } = body;
+    const { winnerId, loserId, community } = body;
 
-    if (!winnerId || !loserId) {
-      return json({ error: "winnerId and loserId required" }, 400);
+    if (!winnerId || !loserId || !community) {
+      return json({ error: "winnerId, loserId, and community required" }, 400);
     }
 
     try {
+      // Find profiles for these users
+      const { profiles } = await adminDb.query({
+        profiles: {
+          $: { where: { communityCode: community } },
+          user: {}
+        }
+      });
+
+      const wProfile = profiles.find((p: any) => {
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        return uid === winnerId;
+      });
+      const lProfile = profiles.find((p: any) => {
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        return uid === loserId;
+      });
+      const vProfile = profiles.find((p: any) => {
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        return uid === user.id;
+      });
+
+      if (!wProfile || !lProfile || !vProfile) {
+        return json({ error: "Could not find profiles for one or more users" }, 400);
+      }
+
       // Create comparison record
       const comparisonId = id();
       await adminDb.transact([
         adminDb.tx.comparisons[comparisonId]
           .update({ createdAt: Date.now() })
-          .link({ voter: user.id, winner: winnerId, loser: loserId }),
+          .link({ voterProfile: vProfile.id, winnerProfile: wProfile.id, loserProfile: lProfile.id }),
       ]);
 
       // Update ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "raterProfile.user.id": user.id } },
+          $: { where: { "raterProfile.id": vProfile.id } },
           targetProfile: { user: {} },
         },
       });
@@ -346,7 +371,7 @@ async function handler(req: Request): Promise<Response> {
       let loserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetId = r.target?.id;
+        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
         if (targetId === winnerId) {
           winnerElo = r.score;
           winnerRatingId = r.id;
@@ -376,7 +401,7 @@ async function handler(req: Request): Promise<Response> {
         txns.push(
           adminDb.tx.eloRatings[newId]
             .update({ score: newElo.winner, comparisonsCount: 1 })
-            .link({ rater: user.id, target: winnerId }),
+            .link({ raterProfile: vProfile.id, targetProfile: wProfile.id }),
         );
       }
 
@@ -395,7 +420,7 @@ async function handler(req: Request): Promise<Response> {
         txns.push(
           adminDb.tx.eloRatings[newId]
             .update({ score: newElo.loser, comparisonsCount: 1 })
-            .link({ rater: user.id, target: loserId }),
+            .link({ raterProfile: vProfile.id, targetProfile: lProfile.id }),
         );
       }
 
@@ -537,26 +562,28 @@ async function handler(req: Request): Promise<Response> {
       }
 
       const comp = comparisons[0];
-      const oldWinnerId = comp.winner?.[0]?.id;
-      const oldLoserId = comp.loser?.[0]?.id;
+      const oldWinnerProfileId = comp.winnerProfile?.[0]?.id;
+      const oldLoserProfileId = comp.loserProfile?.[0]?.id;
+      const oldWinnerUserId = comp.winnerProfile?.[0]?.user?.[0]?.id || comp.winnerProfile?.[0]?.user?.id;
+      const oldLoserUserId = comp.loserProfile?.[0]?.user?.[0]?.id || comp.loserProfile?.[0]?.user?.id;
 
-      if (!oldWinnerId || !oldLoserId) {
+      if (!oldWinnerProfileId || !oldLoserProfileId) {
         return json({ error: "Invalid comparison data" }, 500);
       }
 
       // Swap the winner/loser links
       await adminDb.transact([
         adminDb.tx.comparisons[comparisonId]
-          .unlink({ winner: oldWinnerId, loser: oldLoserId })
-          .link({ winner: oldLoserId, loser: oldWinnerId }),
+          .unlink({ winnerProfile: oldWinnerProfileId, loserProfile: oldLoserProfileId })
+          .link({ winnerProfile: oldLoserProfileId, loserProfile: oldWinnerProfileId }),
       ]);
 
       // Recalculate ELO: undo old result, apply new result
       // Get current ELO ratings for these two targets
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "rater.id": user.id } },
-          target: {},
+          $: { where: { "raterProfile.user.id": user.id } },
+          targetProfile: { user: {} },
         },
       });
 
@@ -566,12 +593,12 @@ async function handler(req: Request): Promise<Response> {
       let oldLoserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetId = r.target?.id;
-        if (targetId === oldWinnerId) {
+        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+        if (targetId === oldWinnerUserId) {
           oldWinnerElo = r.score;
           oldWinnerRatingId = r.id;
         }
-        if (targetId === oldLoserId) {
+        if (targetId === oldLoserUserId) {
           oldLoserElo = r.score;
           oldLoserRatingId = r.id;
         }
