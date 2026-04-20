@@ -38,8 +38,8 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const isGlobalAdmin = user?.email ? ADMIN_EMAILS.some(e => e.toLowerCase() === user.email.toLowerCase()) : false;
   let communityAdminEmails: string[] = [];
   try {
-    communityAdminEmails = userData?.communities?.[0]?.adminEmails
-      ? userData.communities[0].adminEmails
+    communityAdminEmails = Array.isArray(userData?.communities?.[0]?.adminEmails)
+      ? userData!.communities![0].adminEmails
       : [];
   } catch (e) {
     console.error("Failed to parse admin emails", e);
@@ -51,7 +51,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   const adminCommunities = allCommunities.filter(c => {
     if (isGlobalAdmin) return true;
     try {
-      const admins = c.adminEmails ? c.adminEmails : [];
+      const admins = Array.isArray(c.adminEmails) ? c.adminEmails : [];
       return user?.email && admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
     } catch {
       return false;
