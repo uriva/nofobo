@@ -24,12 +24,12 @@ const _schema = i.schema({
       text: i.string(),
     }),
     communities: i.entity({
-      adminEmails: i.any().optional(),
+      adminEmails: i.json<string[]>().optional(),
       code: i.string().unique().indexed(),
       createdAt: i.number().indexed(),
       name: i.string(),
       requirePhone: i.boolean().optional(),
-      tags: i.any().optional(),
+      tags: i.json<string[]>().optional(),
       coverImageUrl: i.string().optional(),
     }),
     comparisons: i.entity({
@@ -56,21 +56,21 @@ const _schema = i.schema({
     profiles: i.entity({
       age: i.number().indexed(),
       aiDescription: i.string().optional(),
-      attractedTo: i.any().optional(),
+      attractedTo: i.json<string[]>().optional(),
       bio: i.string(),
       communityCode: i.string().indexed().optional(),
       createdAt: i.number().indexed(),
       gender: i.string().indexed(),
-      kinkTags: i.any().optional(), // JSON array of kink tags
+      kinkTags: i.json<string[]>().optional(), // JSON array of kink tags
       links: i.string().optional(),
       location: i.string().optional(),
       lookingFor: i.string().indexed().optional(),
-      matchWithStatuses: i.any().optional(), // JSON array of acceptable statuses
+      matchWithStatuses: i.json<string[]>().optional(), // JSON array of acceptable statuses
       name: i.string(),
       onboardingComplete: i.boolean().indexed(),
       phone: i.string().optional(),
       photoUrl: i.string().optional(),
-      photoUrls: i.any().optional(), // JSON array of photo URLs
+      photoUrls: i.json<string[]>().optional(), // JSON array of photo URLs
       relationshipStatus: i.string().indexed().optional(),
     }),
   },

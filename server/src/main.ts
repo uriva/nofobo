@@ -265,7 +265,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Select next pair using user IDs
       const candidateUserIds = eligible
-        .map((p: any) => p.user?.[0]?.id)
+        .map((p: any) => Array.isArray(p.user) ? p.user[0]?.id : p.user?.id)
         .filter(Boolean) as string[];
 
       const pair = selectNextPair(userElo, comparedPairs, candidateUserIds);
@@ -280,22 +280,28 @@ async function handler(req: Request): Promise<Response> {
 
       // Return full profile data for both candidates
       const pairProfiles = pair.map((userId) =>
-        eligible.find((p: any) => p.user?.[0]?.id === userId)
+        eligible.find((p: any) => {
+          const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+          return uid === userId;
+        })
       );
 
       return json({
-        pair: pairProfiles.map((p: any) => ({
-          userId: p?.user?.[0]?.id,
-          profileId: p?.id,
-          name: p?.name,
-          age: p?.age,
-          bio: p?.bio ?? p?.aiDescription ?? "",
-          photoUrl: p?.photoUrl,
-          photoUrls: p?.photoUrls || [],
-          relationshipStatus: p?.relationshipStatus,
-          kinkTags: p?.kinkTags || [],
-          elo: Math.round(userElo.get(p?.user?.[0]?.id) ?? ELO_DEFAULT),
-        })),
+        pair: pairProfiles.map((p: any) => {
+          const uid = Array.isArray(p?.user) ? p?.user[0]?.id : p?.user?.id;
+          return {
+            userId: uid,
+            profileId: p?.id,
+            name: p?.name,
+            age: p?.age,
+            bio: p?.bio ?? p?.aiDescription ?? "",
+            photoUrl: p?.photoUrl,
+            photoUrls: p?.photoUrls || [],
+            relationshipStatus: p?.relationshipStatus,
+            kinkTags: p?.kinkTags || [],
+            elo: Math.round(userElo.get(uid) ?? ELO_DEFAULT),
+          };
+        }),
         totalComparisons: relevantComparisons.length,
         eligibleCount: eligible.length,
       });
