@@ -500,8 +500,8 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voterProfile.user.id": user.id } },
-          winnerProfile: { user: {} },
-          loserProfile: { user: {} },
+          winnerProfile: {},
+          loserProfile: {},
         },
       });
 
@@ -510,22 +510,26 @@ async function handler(req: Request): Promise<Response> {
       });
       const profileMap = new Map<string, any[]>();
       for (const p of profiles) {
-        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
-        if (uid) {
-          if (!profileMap.has(uid)) profileMap.set(uid, []);
-          profileMap.get(uid)!.push(p);
+        if (p.id) {
+          if (!profileMap.has(p.id)) profileMap.set(p.id, []);
+          profileMap.get(p.id)!.push(p);
         }
       }
 
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
-        const winnerProfile = c.winnerProfile?.[0];
-        const loserProfile = c.loserProfile?.[0];
-        const winnerId = winnerProfile?.user?.[0]?.id || winnerProfile?.user?.id;
-        const loserId = loserProfile?.user?.[0]?.id || loserProfile?.user?.id;
+        const wProfileId = c.winnerProfile?.[0]?.id;
+        const lProfileId = c.loserProfile?.[0]?.id;
+
+        const winnerProfile = profileMap.get(wProfileId)?.[0] || c.winnerProfile?.[0];
+        const loserProfile = profileMap.get(lProfileId)?.[0] || c.loserProfile?.[0];
+
+        const winnerId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
+        const loserId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
         
         const winnerPhotoUrls = winnerProfile?.photoUrls || [];
         const loserPhotoUrls = loserProfile?.photoUrls || [];
+        
         return {
           comparisonId: c.id,
           winnerId: winnerId ?? "",
