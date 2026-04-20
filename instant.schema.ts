@@ -174,6 +174,66 @@ const _schema = i.schema({
         label: "wonComparisons",
       },
     },
+    comparisonsLegacyVoter: {
+      forward: {
+        on: "comparisons",
+        has: "one",
+        label: "voter",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "legacyVotedComparisons",
+      },
+    },
+    comparisonsLegacyWinner: {
+      forward: {
+        on: "comparisons",
+        has: "one",
+        label: "winner",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "legacyWonComparisons",
+      },
+    },
+    comparisonsLegacyLoser: {
+      forward: {
+        on: "comparisons",
+        has: "one",
+        label: "loser",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "legacyLostComparisons",
+      },
+    },
+    eloLegacyRater: {
+      forward: {
+        on: "eloRatings",
+        has: "one",
+        label: "rater",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "legacyGivenRatings",
+      },
+    },
+    eloLegacyTarget: {
+      forward: {
+        on: "eloRatings",
+        has: "one",
+        label: "target",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "legacyReceivedRatings",
+      },
+    },
     eloRatingsRaterProfile: {
       forward: {
         on: "eloRatings",

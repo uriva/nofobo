@@ -685,7 +685,7 @@ async function handler(req: Request): Promise<Response> {
       // Deduplicate profiles by user.id (keep most recently created if duplicates exist)
       const uniqueProfiles = new Map<string, any>();
       for (const p of profiles) {
-        const uid = p.user?.[0]?.id;
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
         if (!uid) continue;
         const existing = uniqueProfiles.get(uid);
         if (!existing || (p.createdAt > existing.createdAt)) {
@@ -695,8 +695,9 @@ async function handler(req: Request): Promise<Response> {
 
       const result = Array.from(uniqueProfiles.values()).map((p: any) => {
         const photoUrls = p.photoUrls || [];
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
         return {
-          userId: p.user?.[0]?.id ?? "",
+          userId: uid ?? "",
           profileId: p.id,
           name: p.name,
           age: p.age,
@@ -708,7 +709,7 @@ async function handler(req: Request): Promise<Response> {
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,
           phone: p.phone ?? undefined,
-          comparisonsCount: compCountByUser.get(p.user?.[0]?.id ?? "") ?? 0,
+          comparisonsCount: compCountByUser.get(uid ?? "") ?? 0,
         };
       });
 
