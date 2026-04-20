@@ -2,12 +2,60 @@
 // NOFOBO Backend - Deno Server
 // Handles profile creation, community-scoped pair selection, and ELO ranking
 
+
+export function updateElo(winnerElo: number, loserElo: number): { winner: number; loser: number } {
+  const K = 32;
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+  const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
+  
+  return {
+    winner: Math.round(winnerElo + K * (1 - expectedWinner)),
+    loser: Math.round(loserElo + K * (0 - expectedLoser))
+  };
+}
+
+const GENDER_TO_ATTRACTION: Record<string, string> = {
+  man: "men",
+  woman: "women",
+  nonbinary: "nonbinary",
+};
+
+export function parseAttractedTo(raw: any): string[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string" && raw.startsWith("[")) {
+    try {
+      return JSON.parse(raw);
+    } catch { /* fall through */ }
+  }
+  if (raw === "both") return ["men", "women"];
+  return [raw];
+}
+
+export function isAttractionCompatible(
+  myGender: string,
+  myAttractedTo: any,
+  theirGender: string,
+  theirAttractedTo: any,
+): boolean {
+  const myList = parseAttractedTo(myAttractedTo);
+  const theirList = parseAttractedTo(theirAttractedTo);
+
+  const iLikeThem = myList.includes(
+    GENDER_TO_ATTRACTION[theirGender] ?? theirGender,
+  );
+  const theyLikeMe = theirList.includes(
+    GENDER_TO_ATTRACTION[myGender] ?? myGender,
+  );
+
+  return iLikeThem && theyLikeMe;
+}
+
 import { id } from "@instantdb/admin";
 import adminDb from "./db.ts";
 import {
   runMatching,
   selectNextPair,
-  updateElo,
+
   type UserEloData,
 } from "./galeShapley.ts";
 import { ELO_DEFAULT } from "../../constants.ts";
