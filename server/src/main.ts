@@ -500,20 +500,17 @@ async function handler(req: Request): Promise<Response> {
       const { comparisons } = await adminDb.query({
         comparisons: {
           $: { where: { "voterProfile.user.id": user.id } },
-          winnerProfile: {},
-          loserProfile: {},
+          winnerProfile: { user: {} },
+          loserProfile: { user: {} },
         },
       });
 
       const { profiles } = await adminDb.query({
         profiles: { user: {} },
       });
-      const profileMap = new Map<string, any[]>();
+      const profileMap = new Map<string, any>();
       for (const p of profiles) {
-        if (p.id) {
-          if (!profileMap.has(p.id)) profileMap.set(p.id, []);
-          profileMap.get(p.id)!.push(p);
-        }
+        if (p.id) profileMap.set(p.id, p);
       }
 
       // Map winner/loser profile IDs to user IDs and profile data
@@ -521,8 +518,8 @@ async function handler(req: Request): Promise<Response> {
         const wProfileId = c.winnerProfile?.[0]?.id;
         const lProfileId = c.loserProfile?.[0]?.id;
 
-        const winnerProfile = profileMap.get(wProfileId)?.[0] || c.winnerProfile?.[0];
-        const loserProfile = profileMap.get(lProfileId)?.[0] || c.loserProfile?.[0];
+        const winnerProfile = profileMap.get(wProfileId) || c.winnerProfile?.[0];
+        const loserProfile = profileMap.get(lProfileId) || c.loserProfile?.[0];
 
         const winnerId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
         const loserId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
