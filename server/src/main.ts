@@ -527,11 +527,15 @@ async function handler(req: Request): Promise<Response> {
 
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
-        const wProfileId = c.winnerProfile?.[0]?.id;
-        const lProfileId = c.loserProfile?.[0]?.id;
+        // Handle both has:"one" and has:"many" returns from InstantDB
+        const wProfileId = Array.isArray(c.winnerProfile) ? c.winnerProfile[0]?.id : c.winnerProfile?.id;
+        const lProfileId = Array.isArray(c.loserProfile) ? c.loserProfile[0]?.id : c.loserProfile?.id;
 
-        const winnerProfile = profileMap.get(wProfileId) || c.winnerProfile?.[0];
-        const loserProfile = profileMap.get(lProfileId) || c.loserProfile?.[0];
+        const wProfileData = Array.isArray(c.winnerProfile) ? c.winnerProfile[0] : c.winnerProfile;
+        const lProfileData = Array.isArray(c.loserProfile) ? c.loserProfile[0] : c.loserProfile;
+
+        const winnerProfile = profileMap.get(wProfileId) || wProfileData;
+        const loserProfile = profileMap.get(lProfileId) || lProfileData;
 
         const winnerId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
         const loserId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
