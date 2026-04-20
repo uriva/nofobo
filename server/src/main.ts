@@ -872,7 +872,7 @@ async function handler(req: Request): Promise<Response> {
       // Build UserEloData for each user
       const userIdSet = new Set(userIds);
       const users: UserEloData[] = profiles.map((p: any) => {
-        const userId = p.user?.id ?? "";
+        const userId = Array.isArray(p.user) ? p.user[0]?.id : (p.user?.id ?? "");
         const ratings = new Map<string, number>();
 
         for (const r of allRatings) {
@@ -895,7 +895,8 @@ async function handler(req: Request): Promise<Response> {
       // Build profile name lookup
       const nameByUserId = new Map<string, string>();
       for (const p of profiles) {
-        if (p.user?.id) nameByUserId.set(p.user.id, p.name);
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        if (uid) nameByUserId.set(uid, p.name);
       }
 
       // Format matches
