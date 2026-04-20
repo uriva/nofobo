@@ -61,7 +61,7 @@ const _schema = i.schema({
       communityCode: i.string().indexed().optional(),
       createdAt: i.number().indexed(),
       gender: i.string().indexed(),
-      kinkTags: i.json<string[]>().optional(), // JSON array of kink tags
+      tags: i.json<string[]>().optional(), // JSON array of custom tags
       links: i.string().optional(),
       location: i.string().optional(),
       lookingFor: i.string().indexed().optional(),

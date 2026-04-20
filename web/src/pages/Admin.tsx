@@ -15,7 +15,7 @@ interface AdminProfile {
   gender: string;
   attractedTo: string;
   relationshipStatus: string;
-  kinkTags: string[];
+  tags: string[];
   bio: string;
   photoUrl?: string;
   location?: string;
@@ -644,9 +644,9 @@ export default function Admin() {
                       <div className="mb-2 text-grape-400 text-xs font-medium">
                         {p.name}'s preference ranking (by ELO)
                       </div>
-                      {p.kinkTags.length > 0 && (
+                      {p.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-3">
-                          {p.kinkTags.map((tag) => (
+                          {p.tags.map((tag) => (
                             <span key={tag} className="text-xs bg-grape-900 text-grape-300 px-2 py-0.5 rounded-full">
                               {tag}
                             </span>

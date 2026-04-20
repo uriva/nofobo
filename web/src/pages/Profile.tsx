@@ -56,7 +56,7 @@ export default function Profile() {
   const [gender, setGender] = useState("");
   const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [relationshipStatus, setRelationshipStatus] = useState("");
-  const [kinkTags, setKinkTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -81,9 +81,9 @@ export default function Profile() {
       });
       setRelationshipStatus(profile.relationshipStatus || "");
       try {
-        setKinkTags(profile.kinkTags);
+        setTags(profile.tags);
       } catch {
-        setKinkTags([]);
+        setTags([]);
       }
       setBio(profile.bio || profile.aiDescription || "");
       setLocation(profile.location || "");
@@ -126,8 +126,8 @@ export default function Profile() {
     });
   };
 
-  const toggleKinkTag = (tag: string) => {
-    setKinkTags((prev) =>
+  const toggleTag = (tag: string) => {
+    setTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
@@ -164,7 +164,7 @@ export default function Profile() {
         gender,
         attractedTo: (attractedTo),
         relationshipStatus,
-        kinkTags: (kinkTags),
+        tags: (tags),
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
@@ -338,9 +338,9 @@ export default function Profile() {
                 {availableTags.map((tag: string) => (
                   <button
                     key={tag}
-                    onClick={() => toggleKinkTag(tag)}
+                    onClick={() => toggleTag(tag)}
                     className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                      kinkTags.includes(tag)
+                      tags.includes(tag)
                         ? "border-grape-500 bg-grape-600/20 text-white"
                         : "border-grape-800 text-grape-400 hover:border-grape-600"
                     }`}

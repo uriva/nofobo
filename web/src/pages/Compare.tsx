@@ -15,7 +15,7 @@ interface PairProfile {
   photoUrl?: string;
   photoUrls?: string[];
   relationshipStatus?: string;
-  kinkTags?: string[];
+  tags?: string[];
   elo?: number;
 }
 
@@ -350,7 +350,7 @@ export default function Compare() {
                     photoUrl={profile.photoUrl}
                     photoUrls={profile.photoUrls}
                     relationshipStatus={profile.relationshipStatus}
-                    kinkTags={profile.kinkTags}
+                    tags={profile.tags}
                     elo={profile.elo}
                   />
                 </div>

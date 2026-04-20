@@ -9,7 +9,7 @@ interface ProfileCardProps {
   photoUrl?: string;
   photoUrls?: string[];
   relationshipStatus?: string;
-  kinkTags?: string[];
+  tags?: string[];
   phone?: string;
   large?: boolean;
   elo?: number;
@@ -23,7 +23,7 @@ export default function ProfileCard({
   photoUrl,
   photoUrls = [],
   relationshipStatus,
-  kinkTags,
+  tags,
   phone,
   large,
   elo,
@@ -139,9 +139,9 @@ export default function ProfileCard({
         </div>
 
         {/* Tags */}
-        {kinkTags && kinkTags.length > 0 && (
+        {tags && tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {kinkTags.map((tag) => (
+            {tags.map((tag) => (
               <span
                 key={tag}
                 className="text-xs font-medium bg-grape-900 border border-grape-800 text-grape-300 px-2.5 py-1 rounded-full"

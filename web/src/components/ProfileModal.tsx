@@ -63,7 +63,7 @@ export default function ProfileModal({ userId, communityCode, onClose }: Profile
             photoUrl={profile.photoUrl}
             photoUrls={profile.photoUrls ? profile.photoUrls : []}
             relationshipStatus={profile.relationshipStatus}
-            kinkTags={profile.kinkTags ? profile.kinkTags : []}
+            tags={profile.tags ? profile.tags : []}
             phone={profile.phone}
             large
           />

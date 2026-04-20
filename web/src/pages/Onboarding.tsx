@@ -40,7 +40,7 @@ export default function Onboarding() {
   const [gender, setGender] = useState("");
   const [attractedTo, setAttractedTo] = useState<string[]>([]);
   const [relationshipStatus, setRelationshipStatus] = useState("");
-  const [kinkTags, setKinkTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [phone, setPhone] = useState("");
@@ -185,13 +185,13 @@ export default function Onboarding() {
         setLocation(prev => prev || p.location || "");
         setPhone(prev => prev || p.phone || "");
         
-        if (kinkTags.length === 0) {
+        if (tags.length === 0) {
           try {
-            const parsedTags = p.kinkTags;
+            const parsedTags = p.tags;
             // Only keep tags that are available in the new community
             const filteredTags = parsedTags.filter((t: string) => availableTags.includes(t));
-            setKinkTags(filteredTags);
-          } catch { setKinkTags([]); }
+            setTags(filteredTags);
+          } catch { setTags([]); }
         }
 
         if (existingPhotoUrls.length === 0 && photos.length === 0) {
@@ -207,8 +207,8 @@ export default function Onboarding() {
     }
   }, [data, isNew, navigate, availableTags]);
 
-  const toggleKinkTag = (tag: string) => {
-    setKinkTags((prev: string[]) =>
+  const toggleTag = (tag: string) => {
+    setTags((prev: string[]) =>
       prev.includes(tag)
         ? prev.filter((t: string) => t !== tag)
         : [...prev, tag],
@@ -250,7 +250,7 @@ export default function Onboarding() {
         gender,
         attractedTo: (attractedTo),
         relationshipStatus,
-        kinkTags: (kinkTags),
+        tags: (tags),
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
@@ -621,9 +621,9 @@ export default function Onboarding() {
                 availableTags.map((tag: string) => (
                   <button
                     key={tag}
-                    onClick={() => toggleKinkTag(tag)}
+                    onClick={() => toggleTag(tag)}
                     className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                      kinkTags.includes(tag)
+                      tags.includes(tag)
                         ? "border-grape-500 bg-grape-600/20 text-white"
                         : "border-grape-800 text-grape-400 hover:border-grape-600"
                     }`}

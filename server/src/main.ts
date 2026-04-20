@@ -196,7 +196,7 @@ async function handler(req: Request): Promise<Response> {
         // Kink tag filter (if specified, at least one overlap required)
         if (filterTags) {
           const required = filterTags.split(",").map((t) => t.trim());
-          const theirTags: string[] = p.kinkTags || [];
+          const theirTags: string[] = p.tags || [];
           if (!required.some((r: any) => theirTags.includes(r))) return false;
         }
 
@@ -298,7 +298,7 @@ async function handler(req: Request): Promise<Response> {
             photoUrl: p?.photoUrl,
             photoUrls: p?.photoUrls || [],
             relationshipStatus: p?.relationshipStatus,
-            kinkTags: p?.kinkTags || [],
+            tags: p?.tags || [],
             elo: Math.round(userElo.get(uid) ?? ELO_DEFAULT),
           };
         }),
@@ -710,7 +710,7 @@ async function handler(req: Request): Promise<Response> {
           gender: p.gender,
           attractedTo: p.attractedTo ?? "both",
           relationshipStatus: p.relationshipStatus ?? "",
-          kinkTags: p.kinkTags || [],
+          tags: p.tags || [],
           bio: p.bio ?? p.aiDescription ?? "",
           photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
           location: p.location ?? undefined,
