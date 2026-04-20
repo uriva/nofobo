@@ -72,8 +72,9 @@ export default function Profile() {
       setAge(profile.age ? String(profile.age) : "");
       setGender(profile.gender || "");
       setAttractedTo(() => {
-        const raw = profile.attractedTo || "";
-        if (raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
+        const raw = profile.attractedTo;
+        if (Array.isArray(raw)) return raw;
+        if (raw && typeof raw === "string" && raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
         if (raw === "both") return ["men", "women"];
         if (raw) return [raw];
         return [];

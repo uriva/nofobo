@@ -173,8 +173,9 @@ export default function Onboarding() {
         setGender(prev => prev || p.gender || "");
         setAttractedTo(prev => {
           if (prev.length > 0) return prev;
-          const raw = p.attractedTo || "";
-          if (raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
+          const raw = p.attractedTo;
+          if (Array.isArray(raw)) return raw;
+          if (raw && typeof raw === "string" && raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
           if (raw === "both") return ["men", "women"];
           if (raw) return [raw];
           return [];

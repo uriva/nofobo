@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 function json(data: unknown, status = 200) {
-  return new Response((data), {
+  return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -71,8 +71,9 @@ async function verifyAuth(
 // --- Attraction compatibility ---
 
 // Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
-function parseAttractedTo(raw: string): string[] {
-  if (raw.startsWith("[")) {
+function parseAttractedTo(raw: any): string[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string" && raw.startsWith("[")) {
     try {
       return JSON.parse(raw);
     } catch { /* fall through */ }
@@ -270,7 +271,7 @@ async function handler(req: Request): Promise<Response> {
 
       const userElo = new Map<string, number>();
       for (const r of eloRatings) {
-        const targetId = r.target?.[0]?.id;
+        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
         if (targetId) userElo.set(targetId, r.score);
       }
 
