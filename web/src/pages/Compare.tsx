@@ -133,7 +133,7 @@ export default function Compare() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: ({ winnerId, loserId, community: activeCommunityCode }),
+        body: JSON.stringify({ winnerId, loserId, community: activeCommunityCode }),
       });
 
       setTimeout(() => {

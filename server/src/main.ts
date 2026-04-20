@@ -460,12 +460,28 @@ async function handler(req: Request): Promise<Response> {
           }),
         ]);
       } else {
-        const newId = id();
-        await adminDb.transact([
-          adminDb.tx.eloRatings[newId]
-            .update({ score: DEMOTED_SCORE, comparisonsCount: 0 })
-            .link({ rater: user.id, target: targetUserId }),
-        ]);
+        // Demote needs profiles to link to
+        const communityCode = body.community;
+        if (!communityCode) return json({ error: "community required for demote" }, 400);
+        
+        const { profiles } = await adminDb.query({
+          profiles: {
+            $: { where: { communityCode } },
+            user: {}
+          }
+        });
+        
+        const rProfile = profiles.find((p: any) => p.user?.[0]?.id === user.id || p.user?.id === user.id);
+        const tProfile = profiles.find((p: any) => p.user?.[0]?.id === targetUserId || p.user?.id === targetUserId);
+        
+        if (rProfile && tProfile) {
+          const newId = id();
+          await adminDb.transact([
+            adminDb.tx.eloRatings[newId]
+              .update({ score: DEMOTED_SCORE, comparisonsCount: 0 })
+              .link({ raterProfile: rProfile.id, targetProfile: tProfile.id }),
+          ]);
+        }
       }
 
       return json({ success: true, demoted: targetUserId });
@@ -483,9 +499,9 @@ async function handler(req: Request): Promise<Response> {
     try {
       const { comparisons } = await adminDb.query({
         comparisons: {
-          $: { where: { "voter.id": user.id } },
-          winner: {},
-          loser: {},
+          $: { where: { "voterProfile.user.id": user.id } },
+          winnerProfile: { user: {} },
+          loserProfile: { user: {} },
         },
       });
 
@@ -494,8 +510,8 @@ async function handler(req: Request): Promise<Response> {
       });
       const profileMap = new Map<string, any[]>();
       for (const p of profiles) {
-        if (p.user?.[0]?.id) {
-          const uid = p.user[0].id;
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        if (uid) {
           if (!profileMap.has(uid)) profileMap.set(uid, []);
           profileMap.get(uid)!.push(p);
         }
@@ -503,20 +519,21 @@ async function handler(req: Request): Promise<Response> {
 
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
-        const winner = c.winner?.[0];
-        const loser = c.loser?.[0];
-        const winnerProfile = winner?.id ? profileMap.get(winner.id)?.[0] : undefined;
-        const loserProfile = loser?.id ? profileMap.get(loser.id)?.[0] : undefined;
+        const winnerProfile = c.winnerProfile?.[0];
+        const loserProfile = c.loserProfile?.[0];
+        const winnerId = winnerProfile?.user?.[0]?.id || winnerProfile?.user?.id;
+        const loserId = loserProfile?.user?.[0]?.id || loserProfile?.user?.id;
+        
         const winnerPhotoUrls = winnerProfile?.photoUrls || [];
         const loserPhotoUrls = loserProfile?.photoUrls || [];
         return {
           comparisonId: c.id,
-          winnerId: winner?.id ?? "",
+          winnerId: winnerId ?? "",
           winnerName: winnerProfile?.name ?? "Unknown",
           winnerAge: winnerProfile?.age ?? 0,
           winnerPhotoUrl: winnerProfile?.photoUrl ?? winnerPhotoUrls[0] ??
             undefined,
-          loserId: loser?.id ?? "",
+          loserId: loserId ?? "",
           loserName: loserProfile?.name ?? "Unknown",
           loserAge: loserProfile?.age ?? 0,
           loserPhotoUrl: loserProfile?.photoUrl ?? loserPhotoUrls[0] ??
