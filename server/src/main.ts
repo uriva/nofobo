@@ -256,8 +256,12 @@ async function handler(req: Request): Promise<Response> {
 
       const comparedPairs = new Set<string>();
       for (const c of relevantComparisons) {
-        const wId = c.winner?.[0]?.id;
-        const lId = c.loser?.[0]?.id;
+        const winnerProfile = Array.isArray(c.winnerProfile) ? c.winnerProfile[0] : c.winnerProfile;
+        const loserProfile = Array.isArray(c.loserProfile) ? c.loserProfile[0] : c.loserProfile;
+        
+        const wId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
+        const lId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
+        
         if (wId && lId) comparedPairs.add(`${wId}:${lId}`);
       }
 
