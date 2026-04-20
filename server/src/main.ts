@@ -68,51 +68,15 @@ async function verifyAuth(
   }
 }
 
-// --- Attraction compatibility ---
-
-// Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
-function parseAttractedTo(raw: any): string[] {
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === "string" && raw.startsWith("[")) {
-    try {
-      return JSON.parse(raw);
-    } catch { /* fall through */ }
-  }
-  if (raw === "both") return ["men", "women"];
-  return [raw];
-}
-
-// Map a gender value to what appears in an attractedTo list
-const GENDER_TO_ATTRACTION: Record<string, string> = {
-  man: "men",
-  woman: "women",
-  nonbinary: "nonbinary",
-};
-
-// Returns true if user A can see user B in comparisons
-function isAttractionCompatible(
-  myGender: string,
-  myAttractedTo: string,
-  theirGender: string,
-  theirAttractedTo: string,
-): boolean {
-  const myList = parseAttractedTo(myAttractedTo);
-  const theirList = parseAttractedTo(theirAttractedTo);
-
-  const iLikeThem = myList.includes(
-    GENDER_TO_ATTRACTION[theirGender] ?? theirGender,
-  );
-  const theyLikeMe = theirList.includes(
-    GENDER_TO_ATTRACTION[myGender] ?? myGender,
-  );
-
-  return iLikeThem && theyLikeMe;
-}
-
-// --- Route Handler ---
 async function handler(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
   const url = new URL(req.url);
   const path = url.pathname;
+
+  if (path === "/api/version" && req.method === "GET") {
+    return json({ commit: Deno.env.get("RENDER_GIT_COMMIT") || Deno.env.get("VITE_COMMIT_HASH") || "unknown" });
+  }
 
   // CORS preflight
   if (req.method === "OPTIONS") {
