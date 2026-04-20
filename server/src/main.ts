@@ -815,7 +815,7 @@ async function handler(req: Request): Promise<Response> {
 
       // Get all ELO ratings for these users
       const userIds = profiles
-        .map((p: any) => p.user?.[0]?.id)
+        .map((p: any) => Array.isArray(p.user) ? p.user[0]?.id : p.user?.id)
         .filter(Boolean) as string[];
 
       const { eloRatings: allRatings } = await adminDb.query({
