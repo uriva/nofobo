@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
+  return new Response((data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -50,7 +50,7 @@ async function verifyAdmin(
   if (communities.length === 0) return false;
 
   const community = communities[0];
-  const adminEmails: string[] = JSON.parse(community.adminEmails || "[]");
+  const adminEmails: string[] = community.adminEmails;
   return adminEmails.some((e: string) => e.toLowerCase() === normalizedEmail);
 }
 
@@ -148,7 +148,7 @@ async function handler(req: Request): Promise<Response> {
       const myAttractedTo = myProfile.attractedTo ?? "both";
       const myMatchStatuses: string[] = (() => {
         try {
-          return JSON.parse(myProfile.matchWithStatuses ?? "[]");
+          return myProfile.matchWithStatuses;
         } catch {
           return [];
         }
@@ -203,7 +203,7 @@ async function handler(req: Request): Promise<Response> {
           const required = filterTags.split(",").map((t) => t.trim());
           const theirTags: string[] = (() => {
             try {
-              return JSON.parse(p.kinkTags ?? "[]");
+              return p.kinkTags;
             } catch {
               return [];
             }
@@ -237,13 +237,11 @@ async function handler(req: Request): Promise<Response> {
       const eligibleUserIds = new Set(eligible.map((p: any) => p.user?.[0]?.id).filter(Boolean));
       
       const relevantComparisons = comparisons.filter((c: any) => {
-        const wId = c.winner?.[0]?.id;
-        const lId = c.loser?.[0]?.id;
         // The users must be in the current community candidate pool, or at least one of them
         // Actually, if they were matched before in this community, they should both be in it.
         // Wait, candidates only contains onboardingComplete profiles. If someone deleted their profile,
         // they might not be there. But that's fine.
-        return true; // We can just count all comparisons since voters only compare within their community anyway.
+        return true; 
       });
 
       if (eligible.length < 2) {
@@ -306,7 +304,7 @@ async function handler(req: Request): Promise<Response> {
           photoUrl: p?.photoUrl,
           photoUrls: (() => {
             try {
-              return JSON.parse(p?.photoUrls ?? "[]");
+              return p?.photoUrls;
             } catch {
               return [];
             }
@@ -314,7 +312,7 @@ async function handler(req: Request): Promise<Response> {
           relationshipStatus: p?.relationshipStatus,
           kinkTags: (() => {
             try {
-              return JSON.parse(p?.kinkTags ?? "[]");
+              return p?.kinkTags;
             } catch {
               return [];
             }
@@ -503,14 +501,14 @@ async function handler(req: Request): Promise<Response> {
         const loserProfile = loser?.id ? profileMap.get(loser.id)?.[0] : undefined;
         const winnerPhotoUrls = (() => {
           try {
-            return JSON.parse(winnerProfile?.photoUrls ?? "[]");
+            return winnerProfile?.photoUrls;
           } catch {
             return [];
           }
         })();
         const loserPhotoUrls = (() => {
           try {
-            return JSON.parse(loserProfile?.photoUrls ?? "[]");
+            return loserProfile?.photoUrls;
           } catch {
             return [];
           }
@@ -733,7 +731,7 @@ async function handler(req: Request): Promise<Response> {
       const result = Array.from(uniqueProfiles.values()).map((p: any) => {
         const photoUrls = (() => {
           try {
-            return JSON.parse(p.photoUrls ?? "[]");
+            return p.photoUrls;
           } catch {
             return [];
           }
@@ -748,7 +746,7 @@ async function handler(req: Request): Promise<Response> {
           relationshipStatus: p.relationshipStatus ?? "",
           kinkTags: (() => {
             try {
-              return JSON.parse(p.kinkTags ?? "[]");
+              return p.kinkTags;
             } catch {
               return [];
             }

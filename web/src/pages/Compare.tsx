@@ -49,7 +49,7 @@ export default function Compare() {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const myCommunity = myData?.communities?.[0];
-  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : TAG_OPTIONS;
+  const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
 
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +133,7 @@ export default function Compare() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ winnerId, loserId, community: activeCommunityCode }),
+        body: ({ winnerId, loserId, community: activeCommunityCode }),
       });
 
       setTimeout(() => {

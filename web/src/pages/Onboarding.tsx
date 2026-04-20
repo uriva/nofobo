@@ -72,7 +72,7 @@ export default function Onboarding() {
   // Determine which tags to show for this community
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
-  const availableTags = currentCommunity?.tags ? JSON.parse(currentCommunity.tags) : [];
+  const availableTags = currentCommunity?.tags ? currentCommunity.tags : [];
   const requirePhone = !!currentCommunity?.requirePhone;
 
   const handleCodeSubmit = () => {
@@ -116,7 +116,7 @@ export default function Onboarding() {
           .update({
             name: newCommunityName.trim(),
             code,
-            tags: tagsArray ? JSON.stringify(tagsArray) : undefined,
+            tags: tagsArray ? (tagsArray) : undefined,
             createdAt: Date.now(),
           })
           .link({ creator: user!.id }),
@@ -186,7 +186,7 @@ export default function Onboarding() {
         
         if (kinkTags.length === 0) {
           try {
-            const parsedTags = JSON.parse(p.kinkTags || "[]");
+            const parsedTags = p.kinkTags;
             // Only keep tags that are available in the new community
             const filteredTags = parsedTags.filter((t: string) => availableTags.includes(t));
             setKinkTags(filteredTags);
@@ -195,7 +195,7 @@ export default function Onboarding() {
 
         if (existingPhotoUrls.length === 0 && photos.length === 0) {
           try {
-            const urls = JSON.parse(p.photoUrls || "[]");
+            const urls = p.photoUrls;
             if (urls.length > 0) setExistingPhotoUrls(urls);
             else if (p.photoUrl) setExistingPhotoUrls([p.photoUrl]);
           } catch { 
@@ -247,9 +247,9 @@ export default function Onboarding() {
         name: name.trim(),
         age: parseInt(age),
         gender,
-        attractedTo: JSON.stringify(attractedTo),
+        attractedTo: (attractedTo),
         relationshipStatus,
-        kinkTags: JSON.stringify(kinkTags),
+        kinkTags: (kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
@@ -259,7 +259,7 @@ export default function Onboarding() {
       };
       if (finalPhotoUrls.length > 0) {
         profileData.photoUrl = finalPhotoUrls[0]; // backward compat
-        profileData.photoUrls = JSON.stringify(finalPhotoUrls);
+        profileData.photoUrls = (finalPhotoUrls);
       }
 
       await db.transact([

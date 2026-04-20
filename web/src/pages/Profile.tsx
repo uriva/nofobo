@@ -48,7 +48,7 @@ export default function Profile() {
   );
 
   const myCommunity = communityData?.communities?.[0];
-  const availableTags = myCommunity?.tags ? JSON.parse(myCommunity.tags) : TAG_OPTIONS;
+  const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
 
   // Form state
   const [name, setName] = useState("");
@@ -80,7 +80,7 @@ export default function Profile() {
       });
       setRelationshipStatus(profile.relationshipStatus || "");
       try {
-        setKinkTags(JSON.parse(profile.kinkTags || "[]"));
+        setKinkTags(profile.kinkTags);
       } catch {
         setKinkTags([]);
       }
@@ -88,7 +88,7 @@ export default function Profile() {
       setLocation(profile.location || "");
       
       try {
-        const urls = JSON.parse(profile.photoUrls || "[]");
+        const urls = profile.photoUrls;
         if (urls.length === 0 && profile.photoUrl) urls.push(profile.photoUrl);
         setPhotos(urls.map((url: string) => ({ preview: url, existingUrl: url })));
       } catch {
@@ -161,9 +161,9 @@ export default function Profile() {
         name: name.trim(),
         age: parseInt(age),
         gender,
-        attractedTo: JSON.stringify(attractedTo),
+        attractedTo: (attractedTo),
         relationshipStatus,
-        kinkTags: JSON.stringify(kinkTags),
+        kinkTags: (kinkTags),
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
@@ -171,7 +171,7 @@ export default function Profile() {
 
       if (photoUrls.length > 0) {
         profileData.photoUrl = photoUrls[0];
-        profileData.photoUrls = JSON.stringify(photoUrls);
+        profileData.photoUrls = (photoUrls);
       } else {
         profileData.photoUrl = null;
         profileData.photoUrls = "[]";

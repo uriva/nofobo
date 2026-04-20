@@ -14,7 +14,7 @@ async function callAI(messages: ChatMessage[]): Promise<string> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
-    body: JSON.stringify({
+    body: ({
       model: "gpt-4o-mini",
       messages,
       max_tokens: 1024,

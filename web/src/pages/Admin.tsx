@@ -154,7 +154,7 @@ export default function Admin() {
 
       await db.transact([
         db.tx.communities[community.id]
-          .update({ tags: tagsArray ? JSON.stringify(tagsArray) : undefined }),
+          .update({ tags: tagsArray ? (tagsArray) : undefined }),
       ]);
       setIsEditingTags(false);
     } catch (e) {
@@ -175,7 +175,7 @@ export default function Admin() {
 
       await db.transact([
         db.tx.communities[community.id]
-          .update({ adminEmails: adminArray ? JSON.stringify(adminArray) : undefined }),
+          .update({ adminEmails: adminArray ? (adminArray) : undefined }),
       ]);
       setIsEditingAdmins(false);
     } catch (e) {
@@ -228,7 +228,7 @@ export default function Admin() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getAuthToken()}`,
         },
-        body: JSON.stringify({
+        body: ({
           name: editingCommunityName.trim(),
           code: editingCommunityCode.trim().toLowerCase(),
         }),
@@ -297,7 +297,7 @@ export default function Admin() {
                   <button
                     onClick={() => {
                       setEditingTagsInput(
-                        community?.tags ? JSON.parse(community.tags).join(", ") : ""
+                        community?.tags ? community.tags.join(", ") : ""
                       );
                       setIsEditingTags(true);
                     }}
@@ -337,7 +337,7 @@ export default function Admin() {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {community?.tags ? (
-                    JSON.parse(community.tags).map((tag: string) => (
+                    community.tags.map((tag: string) => (
                       <span key={tag} className="bg-grape-900 text-grape-300 px-3 py-1 rounded-full text-sm">
                         {tag}
                       </span>
@@ -500,7 +500,7 @@ export default function Admin() {
                       <button
                         onClick={() => {
                           setEditingAdminsInput(
-                            community?.adminEmails ? JSON.parse(community.adminEmails).join(", ") : ""
+                            community?.adminEmails ? community.adminEmails.join(", ") : ""
                           );
                           setIsEditingAdmins(true);
                         }}
@@ -540,7 +540,7 @@ export default function Admin() {
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {community?.adminEmails ? (
-                        JSON.parse(community.adminEmails).map((email: string) => (
+                        community.adminEmails.map((email: string) => (
                           <span key={email} className="bg-grape-900 text-grape-300 px-3 py-1 rounded-full text-sm">
                             {email}
                           </span>

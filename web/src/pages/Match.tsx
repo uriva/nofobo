@@ -132,7 +132,7 @@ export default function Match() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ targetUserId: match.userId }),
+        body: ({ targetUserId: match.userId }),
       });
       const data = await res.json();
       if (data.success) {

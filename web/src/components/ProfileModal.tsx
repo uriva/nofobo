@@ -61,9 +61,9 @@ export default function ProfileModal({ userId, communityCode, onClose }: Profile
             bio={profile.bio}
             description={profile.aiDescription}
             photoUrl={profile.photoUrl}
-            photoUrls={profile.photoUrls ? JSON.parse(profile.photoUrls) : []}
+            photoUrls={profile.photoUrls ? profile.photoUrls : []}
             relationshipStatus={profile.relationshipStatus}
-            kinkTags={profile.kinkTags ? JSON.parse(profile.kinkTags) : []}
+            kinkTags={profile.kinkTags ? profile.kinkTags : []}
             phone={profile.phone}
             large
           />
