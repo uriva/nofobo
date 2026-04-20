@@ -373,7 +373,7 @@ async function handler(req: Request): Promise<Response> {
       // Update ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "raterProfile.id": vProfile.id } },
+          $: { where: { "raterProfile.user.id": user.id } },
           targetProfile: { user: {} },
         },
       });
