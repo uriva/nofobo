@@ -81,7 +81,7 @@ const rules = {
   },
   $users: {
     allow: {
-      view: "auth.id == data.id",
+      view: "true",
     },
   },
   $files: {
