@@ -66,7 +66,7 @@ export default function MyDecisions() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getAuthToken()}`,
         },
-        body: ({ comparisonId }),
+        body: JSON.stringify({ comparisonId }),
       });
       if (res.ok) {
         // Update locally: swap winner and loser
@@ -103,7 +103,7 @@ export default function MyDecisions() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${getAuthToken()}`,
         },
-        body: ({ comparisonId }),
+        body: JSON.stringify({ comparisonId }),
       });
       if (res.ok) {
         setDecisions((prev) => prev.filter((d) => d.comparisonId !== comparisonId));
