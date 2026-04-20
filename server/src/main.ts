@@ -271,7 +271,8 @@ async function handler(req: Request): Promise<Response> {
 
       const userElo = new Map<string, number>();
       for (const r of eloRatings) {
-        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
         if (targetId) userElo.set(targetId, r.score);
       }
 
@@ -383,7 +384,8 @@ async function handler(req: Request): Promise<Response> {
       let loserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
         if (targetId === winnerId) {
           winnerElo = r.score;
           winnerRatingId = r.id;
@@ -570,6 +572,62 @@ async function handler(req: Request): Promise<Response> {
     }
   }
 
+  if (path === "/api/my/rankings" && req.method === "GET") {
+    const user = await verifyAuth(req);
+    if (!user) return json({ error: "Unauthorized" }, 401);
+
+    try {
+      const { eloRatings } = await adminDb.query({
+        eloRatings: {
+          $: { where: { "raterProfile.user.id": user.id } },
+          targetProfile: { user: {} },
+        },
+      });
+
+      const { profiles } = await adminDb.query({
+        profiles: { user: {} },
+      });
+
+      const userProfileMap = new Map<string, any>();
+      for (const p of profiles) {
+        const uid = Array.isArray(p.user) ? p.user[0]?.id : p.user?.id;
+        if (uid) userProfileMap.set(uid, p);
+      }
+
+      // Deduplicate ratings (take latest) if multiple exist due to schema changes
+      const latestRatings = new Map<string, any>();
+      for (const r of eloRatings) {
+        const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+        const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
+        if (!tUserId) continue;
+        
+        const existing = latestRatings.get(tUserId);
+        if (!existing || (r.createdAt || 0) > (existing.createdAt || 0)) {
+          latestRatings.set(tUserId, r);
+        }
+      }
+
+      const rankings = Array.from(latestRatings.values())
+        .map((r: any) => {
+          const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+          const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
+          const targetProfile = userProfileMap.get(tUserId ?? "");
+          return {
+            targetUserId: tUserId ?? "",
+            targetName: targetProfile?.name ?? "Unknown",
+            score: r.score,
+            comparisonsCount: r.comparisonsCount ?? 0,
+          };
+        })
+        .sort((a: any, b: any) => b.score - a.score);
+
+      return json({ rankings });
+    } catch (e) {
+      console.error("My rankings error:", e);
+      return json({ error: "Failed to load rankings" }, 500);
+    }
+  }
+
   // --- Flip a Comparison (swap winner/loser) ---
   if (path === "/api/compare/flip" && req.method === "POST") {
     const user = await verifyAuth(req);
@@ -627,7 +685,8 @@ async function handler(req: Request): Promise<Response> {
       let oldLoserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
         if (targetId === oldWinnerUserId) {
           oldWinnerElo = r.score;
           oldWinnerRatingId = r.id;
@@ -829,7 +888,8 @@ async function handler(req: Request): Promise<Response> {
 
       const rankings = eloRatings
         .map((r: any) => {
-          const tUserId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+          const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+          const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
           const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
             targetUserId: tUserId ?? "",
@@ -893,8 +953,11 @@ async function handler(req: Request): Promise<Response> {
         const ratings = new Map<string, number>();
 
         for (const r of allRatings) {
-          const rId = r.raterProfile?.[0]?.user?.[0]?.id || r.raterProfile?.[0]?.user?.id;
-          const tId = r.targetProfile?.[0]?.user?.[0]?.id || r.targetProfile?.[0]?.user?.id;
+          const raterProfile = Array.isArray(r.raterProfile) ? r.raterProfile[0] : r.raterProfile;
+          const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
+          const rId = Array.isArray(raterProfile?.user) ? raterProfile.user[0]?.id : raterProfile?.user?.id;
+          const tId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
+          
           if (rId === userId && userIdSet.has(tId ?? "")) {
             ratings.set(tId!, r.score);
           }
