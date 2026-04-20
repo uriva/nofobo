@@ -265,7 +265,7 @@ async function handler(req: Request): Promise<Response> {
 
       const userElo = new Map<string, number>();
       for (const r of eloRatings) {
-        const targetId = r.target?.id;
+        const targetId = r.target?.[0]?.id;
         if (targetId) userElo.set(targetId, r.score);
       }
 
