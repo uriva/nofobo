@@ -806,7 +806,8 @@ async function handler(req: Request): Promise<Response> {
 
       const compCountByUser = new Map<string, number>();
       for (const c of allComps) {
-        const voterId = c.voterProfile?.[0]?.user?.[0]?.id || c.voterProfile?.[0]?.user?.id;
+        const voterProfile = Array.isArray(c.voterProfile) ? c.voterProfile[0] : c.voterProfile;
+        const voterId = Array.isArray(voterProfile?.user) ? voterProfile.user[0]?.id : voterProfile?.user?.id;
         if (voterId) {
           compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
         }
