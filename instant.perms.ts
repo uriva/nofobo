@@ -79,6 +79,11 @@ const rules = {
       "auth.id == data.ref('sender.id') && (auth.id in data.ref('match.user1.id') || auth.id in data.ref('match.user2.id'))",
     ],
   },
+  $users: {
+    allow: {
+      view: "auth.id == data.id",
+    },
+  },
   $files: {
     allow: {
       view: "true",
