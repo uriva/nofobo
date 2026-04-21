@@ -521,7 +521,7 @@ export default function Admin() {
                         onClick={async () => {
                           if (confirm("Remove cover image?")) {
                             await db.transact([
-                              db.tx.communities[community.id].update({ coverImageUrl: undefined })
+                              db.tx.communities[community.id].update({ coverImageUrl: null })
                             ]);
                           }
                         }}
