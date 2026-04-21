@@ -77,7 +77,6 @@ export default function Admin() {
   } : null);
   const community = communityData?.communities?.[0];
 
-  // Load all profiles for active community (perms: profiles.view = "true")
   const { data: profilesData, isLoading: loadingProfiles } = db.useQuery(
     activeCommunityCode
       ? {
@@ -97,7 +96,6 @@ export default function Admin() {
 
   const profiles: AdminProfile[] = useMemo(() => {
     const raw = profilesData?.profiles ?? [];
-    // Dedupe by user.id, keep newest createdAt
     const byUser = new Map<string, typeof raw[number]>();
     for (const p of raw) {
       const uid = firstOf(p.user)?.id;
@@ -126,7 +124,6 @@ export default function Admin() {
     });
   }, [profilesData]);
 
-  // Load rankings only when a profile is expanded (perms: eloRatings admin can view)
   const { data: rankingsData, isLoading: loadingRankings } = db.useQuery(
     expandedUserId
       ? {
@@ -154,8 +151,6 @@ export default function Admin() {
       .sort((a, b) => b.score - a.score);
   }, [rankingsData]);
 
-  // Detect admin access via perms: if community loaded but profiles failed, that's a perms issue.
-  // We rely on perms; no manual check needed. Show error only on explicit catch.
   const loading = !!activeCommunityCode && loadingProfiles;
 
   const getAuthToken = () => user?.refresh_token ?? "";

@@ -22,10 +22,8 @@ export default function StorageImage({ pathOrUrl, fallback, ...props }: StorageI
       return;
     }
 
-    // It's a path, or an old URL that needs to be extracted
     const path = extractPath(pathOrUrl);
     
-    // If it's a storage path (profiles/ or communities/), fetch a fresh URL
     if (path.startsWith("profiles/") || path.startsWith("communities/")) {
       getStorageUrl(path)
         .then((fetchedUrl) => {
@@ -38,13 +36,11 @@ export default function StorageImage({ pathOrUrl, fallback, ...props }: StorageI
       return;
     }
 
-    // If it's a regular http URL not matching our profiles format, just use it
     if (pathOrUrl.startsWith("http")) {
       if (isMounted) setUrl(pathOrUrl);
       return;
     }
 
-    // Unrecognized format
     if (isMounted) setUrl(pathOrUrl);
 
     return () => { isMounted = false; };
