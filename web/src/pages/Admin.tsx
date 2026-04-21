@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
@@ -6,6 +6,9 @@ import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
 import ProfileModal from "../components/ProfileModal.tsx";
 import StorageImage from "../components/StorageImage.tsx";
+
+const firstOf = <T,>(x: T | T[] | undefined | null): T | undefined =>
+  Array.isArray(x) ? x[0] : (x ?? undefined);
 
 interface AdminProfile {
   userId: string;
@@ -38,15 +41,11 @@ interface MatchPair {
 export default function Admin() {
   const { user } = db.useAuth();
   const { activeCommunityCode, setActiveCommunityCode } = useCommunity();
-  const [profiles, setProfiles] = useState<AdminProfile[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Rankings for expanded profile
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-  const [rankings, setRankings] = useState<UserRanking[]>([]);
-  const [loadingRankings, setLoadingRankings] = useState(false);
 
   // Matching
   const [matchResults, setMatchResults] = useState<MatchPair[] | null>(null);
@@ -78,49 +77,91 @@ export default function Admin() {
   } : null);
   const community = communityData?.communities?.[0];
 
+  // Load all profiles for active community (perms: profiles.view = "true")
+  const { data: profilesData, isLoading: loadingProfiles } = db.useQuery(
+    activeCommunityCode
+      ? {
+          profiles: {
+            $: {
+              where: {
+                "community.code": activeCommunityCode,
+                onboardingComplete: true,
+              },
+            },
+            user: {},
+            votedComparisons: {},
+          },
+        }
+      : null,
+  );
+
+  const profiles: AdminProfile[] = useMemo(() => {
+    const raw = profilesData?.profiles ?? [];
+    // Dedupe by user.id, keep newest createdAt
+    const byUser = new Map<string, typeof raw[number]>();
+    for (const p of raw) {
+      const uid = firstOf(p.user)?.id;
+      if (!uid) continue;
+      const existing = byUser.get(uid);
+      if (!existing || p.createdAt > existing.createdAt) byUser.set(uid, p);
+    }
+    return Array.from(byUser.values()).map((p) => {
+      const uid = firstOf(p.user)?.id ?? "";
+      const photoUrls = (p.photoUrls as string[] | undefined) ?? [];
+      return {
+        userId: uid,
+        profileId: p.id,
+        name: p.name,
+        age: p.age,
+        gender: p.gender,
+        attractedTo: (p.attractedTo as unknown as string) ?? "both",
+        relationshipStatus: p.relationshipStatus ?? "",
+        tags: (p.tags as string[] | undefined) ?? [],
+        bio: p.bio ?? p.aiDescription ?? "",
+        photoUrl: p.photoUrl ?? photoUrls[0] ?? undefined,
+        location: p.location ?? undefined,
+        phone: p.phone ?? undefined,
+        comparisonsCount: p.votedComparisons?.length ?? 0,
+      };
+    });
+  }, [profilesData]);
+
+  // Load rankings only when a profile is expanded (perms: eloRatings admin can view)
+  const { data: rankingsData, isLoading: loadingRankings } = db.useQuery(
+    expandedUserId
+      ? {
+          eloRatings: {
+            $: { where: { "raterProfile.user.id": expandedUserId } },
+            targetProfile: { user: {} },
+          },
+        }
+      : null,
+  );
+
+  const rankings: UserRanking[] = useMemo(() => {
+    const raw = rankingsData?.eloRatings ?? [];
+    return raw
+      .map((r) => {
+        const target = firstOf(r.targetProfile);
+        const tUid = firstOf(target?.user)?.id ?? "";
+        return {
+          targetUserId: tUid,
+          targetName: target?.name ?? "Unknown",
+          score: r.score,
+          comparisonsCount: r.comparisonsCount ?? 0,
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }, [rankingsData]);
+
+  // Detect admin access via perms: if community loaded but profiles failed, that's a perms issue.
+  // We rely on perms; no manual check needed. Show error only on explicit catch.
+  const loading = !!activeCommunityCode && loadingProfiles;
+
   const getAuthToken = () => user?.refresh_token ?? "";
 
-  const loadProfiles = async () => {
-    if (!activeCommunityCode) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`${API_URL}/api/admin/profiles?community=${activeCommunityCode}`, {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-      });
-      if (res.status === 403) {
-        setError("You don't have admin access.");
-        return;
-      }
-      const data = await res.json();
-      setProfiles(data.profiles ?? []);
-    } catch (e) {
-      console.error("Load profiles error:", e);
-      setError("Failed to load profiles.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadRankings = async (userId: string) => {
-    if (expandedUserId === userId) {
-      setExpandedUserId(null);
-      return;
-    }
-    if (!activeCommunityCode) return;
-    setExpandedUserId(userId);
-    setLoadingRankings(true);
-    try {
-      const res = await fetch(`${API_URL}/api/admin/rankings/${userId}?community=${activeCommunityCode}`, {
-        headers: { Authorization: `Bearer ${getAuthToken()}` },
-      });
-      const data = await res.json();
-      setRankings(data.rankings ?? []);
-    } catch (e) {
-      console.error("Load rankings error:", e);
-    } finally {
-      setLoadingRankings(false);
-    }
+  const toggleExpanded = (userId: string) => {
+    setExpandedUserId((prev) => (prev === userId ? null : userId));
   };
 
   const runMatching = async () => {
@@ -262,10 +303,6 @@ export default function Admin() {
       setSavingCommunityInfo(false);
     }
   };
-
-  useEffect(() => {
-    if (user) loadProfiles();
-  }, [user, activeCommunityCode]);
 
   if (error) {
     return (
@@ -624,7 +661,7 @@ export default function Admin() {
                       )}
                     </button>
                     <button 
-                      onClick={() => loadRankings(p.userId)}
+                      onClick={() => toggleExpanded(p.userId)}
                       className="flex-1 flex items-center min-w-0 py-4"
                     >
                       <div className="flex-1 min-w-0 text-left">

@@ -39,12 +39,17 @@ const rules = {
   },
   eloRatings: {
     allow: {
-      view: "isRater",
+      view: "isRater || isCommunityAdmin",
       create: "isRater",
       update: "isRater",
       delete: "false",
     },
-    bind: ["isRater", "auth.id in data.ref('raterProfile.user.id')"],
+    bind: [
+      "isRater",
+      "auth.id in data.ref('raterProfile.user.id')",
+      "isCommunityAdmin",
+      "auth.email in data.ref('raterProfile.community.adminEmails')",
+    ],
   },
   matchCycles: {
     allow: {
