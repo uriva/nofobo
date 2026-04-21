@@ -1,9 +1,13 @@
 import { init } from "@instantdb/admin";
 
-const adminDb = init({
-  appId: "6818f05d-46f3-4622-9aaf-dcd14e067e9e",
-  adminToken: "00458ed4-452d-410a-8e03-38e657098985",
-});
+const APP_ID = Deno.env.get("INSTANT_APP_ID");
+const ADMIN_TOKEN = Deno.env.get("INSTANT_ADMIN_TOKEN");
+if (!APP_ID || !ADMIN_TOKEN) {
+  console.error("Missing INSTANT_APP_ID or INSTANT_ADMIN_TOKEN");
+  Deno.exit(1);
+}
+
+const adminDb = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
 
 async function run() {
   const { profiles } = await adminDb.query({
