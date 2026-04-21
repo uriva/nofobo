@@ -33,9 +33,9 @@ const rules = {
       view: "isVoter",
       create: "isVoter",
       update: "false",
-      delete: "false",
+      delete: "isVoter",
     },
-    bind: ["isVoter", "auth.id in data.ref('voter.id')"],
+    bind: ["isVoter", "auth.id in data.ref('voterProfile.user.id')"],
   },
   eloRatings: {
     allow: {
@@ -44,7 +44,7 @@ const rules = {
       update: "isRater",
       delete: "false",
     },
-    bind: ["isRater", "auth.id in data.ref('rater.id')"],
+    bind: ["isRater", "auth.id in data.ref('raterProfile.user.id')"],
   },
   matchCycles: {
     allow: {
