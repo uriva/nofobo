@@ -245,32 +245,20 @@ async function handler(req: Request): Promise<Response> {
         },
       });
 
-      // Filter comparisons to only count those relevant to the current community pool
-      // Since comparisons don't have communityCode, we check if the users involved
-      // are in the candidates list (which is already filtered by community).
-      const eligibleUserIds = new Set(
-        eligible.map((p: any) => p.user?.[0]?.id).filter(Boolean),
-      );
-
-      const relevantComparisons = comparisons.filter((c: any) => {
-        // The users must be in the current community candidate pool, or at least one of them
-        // Actually, if they were matched before in this community, they should both be in it.
-        // Wait, candidates only contains onboardingComplete profiles. If someone deleted their profile,
-        // they might not be there. But that's fine.
-        return true;
-      });
-
+      // Build set of comparedPairs directly from all of the user's comparisons.
+      // Candidates are already filtered by community + eligibility, so pairs
+      // involving non-eligible users will simply never be selected below.
       if (eligible.length < 2) {
         return json({
           pair: null,
           reason: "Not enough compatible profiles yet. Check back later!",
           eligibleCount: eligible.length,
-          totalComparisons: relevantComparisons.length,
+          totalComparisons: comparisons.length,
         });
       }
 
       const comparedPairs = new Set<string>();
-      for (const c of relevantComparisons) {
+      for (const c of comparisons) {
         const winnerProfile = Array.isArray(c.winnerProfile)
           ? c.winnerProfile[0]
           : c.winnerProfile;
@@ -318,7 +306,7 @@ async function handler(req: Request): Promise<Response> {
           pair: null,
           reason: "You've compared all available profiles!",
           eligibleCount: eligible.length,
-          totalComparisons: relevantComparisons.length,
+          totalComparisons: comparisons.length,
         });
       }
 
@@ -346,7 +334,7 @@ async function handler(req: Request): Promise<Response> {
             elo: Math.round(userElo.get(uid) ?? ELO_DEFAULT),
           };
         }),
-        totalComparisons: relevantComparisons.length,
+        totalComparisons: comparisons.length,
         eligibleCount: eligible.length,
       });
     } catch (e) {

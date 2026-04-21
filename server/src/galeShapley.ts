@@ -212,7 +212,7 @@ export interface UserEloData {
 }
 
 // Parse attractedTo which may be a JSON array (new) or legacy string ("men"/"women"/"both")
-function parseAttractedTo(raw: any): string[] {
+function parseAttractedTo(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string" && raw.startsWith("[")) {
     try {
@@ -220,7 +220,7 @@ function parseAttractedTo(raw: any): string[] {
     } catch { /* fall through */ }
   }
   if (raw === "both") return ["men", "women"];
-  return [raw];
+  return [raw as string];
 }
 
 // Map a gender value to what appears in an attractedTo list

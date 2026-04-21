@@ -23,7 +23,8 @@ async function cleanup() {
   console.log(`Found ${profiles.length} total profiles.`);
 
   // Group profiles by user.id
-  const profilesByUser = new Map<string, any[]>();
+  type ProfileRow = typeof profiles[number];
+  const profilesByUser = new Map<string, ProfileRow[]>();
   let profilesWithNoUser = 0;
 
   for (const profile of profiles) {
@@ -55,7 +56,7 @@ async function cleanup() {
   console.log(`${profilesWithNoUser} profiles had no linked user.`);
 
   let deletedCount = 0;
-  const txs: any[] = [];
+  const txs: ReturnType<typeof db.tx.profiles[string]["delete"]>[] = [];
 
   for (const [uid, userProfiles] of profilesByUser.entries()) {
     if (userProfiles.length > 1) {

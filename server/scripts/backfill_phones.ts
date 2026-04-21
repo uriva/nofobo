@@ -1,4 +1,4 @@
-import { init } from "npm:@instantdb/admin";
+import { init } from "@instantdb/admin";
 
 export function normalizePhone(phone?: string): string | undefined {
   if (!phone) return undefined;
