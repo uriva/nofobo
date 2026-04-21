@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { id } from "@instantdb/react";
 import { useNavigate } from "react-router-dom";
 import db from "../db.ts";
-import { API_URL } from "../../../constants.ts";
 import ProfileCard from "../components/ProfileCard.tsx";
 import StorageImage from "../components/StorageImage.tsx";
 import Layout from "../components/Layout.tsx";
@@ -95,8 +94,6 @@ export default function Match() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages.length]);
 
-  const getAuthToken = () => user?.refresh_token ?? "";
-
   const sendChatMessage = async () => {
     if (!chatInput.trim() || !user || !matchInfo?.matchId) return;
     const text = chatInput.trim();
@@ -131,19 +128,57 @@ export default function Match() {
     if (!matchInfo?.userId || !user || !activeCommunityCode) return;
     setDemoting(true);
     try {
-      const res = await fetch(`${API_URL}/api/elo/demote`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAuthToken()}`,
+      const DEMOTED_SCORE = 0;
+
+      // Check for existing rating
+      // deno-lint-ignore no-explicit-any
+      const existing = await (db as any).queryOnce({
+        eloRatings: {
+          $: {
+            where: {
+              "raterProfile.user.id": user.id,
+              "targetProfile.user.id": matchInfo.userId,
+            },
+          },
         },
-        body: JSON.stringify({
-          targetUserId: matchInfo.userId,
-          community: activeCommunityCode,
-        }),
       });
-      const data = await res.json();
-      if (data.success) setDemoted(true);
+      const existingRating = existing?.data?.eloRatings?.[0];
+
+      if (existingRating) {
+        // deno-lint-ignore no-explicit-any
+        await (db as any).transact([
+          // deno-lint-ignore no-explicit-any
+          (db.tx as any).eloRatings[existingRating.id].update({
+            score: DEMOTED_SCORE,
+          }),
+        ]);
+      } else {
+        // Need to create — find rater + target profiles in this community
+        // deno-lint-ignore no-explicit-any
+        const profQ = await (db as any).queryOnce({
+          profiles: {
+            $: { where: { "community.code": activeCommunityCode } },
+            user: {},
+          },
+        });
+        // deno-lint-ignore no-explicit-any
+        const profs = (profQ?.data?.profiles ?? []) as any[];
+        const rProfile = profs.find((p) => firstOf<{ id: string }>(p.user)?.id === user.id);
+        const tProfile = profs.find((p) => firstOf<{ id: string }>(p.user)?.id === matchInfo.userId);
+        if (!rProfile || !tProfile) {
+          throw new Error("Missing profile(s) for demote");
+        }
+        const newId = id();
+        // deno-lint-ignore no-explicit-any
+        await (db as any).transact([
+          // deno-lint-ignore no-explicit-any
+          (db.tx as any).eloRatings[newId]
+            .update({ score: DEMOTED_SCORE, comparisonsCount: 0 })
+            .link({ raterProfile: rProfile.id, targetProfile: tProfile.id }),
+        ]);
+      }
+
+      setDemoted(true);
     } catch (e) {
       console.error("Demote error:", e);
     } finally {
