@@ -236,10 +236,15 @@ async function handler(req: Request): Promise<Response> {
         return true;
       });
 
-      // Get user's existing comparisons
+      // Get user's existing comparisons in this community
       const { comparisons } = await adminDb.query({
         comparisons: {
-          $: { where: { "voterProfile.user.id": user.id } },
+          $: {
+            where: {
+              "voterProfile.user.id": user.id,
+              "voterProfile.community.code": myCommunity,
+            },
+          },
           winnerProfile: { user: {} },
           loserProfile: { user: {} },
         },
@@ -279,7 +284,12 @@ async function handler(req: Request): Promise<Response> {
       // Get user's ELO ratings
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "raterProfile.user.id": user.id } },
+          $: {
+            where: {
+              "raterProfile.user.id": user.id,
+              "raterProfile.community.code": myCommunity,
+            },
+          },
           targetProfile: { user: {} },
         },
       });

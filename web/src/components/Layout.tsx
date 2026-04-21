@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import db from "../db.ts";
 import { useCommunity } from "./CommunityContext.tsx";
 import { isGlobalAdmin as checkGlobalAdmin } from "../../../constants.ts";
+import StorageImage from "./StorageImage.tsx";
 
 export default function Layout({ children, headerActions }: { children: ReactNode, headerActions?: ReactNode }) {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ export default function Layout({ children, headerActions }: { children: ReactNod
     userData?.$users[0] &&
     ((userData.$users[0].matchesAsUser1?.length ?? 0) > 0 ||
       (userData.$users[0].matchesAsUser2?.length ?? 0) > 0);
+
+  const activeCommunity = userData?.communities?.[0];
+  const coverImageUrl = activeCommunity?.coverImageUrl;
 
   const isGlobalAdmin = checkGlobalAdmin(user?.email);
   let communityAdminEmails: string[] = [];
@@ -190,6 +194,17 @@ export default function Layout({ children, headerActions }: { children: ReactNod
           </div>
         )}
       </div>
+
+      {/* Community Cover Banner */}
+      {coverImageUrl && (
+        <div className="w-full h-32 sm:h-40 relative border-b border-grape-900/50">
+          <StorageImage
+            pathOrUrl={coverImageUrl}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f0a1a] to-transparent"></div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
