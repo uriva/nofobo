@@ -23,10 +23,15 @@ const rules = {
     allow: {
       view: "true",
       create: "true",
-      update: "isAdmin",
+      update: "isAdmin || isGlobalAdmin",
       delete: "false",
     },
-    bind: ["isAdmin", "auth.email in data.adminEmails"],
+    bind: [
+      "isAdmin",
+      "auth.email in data.adminEmails",
+      "isGlobalAdmin",
+      "auth.email == 'uri.valevski@gmail.com'",
+    ],
   },
   comparisons: {
     allow: {

@@ -2,8 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import db from "../db.ts";
 import { useCommunity } from "./CommunityContext.tsx";
-
-const ADMIN_EMAILS = ["uri.valevski@gmail.com", "BurningMan@alumni.stanford.edu"];
+import { isGlobalAdmin as checkGlobalAdmin } from "../../../constants.ts";
 
 export default function Layout({ children, headerActions }: { children: ReactNode, headerActions?: ReactNode }) {
   const navigate = useNavigate();
@@ -35,7 +34,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
     ((userData.$users[0].matchesAsUser1?.length ?? 0) > 0 ||
       (userData.$users[0].matchesAsUser2?.length ?? 0) > 0);
 
-  const isGlobalAdmin = user?.email ? ADMIN_EMAILS.some(e => e.toLowerCase() === user.email.toLowerCase()) : false;
+  const isGlobalAdmin = checkGlobalAdmin(user?.email);
   let communityAdminEmails: string[] = [];
   try {
     communityAdminEmails = Array.isArray(userData?.communities?.[0]?.adminEmails)
