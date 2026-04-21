@@ -22,7 +22,7 @@ export function extractPath(urlOrPath: string): string {
   const decoded = decodeURIComponent(urlOrPath);
   
   // If the path actually is in the URL, extract it
-  const match = decoded.match(/(profiles\/[^?]+)/);
+  const match = decoded.match(/((?:profiles|communities)\/[^?]+)/);
   if (match) return match[1];
   
   return urlOrPath;

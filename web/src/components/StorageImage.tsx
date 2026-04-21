@@ -25,8 +25,8 @@ export default function StorageImage({ pathOrUrl, fallback, ...props }: StorageI
     // It's a path, or an old URL that needs to be extracted
     const path = extractPath(pathOrUrl);
     
-    // If extractPath returned a path starting with "profiles/", fetch a fresh URL
-    if (path.startsWith("profiles/")) {
+    // If it's a storage path (profiles/ or communities/), fetch a fresh URL
+    if (path.startsWith("profiles/") || path.startsWith("communities/")) {
       getStorageUrl(path)
         .then((fetchedUrl) => {
           if (isMounted) setUrl(fetchedUrl);
