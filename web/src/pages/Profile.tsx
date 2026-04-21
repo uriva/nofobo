@@ -41,7 +41,7 @@ export default function Profile() {
   const { user } = db.useAuth();
   const { activeCommunityCode, myProfiles } = useCommunity();
 
-  const profile = myProfiles.find(p => p.communityCode === activeCommunityCode);
+  const profile = myProfiles.find(p => p.community?.code === activeCommunityCode);
 
   const { data: communityData, isLoading } = db.useQuery(
     activeCommunityCode ? { communities: { $: { where: { code: activeCommunityCode } } } } : null

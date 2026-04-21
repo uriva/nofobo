@@ -58,7 +58,6 @@ const _schema = i.schema({
       aiDescription: i.string().optional(),
       attractedTo: i.json<string[]>().optional(),
       bio: i.string(),
-      communityCode: i.string().indexed().optional(),
       createdAt: i.number().indexed(),
       gender: i.string().indexed(),
       tags: i.json<string[]>().optional(), // JSON array of custom tags
@@ -319,6 +318,18 @@ const _schema = i.schema({
         on: "$users",
         has: "one",
         label: "profile",
+      },
+    },
+    profilesCommunity: {
+      forward: {
+        on: "profiles",
+        has: "one",
+        label: "community",
+      },
+      reverse: {
+        on: "communities",
+        has: "many",
+        label: "profiles",
       },
     },
   },

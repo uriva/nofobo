@@ -2,15 +2,17 @@
 // NOFOBO Backend - Deno Server
 // Handles profile creation, community-scoped pair selection, and ELO ranking
 
-
-export function updateElo(winnerElo: number, loserElo: number): { winner: number; loser: number } {
+export function updateElo(
+  winnerElo: number,
+  loserElo: number,
+): { winner: number; loser: number } {
   const K = 32;
   const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
   const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
-  
+
   return {
     winner: Math.round(winnerElo + K * (1 - expectedWinner)),
-    loser: Math.round(loserElo + K * (0 - expectedLoser))
+    loser: Math.round(loserElo + K * (0 - expectedLoser)),
   };
 }
 
@@ -55,7 +57,6 @@ import adminDb from "./db.ts";
 import {
   runMatching,
   selectNextPair,
-
   type UserEloData,
 } from "./galeShapley.ts";
 import { ELO_DEFAULT } from "../../constants.ts";
@@ -117,13 +118,18 @@ async function verifyAuth(
 }
 
 async function handler(req: Request): Promise<Response> {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   const url = new URL(req.url);
   const path = url.pathname;
 
   if (path === "/api/version" && req.method === "GET") {
-    return json({ commit: Deno.env.get("RENDER_GIT_COMMIT") || Deno.env.get("VITE_COMMIT_HASH") || "unknown" });
+    return json({
+      commit: Deno.env.get("RENDER_GIT_COMMIT") ||
+        Deno.env.get("VITE_COMMIT_HASH") || "unknown",
+    });
   }
 
   // CORS preflight
@@ -142,21 +148,28 @@ async function handler(req: Request): Promise<Response> {
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     try {
-      // Get user's profile
+      // Get user's profile(s) with community link
       const { profiles: myProfiles } = await adminDb.query({
-        profiles: { $: { where: { "user.id": user.id } } },
+        profiles: { $: { where: { "user.id": user.id } }, community: {} },
       });
       const requestedCommunity = url.searchParams.get("community");
       let myProfile = myProfiles[0];
       if (requestedCommunity) {
-        myProfile = myProfiles.find((p: any) =>
-          p.communityCode === requestedCommunity
-        );
+        myProfile = myProfiles.find((p: any) => {
+          const c = Array.isArray(p.community) ? p.community[0] : p.community;
+          return c?.code === requestedCommunity;
+        });
       }
 
       if (!myProfile) return json({ error: "Profile not found" }, 404);
 
-      const myCommunity = myProfile.communityCode;
+      const myCommunityObj = Array.isArray(myProfile.community)
+        ? myProfile.community[0]
+        : myProfile.community;
+      const myCommunity = myCommunityObj?.code;
+      if (!myCommunity) {
+        return json({ error: "Profile not linked to a community" }, 400);
+      }
       const myGender = myProfile.gender;
       const myAttractedTo = myProfile.attractedTo ?? "both";
       const myMatchStatuses: string[] = myProfile.matchWithStatuses || [];
@@ -172,7 +185,7 @@ async function handler(req: Request): Promise<Response> {
         profiles: {
           $: {
             where: {
-              communityCode: myCommunity,
+              "community.code": myCommunity,
               onboardingComplete: true,
             },
           },
@@ -235,14 +248,16 @@ async function handler(req: Request): Promise<Response> {
       // Filter comparisons to only count those relevant to the current community pool
       // Since comparisons don't have communityCode, we check if the users involved
       // are in the candidates list (which is already filtered by community).
-      const eligibleUserIds = new Set(eligible.map((p: any) => p.user?.[0]?.id).filter(Boolean));
-      
+      const eligibleUserIds = new Set(
+        eligible.map((p: any) => p.user?.[0]?.id).filter(Boolean),
+      );
+
       const relevantComparisons = comparisons.filter((c: any) => {
         // The users must be in the current community candidate pool, or at least one of them
         // Actually, if they were matched before in this community, they should both be in it.
         // Wait, candidates only contains onboardingComplete profiles. If someone deleted their profile,
         // they might not be there. But that's fine.
-        return true; 
+        return true;
       });
 
       if (eligible.length < 2) {
@@ -256,12 +271,20 @@ async function handler(req: Request): Promise<Response> {
 
       const comparedPairs = new Set<string>();
       for (const c of relevantComparisons) {
-        const winnerProfile = Array.isArray(c.winnerProfile) ? c.winnerProfile[0] : c.winnerProfile;
-        const loserProfile = Array.isArray(c.loserProfile) ? c.loserProfile[0] : c.loserProfile;
-        
-        const wId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
-        const lId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
-        
+        const winnerProfile = Array.isArray(c.winnerProfile)
+          ? c.winnerProfile[0]
+          : c.winnerProfile;
+        const loserProfile = Array.isArray(c.loserProfile)
+          ? c.loserProfile[0]
+          : c.loserProfile;
+
+        const wId = Array.isArray(winnerProfile?.user)
+          ? winnerProfile.user[0]?.id
+          : winnerProfile?.user?.id;
+        const lId = Array.isArray(loserProfile?.user)
+          ? loserProfile.user[0]?.id
+          : loserProfile?.user?.id;
+
         if (wId && lId) comparedPairs.add(`${wId}:${lId}`);
       }
 
@@ -269,14 +292,18 @@ async function handler(req: Request): Promise<Response> {
       const { eloRatings } = await adminDb.query({
         eloRatings: {
           $: { where: { "raterProfile.user.id": user.id } },
-          targetProfile: { user: {} }
+          targetProfile: { user: {} },
         },
       });
 
       const userElo = new Map<string, number>();
       for (const r of eloRatings) {
-        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile)
+          ? r.targetProfile[0]
+          : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user)
+          ? targetProfile.user[0]?.id
+          : targetProfile?.user?.id;
         if (targetId) userElo.set(targetId, r.score);
       }
 
@@ -341,12 +368,12 @@ async function handler(req: Request): Promise<Response> {
     }
 
     try {
-      // Find profiles for these users
+      // Find profiles for these users in this community
       const { profiles } = await adminDb.query({
         profiles: {
-          $: { where: { communityCode: community } },
-          user: {}
-        }
+          $: { where: { "community.code": community } },
+          user: {},
+        },
       });
 
       const wProfile = profiles.find((p: any) => {
@@ -363,7 +390,10 @@ async function handler(req: Request): Promise<Response> {
       });
 
       if (!wProfile || !lProfile || !vProfile) {
-        return json({ error: "Could not find profiles for one or more users" }, 400);
+        return json(
+          { error: "Could not find profiles for one or more users" },
+          400,
+        );
       }
 
       // Create comparison record
@@ -371,7 +401,11 @@ async function handler(req: Request): Promise<Response> {
       await adminDb.transact([
         adminDb.tx.comparisons[comparisonId]
           .update({ createdAt: Date.now() })
-          .link({ voterProfile: vProfile.id, winnerProfile: wProfile.id, loserProfile: lProfile.id }),
+          .link({
+            voterProfile: vProfile.id,
+            winnerProfile: wProfile.id,
+            loserProfile: lProfile.id,
+          }),
       ]);
 
       // Update ELO ratings
@@ -388,8 +422,12 @@ async function handler(req: Request): Promise<Response> {
       let loserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile)
+          ? r.targetProfile[0]
+          : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user)
+          ? targetProfile.user[0]?.id
+          : targetProfile?.user?.id;
         if (targetId === winnerId) {
           winnerElo = r.score;
           winnerRatingId = r.id;
@@ -467,7 +505,12 @@ async function handler(req: Request): Promise<Response> {
 
       const { eloRatings } = await adminDb.query({
         eloRatings: {
-          $: { where: { "raterProfile.user.id": user.id, "targetProfile.user.id": targetUserId } },
+          $: {
+            where: {
+              "raterProfile.user.id": user.id,
+              "targetProfile.user.id": targetUserId,
+            },
+          },
         },
       });
 
@@ -480,18 +523,24 @@ async function handler(req: Request): Promise<Response> {
       } else {
         // Demote needs profiles to link to
         const communityCode = body.community;
-        if (!communityCode) return json({ error: "community required for demote" }, 400);
-        
+        if (!communityCode) {
+          return json({ error: "community required for demote" }, 400);
+        }
+
         const { profiles } = await adminDb.query({
           profiles: {
-            $: { where: { communityCode } },
-            user: {}
-          }
+            $: { where: { "community.code": communityCode } },
+            user: {},
+          },
         });
-        
-        const rProfile = profiles.find((p: any) => p.user?.[0]?.id === user.id || p.user?.id === user.id);
-        const tProfile = profiles.find((p: any) => p.user?.[0]?.id === targetUserId || p.user?.id === targetUserId);
-        
+
+        const rProfile = profiles.find((p: any) =>
+          p.user?.[0]?.id === user.id || p.user?.id === user.id
+        );
+        const tProfile = profiles.find((p: any) =>
+          p.user?.[0]?.id === targetUserId || p.user?.id === targetUserId
+        );
+
         if (rProfile && tProfile) {
           const newId = id();
           await adminDb.transact([
@@ -524,7 +573,7 @@ async function handler(req: Request): Promise<Response> {
       });
 
       const { profiles } = await adminDb.query({
-        profiles: { user: {} },
+        profiles: { user: {}, community: {} },
       });
       const profileMap = new Map<string, any>();
       for (const p of profiles) {
@@ -534,21 +583,36 @@ async function handler(req: Request): Promise<Response> {
       // Map winner/loser profile IDs to user IDs and profile data
       const result = comparisons.map((c: any) => {
         // Handle both has:"one" and has:"many" returns from InstantDB
-        const wProfileId = Array.isArray(c.winnerProfile) ? c.winnerProfile[0]?.id : c.winnerProfile?.id;
-        const lProfileId = Array.isArray(c.loserProfile) ? c.loserProfile[0]?.id : c.loserProfile?.id;
+        const wProfileId = Array.isArray(c.winnerProfile)
+          ? c.winnerProfile[0]?.id
+          : c.winnerProfile?.id;
+        const lProfileId = Array.isArray(c.loserProfile)
+          ? c.loserProfile[0]?.id
+          : c.loserProfile?.id;
 
-        const wProfileData = Array.isArray(c.winnerProfile) ? c.winnerProfile[0] : c.winnerProfile;
-        const lProfileData = Array.isArray(c.loserProfile) ? c.loserProfile[0] : c.loserProfile;
+        const wProfileData = Array.isArray(c.winnerProfile)
+          ? c.winnerProfile[0]
+          : c.winnerProfile;
+        const lProfileData = Array.isArray(c.loserProfile)
+          ? c.loserProfile[0]
+          : c.loserProfile;
 
         const winnerProfile = profileMap.get(wProfileId) || wProfileData;
         const loserProfile = profileMap.get(lProfileId) || lProfileData;
 
-        const winnerId = Array.isArray(winnerProfile?.user) ? winnerProfile.user[0]?.id : winnerProfile?.user?.id;
-        const loserId = Array.isArray(loserProfile?.user) ? loserProfile.user[0]?.id : loserProfile?.user?.id;
-        
+        const winnerId = Array.isArray(winnerProfile?.user)
+          ? winnerProfile.user[0]?.id
+          : winnerProfile?.user?.id;
+        const loserId = Array.isArray(loserProfile?.user)
+          ? loserProfile.user[0]?.id
+          : loserProfile?.user?.id;
+
         const winnerPhotoUrls = winnerProfile?.photoUrls || [];
         const loserPhotoUrls = loserProfile?.photoUrls || [];
-        
+        const winnerCommunity = Array.isArray(winnerProfile?.community)
+          ? winnerProfile.community[0]
+          : winnerProfile?.community;
+
         return {
           comparisonId: c.id,
           winnerId: winnerId ?? "",
@@ -561,7 +625,7 @@ async function handler(req: Request): Promise<Response> {
           loserAge: loserProfile?.age ?? 0,
           loserPhotoUrl: loserProfile?.photoUrl ?? loserPhotoUrls[0] ??
             undefined,
-          communityCode: winnerProfile?.communityCode ?? "",
+          communityCode: winnerCommunity?.code ?? "",
           createdAt: c.createdAt ?? 0,
         };
       });
@@ -601,10 +665,14 @@ async function handler(req: Request): Promise<Response> {
       // Deduplicate ratings (take latest) if multiple exist due to schema changes
       const latestRatings = new Map<string, any>();
       for (const r of eloRatings) {
-        const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-        const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
+        const targetProfileObj = Array.isArray(r.targetProfile)
+          ? r.targetProfile[0]
+          : r.targetProfile;
+        const tUserId = Array.isArray(targetProfileObj?.user)
+          ? targetProfileObj.user[0]?.id
+          : targetProfileObj?.user?.id;
         if (!tUserId) continue;
-        
+
         const existing = latestRatings.get(tUserId);
         if (!existing || (r.createdAt || 0) > (existing.createdAt || 0)) {
           latestRatings.set(tUserId, r);
@@ -613,8 +681,12 @@ async function handler(req: Request): Promise<Response> {
 
       const rankings = Array.from(latestRatings.values())
         .map((r: any) => {
-          const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-          const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
+          const targetProfileObj = Array.isArray(r.targetProfile)
+            ? r.targetProfile[0]
+            : r.targetProfile;
+          const tUserId = Array.isArray(targetProfileObj?.user)
+            ? targetProfileObj.user[0]?.id
+            : targetProfileObj?.user?.id;
           const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
             targetUserId: tUserId ?? "",
@@ -660,8 +732,10 @@ async function handler(req: Request): Promise<Response> {
       const comp = comparisons[0];
       const oldWinnerProfileId = comp.winnerProfile?.[0]?.id;
       const oldLoserProfileId = comp.loserProfile?.[0]?.id;
-      const oldWinnerUserId = comp.winnerProfile?.[0]?.user?.[0]?.id || comp.winnerProfile?.[0]?.user?.id;
-      const oldLoserUserId = comp.loserProfile?.[0]?.user?.[0]?.id || comp.loserProfile?.[0]?.user?.id;
+      const oldWinnerUserId = comp.winnerProfile?.[0]?.user?.[0]?.id ||
+        comp.winnerProfile?.[0]?.user?.id;
+      const oldLoserUserId = comp.loserProfile?.[0]?.user?.[0]?.id ||
+        comp.loserProfile?.[0]?.user?.id;
 
       if (!oldWinnerProfileId || !oldLoserProfileId) {
         return json({ error: "Invalid comparison data" }, 500);
@@ -670,8 +744,14 @@ async function handler(req: Request): Promise<Response> {
       // Swap the winner/loser links
       await adminDb.transact([
         adminDb.tx.comparisons[comparisonId]
-          .unlink({ winnerProfile: oldWinnerProfileId, loserProfile: oldLoserProfileId })
-          .link({ winnerProfile: oldLoserProfileId, loserProfile: oldWinnerProfileId }),
+          .unlink({
+            winnerProfile: oldWinnerProfileId,
+            loserProfile: oldLoserProfileId,
+          })
+          .link({
+            winnerProfile: oldLoserProfileId,
+            loserProfile: oldWinnerProfileId,
+          }),
       ]);
 
       // Recalculate ELO: undo old result, apply new result
@@ -689,8 +769,12 @@ async function handler(req: Request): Promise<Response> {
       let oldLoserRatingId: string | null = null;
 
       for (const r of eloRatings) {
-        const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-        const targetId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
+        const targetProfile = Array.isArray(r.targetProfile)
+          ? r.targetProfile[0]
+          : r.targetProfile;
+        const targetId = Array.isArray(targetProfile?.user)
+          ? targetProfile.user[0]?.id
+          : targetProfile?.user?.id;
         if (targetId === oldWinnerUserId) {
           oldWinnerElo = r.score;
           oldWinnerRatingId = r.id;
@@ -789,7 +873,7 @@ async function handler(req: Request): Promise<Response> {
         profiles: {
           $: {
             where: {
-              communityCode: requestedCommunity,
+              "community.code": requestedCommunity,
               onboardingComplete: true,
             },
           },
@@ -806,8 +890,12 @@ async function handler(req: Request): Promise<Response> {
 
       const compCountByUser = new Map<string, number>();
       for (const c of allComps) {
-        const voterProfile = Array.isArray(c.voterProfile) ? c.voterProfile[0] : c.voterProfile;
-        const voterId = Array.isArray(voterProfile?.user) ? voterProfile.user[0]?.id : voterProfile?.user?.id;
+        const voterProfile = Array.isArray(c.voterProfile)
+          ? c.voterProfile[0]
+          : c.voterProfile;
+        const voterId = Array.isArray(voterProfile?.user)
+          ? voterProfile.user[0]?.id
+          : voterProfile?.user?.id;
         if (voterId) {
           compCountByUser.set(voterId, (compCountByUser.get(voterId) ?? 0) + 1);
         }
@@ -893,8 +981,12 @@ async function handler(req: Request): Promise<Response> {
 
       const rankings = eloRatings
         .map((r: any) => {
-          const targetProfileObj = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-          const tUserId = Array.isArray(targetProfileObj?.user) ? targetProfileObj.user[0]?.id : targetProfileObj?.user?.id;
+          const targetProfileObj = Array.isArray(r.targetProfile)
+            ? r.targetProfile[0]
+            : r.targetProfile;
+          const tUserId = Array.isArray(targetProfileObj?.user)
+            ? targetProfileObj.user[0]?.id
+            : targetProfileObj?.user?.id;
           const targetProfile = userProfileMap.get(tUserId ?? "");
           return {
             targetUserId: tUserId ?? "",
@@ -931,7 +1023,7 @@ async function handler(req: Request): Promise<Response> {
         profiles: {
           $: {
             where: {
-              communityCode: requestedCommunity,
+              "community.code": requestedCommunity,
               onboardingComplete: true,
             },
           },
@@ -954,15 +1046,25 @@ async function handler(req: Request): Promise<Response> {
       // Build UserEloData for each user
       const userIdSet = new Set(userIds);
       const users: UserEloData[] = profiles.map((p: any) => {
-        const userId = Array.isArray(p.user) ? p.user[0]?.id : (p.user?.id ?? "");
+        const userId = Array.isArray(p.user)
+          ? p.user[0]?.id
+          : (p.user?.id ?? "");
         const ratings = new Map<string, number>();
 
         for (const r of allRatings) {
-          const raterProfile = Array.isArray(r.raterProfile) ? r.raterProfile[0] : r.raterProfile;
-          const targetProfile = Array.isArray(r.targetProfile) ? r.targetProfile[0] : r.targetProfile;
-          const rId = Array.isArray(raterProfile?.user) ? raterProfile.user[0]?.id : raterProfile?.user?.id;
-          const tId = Array.isArray(targetProfile?.user) ? targetProfile.user[0]?.id : targetProfile?.user?.id;
-          
+          const raterProfile = Array.isArray(r.raterProfile)
+            ? r.raterProfile[0]
+            : r.raterProfile;
+          const targetProfile = Array.isArray(r.targetProfile)
+            ? r.targetProfile[0]
+            : r.targetProfile;
+          const rId = Array.isArray(raterProfile?.user)
+            ? raterProfile.user[0]?.id
+            : raterProfile?.user?.id;
+          const tId = Array.isArray(targetProfile?.user)
+            ? targetProfile.user[0]?.id
+            : targetProfile?.user?.id;
+
           if (rId === userId && userIdSet.has(tId ?? "")) {
             ratings.set(tId!, r.score);
           }
@@ -1008,84 +1110,6 @@ async function handler(req: Request): Promise<Response> {
     } catch (e) {
       console.error("Admin matching error:", e);
       return json({ error: "Failed to run matching" }, 500);
-    }
-  }
-
-  // --- Admin: Update Community Info ---
-  if (path === "/api/admin/community" && req.method === "POST") {
-    const user = await verifyAuth(req);
-    if (!user) return json({ error: "Unauthorized" }, 401);
-
-    const requestedCommunity = url.searchParams.get("community");
-    if (!requestedCommunity) return json({ error: "Community required" }, 400);
-
-    const isAdmin = await verifyAdmin(user.email, requestedCommunity);
-    if (!isAdmin) {
-      return json({ error: "Forbidden" }, 403);
-    }
-
-    try {
-      const body = await req.json();
-      const { name, code } = body;
-
-      if (!name || !code) {
-        return json({ error: "Name and code are required" }, 400);
-      }
-
-      // Validate code format (alphanumeric, hyphens, underscores only)
-      if (!/^[a-z0-9-_]+$/.test(code)) {
-        return json({
-          error:
-            "Code must contain only lowercase letters, numbers, hyphens, and underscores",
-        }, 400);
-      }
-
-      // Get current community
-      const { communities } = await adminDb.query({
-        communities: { $: { where: { code: requestedCommunity } } },
-      });
-
-      if (communities.length === 0) {
-        return json({ error: "Community not found" }, 404);
-      }
-
-      const community = communities[0];
-
-      // If code is changing, check if new code already exists
-      if (code !== requestedCommunity) {
-        const { communities: existingCommunities } = await adminDb.query({
-          communities: { $: { where: { code } } },
-        });
-
-        if (existingCommunities.length > 0) {
-          return json({ error: "Code already exists" }, 400);
-        }
-
-        // Update all profiles with the old community code to the new code
-        const { profiles } = await adminDb.query({
-          profiles: { $: { where: { communityCode: requestedCommunity } } },
-        });
-
-        const profileUpdates = profiles.map((p: any) =>
-          adminDb.tx.profiles[p.id].update({ communityCode: code })
-        );
-
-        // Update the community
-        await adminDb.transact([
-          adminDb.tx.communities[community.id].update({ name, code }),
-          ...profileUpdates,
-        ]);
-      } else {
-        // Just update the name
-        await adminDb.transact([
-          adminDb.tx.communities[community.id].update({ name }),
-        ]);
-      }
-
-      return json({ success: true });
-    } catch (e) {
-      console.error("Admin community update error:", e);
-      return json({ error: "Failed to update community" }, 500);
     }
   }
 

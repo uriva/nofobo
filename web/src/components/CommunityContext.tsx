@@ -13,7 +13,7 @@ const CommunityContext = createContext<CommunityContextType | undefined>(undefin
 export function CommunityProvider({ children }: { children: ReactNode }) {
   const { user } = db.useAuth();
   const { data } = db.useQuery(user ? { 
-    profiles: { $: { where: { "user.id": user.id } } },
+    profiles: { $: { where: { "user.id": user.id } }, community: {} },
     communities: {}
   } : null);
 
@@ -25,13 +25,10 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     // If no active community selected, try to load from storage or default to first profile
     if (!activeCommunityCode) {
       const saved = localStorage.getItem("activeCommunityCode");
-      // Only auto-switch to saved if we either have a profile in it or are an admin of it
-      // Wait, allCommunities contains ALL communities (view: true for everyone).
-      // Let's just trust the saved code if it exists.
       if (saved) {
         setActiveCommunityCode(saved);
-      } else if (myProfiles.length > 0) {
-        setActiveCommunityCode(myProfiles[0].communityCode);
+      } else if (myProfiles.length > 0 && myProfiles[0].community?.code) {
+        setActiveCommunityCode(myProfiles[0].community.code);
       }
     }
   }, [myProfiles, activeCommunityCode]);

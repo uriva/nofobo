@@ -14,12 +14,12 @@ async function callAI(messages: ChatMessage[]): Promise<string> {
       "Content-Type": "application/json",
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
-    body: ({
+    body: {
       model: "gpt-4o-mini",
       messages,
       max_tokens: 1024,
       temperature: 0.7,
-    }),
+    },
   });
 
   if (!res.ok) {

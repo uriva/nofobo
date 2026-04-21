@@ -45,7 +45,7 @@ export default function Compare() {
       : null,
   );
   
-  const myProfile = myProfiles.find(p => p.communityCode === activeCommunityCode);
+  const myProfile = myProfiles.find(p => p.community?.code === activeCommunityCode);
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const myCommunity = myData?.communities?.[0];

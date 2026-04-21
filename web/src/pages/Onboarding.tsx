@@ -254,7 +254,6 @@ export default function Onboarding() {
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
-        communityCode: communityCode.trim().toLowerCase(),
         onboardingComplete: true,
         createdAt: Date.now(),
       };
@@ -263,8 +262,19 @@ export default function Onboarding() {
         profileData.photoUrls = (finalPhotoUrls);
       }
 
+      const targetCode = communityCode.trim().toLowerCase();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const targetCommunity = communities.find((c: any) => c.code === targetCode);
+      if (!targetCommunity) {
+        setSaveError("Community not found. Please go back and select a valid community.");
+        setSaving(false);
+        return;
+      }
+
       await db.transact([
-        db.tx.profiles[profileId].update(profileData).link({ user: user.id }),
+        db.tx.profiles[profileId]
+          .update(profileData)
+          .link({ user: user.id, community: targetCommunity.id }),
       ]);
 
       navigate("/app/compare");

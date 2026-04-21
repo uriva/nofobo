@@ -7,7 +7,7 @@ const adminDb = init({
 
 async function run() {
   const { profiles } = await adminDb.query({
-    profiles: { $: { where: { communityCode: "burningdesire" } } },
+    profiles: { $: { where: { "community.code": "burningdesire" } } },
   });
   console.log(JSON.stringify(
     profiles.map((p) => ({

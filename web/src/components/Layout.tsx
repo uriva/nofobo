@@ -59,7 +59,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
   });
 
   const dropdownCommunities = Array.from(new Set([
-    ...myProfiles.map(p => p.communityCode),
+    ...myProfiles.map(p => p.community?.code).filter(Boolean),
     ...adminCommunities.map(c => c.code)
   ]));
 

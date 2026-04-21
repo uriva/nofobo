@@ -37,7 +37,7 @@ interface MatchPair {
 
 export default function Admin() {
   const { user } = db.useAuth();
-  const { activeCommunityCode } = useCommunity();
+  const { activeCommunityCode, setActiveCommunityCode } = useCommunity();
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -220,30 +220,44 @@ export default function Admin() {
 
   const handleSaveCommunityInfo = async () => {
     if (!community || !activeCommunityCode) return;
+    const name = editingCommunityName.trim();
+    const code = editingCommunityCode.trim().toLowerCase();
+
+    if (!name || !code) {
+      alert("Name and code are required");
+      return;
+    }
+
+    if (!/^[a-z0-9-_]+$/.test(code)) {
+      alert("Code must contain only lowercase letters, numbers, hyphens, and underscores");
+      return;
+    }
+
     setSavingCommunityInfo(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/community?community=${activeCommunityCode}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAuthToken()}`,
-        },
-        body: ({
-          name: editingCommunityName.trim(),
-          code: editingCommunityCode.trim().toLowerCase(),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to update community info");
-        return;
+      // If the code is changing, check it doesn't conflict
+      if (code !== activeCommunityCode) {
+        const { data: conflict } = await db.queryOnce({
+          communities: { $: { where: { code } } },
+        });
+        if (conflict?.communities?.length) {
+          alert("Code already exists");
+          return;
+        }
       }
 
+      await db.transact([
+        db.tx.communities[community.id].update({ name, code }),
+      ]);
+
+      // Switch the active community code if it changed
+      if (code !== activeCommunityCode) {
+        setActiveCommunityCode(code);
+      }
       setIsEditingCommunityInfo(false);
     } catch (e) {
       console.error("Save community info error:", e);
-      alert("Failed to save community info");
+      alert(e instanceof Error ? e.message : "Failed to save community info");
     } finally {
       setSavingCommunityInfo(false);
     }

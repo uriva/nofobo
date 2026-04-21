@@ -23,9 +23,10 @@ const rules = {
     allow: {
       view: "true",
       create: "true",
-      update: "true",
+      update: "isAdmin",
       delete: "false",
     },
+    bind: ["isAdmin", "auth.email in data.adminEmails"],
   },
   comparisons: {
     allow: {

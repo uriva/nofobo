@@ -15,7 +15,7 @@ export default function ProfileModal({ userId, communityCode, onClose }: Profile
       $: {
         where: {
           "user.id": userId,
-          communityCode,
+          "community.code": communityCode,
         },
       },
     },
