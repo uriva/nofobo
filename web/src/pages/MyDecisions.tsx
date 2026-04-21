@@ -21,13 +21,18 @@ export default function MyDecisions() {
     "rankings",
   );
 
-  // Live query: own comparisons with joined profiles
+  // Live query: own comparisons with joined profiles, scoped to active community
   // deno-lint-ignore no-explicit-any
   const comparisonsQuery = (db as any).useQuery(
-    user
+    user && activeCommunityCode
       ? {
         comparisons: {
-          $: { where: { "voterProfile.user.id": user.id } },
+          $: {
+            where: {
+              "voterProfile.user.id": user.id,
+              "voterProfile.community.code": activeCommunityCode,
+            },
+          },
           winnerProfile: { user: {}, community: {} },
           loserProfile: { user: {}, community: {} },
         },
@@ -35,13 +40,18 @@ export default function MyDecisions() {
       : null,
   );
 
-  // Live query: own ELO ratings
+  // Live query: own ELO ratings, scoped to active community
   // deno-lint-ignore no-explicit-any
   const ratingsQuery = (db as any).useQuery(
-    user
+    user && activeCommunityCode
       ? {
         eloRatings: {
-          $: { where: { "raterProfile.user.id": user.id } },
+          $: {
+            where: {
+              "raterProfile.user.id": user.id,
+              "raterProfile.community.code": activeCommunityCode,
+            },
+          },
           targetProfile: { user: {} },
         },
       }
@@ -106,10 +116,7 @@ export default function MyDecisions() {
       .sort((a, b) => b.score - a.score);
   }, [ratingsQuery.data]);
 
-  const filteredDecisions = useMemo(() => {
-    if (!activeCommunityCode) return [];
-    return decisions.filter((d) => d.communityCode === activeCommunityCode);
-  }, [decisions, activeCommunityCode]);
+  const filteredDecisions = decisions;
 
   const getAuthToken = () => user?.refresh_token ?? "";
 
