@@ -13,9 +13,9 @@
     "react-dom": "npm:react-dom@^19.1.0",
     "react-dom/": "npm:react-dom@^19.1.0/",
     "react-router-dom": "npm:react-router-dom@^7.6.1",
-    "@instantdb/react": "npm:@instantdb/react@^0.22.150",
-    "@instantdb/admin": "npm:@instantdb/admin@^0.22.150",
-    "@instantdb/core": "npm:@instantdb/core@^0.22.150",
+    "@instantdb/react": "npm:@instantdb/react@^1.0.21",
+    "@instantdb/admin": "npm:@instantdb/admin@^1.0.21",
+    "@instantdb/core": "npm:@instantdb/core@^1.0.21",
     "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.5.2",
     "vite": "npm:vite@^6.3.5"
   },

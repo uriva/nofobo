@@ -6,9 +6,9 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@instantdb/admin": "^1.0.11",
-    "@instantdb/core": "^0.22.150",
-    "@instantdb/react": "^0.22.150",
+    "@instantdb/admin": "^1.0.21",
+    "@instantdb/core": "^1.0.21",
+    "@instantdb/react": "^1.0.21",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.1"
