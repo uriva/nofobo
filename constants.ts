@@ -2,10 +2,7 @@ export const APP_NAME = "NOFOBO";
 export const APP_TAGLINE = "No Fear Of Better Option";
 export const INSTANT_APP_ID = "6818f05d-46f3-4622-9aaf-dcd14e067e9e";
 
-export const GLOBAL_ADMIN_EMAILS = [
-  "uri.valevski@gmail.com",
-  "BurningMan@alumni.stanford.edu",
-];
+export const GLOBAL_ADMIN_EMAILS = ["uri.valevski@gmail.com"];
 export const isGlobalAdmin = (email: string | undefined | null): boolean =>
   !!email &&
   GLOBAL_ADMIN_EMAILS.some((e) => e.toLowerCase() === email.toLowerCase());

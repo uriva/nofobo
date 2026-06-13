@@ -30,7 +30,7 @@ const rules = {
       "isAdmin",
       "auth.email in data.adminEmails",
       "isGlobalAdmin",
-      "auth.email == 'uri.valevski@gmail.com' || auth.email == 'BurningMan@alumni.stanford.edu'",
+      "auth.email == 'uri.valevski@gmail.com'",
     ],
   },
   comparisons: {
