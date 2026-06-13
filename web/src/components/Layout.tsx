@@ -25,7 +25,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
             matchesAsUser1: {},
             matchesAsUser2: {},
           },
-          communities: activeCommunityCode ? { $: { where: { code: activeCommunityCode } } } : undefined,
+          communities: activeCommunityCode ? { $: { where: { code: activeCommunityCode } }, creator: {} } : undefined,
         }
       : null
   );
@@ -48,14 +48,17 @@ export default function Layout({ children, headerActions }: { children: ReactNod
     console.error("Failed to parse admin emails", e);
   }
   const isCommunityAdmin = user?.email && communityAdminEmails.some(e => e.toLowerCase() === user.email.toLowerCase());
-  const isAdmin = isGlobalAdmin || isCommunityAdmin;
+  const isCreator = user?.id && userData?.communities?.[0]?.creator?.id === user.id;
+  const isAdmin = isGlobalAdmin || isCommunityAdmin || isCreator;
 
   // Let admins see all communities they have access to in the dropdown
   const adminCommunities = allCommunities.filter(c => {
     if (isGlobalAdmin) return true;
     try {
       const admins = Array.isArray(c.adminEmails) ? c.adminEmails : [];
-      return user?.email && admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+      const isAdminOfComm = user?.email && admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+      const isCreatorOfComm = user?.id && c.creator?.id === user.id;
+      return isAdminOfComm || isCreatorOfComm;
     } catch {
       return false;
     }

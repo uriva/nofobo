@@ -15,7 +15,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const { user } = db.useAuth();
   const { data } = db.useQuery(user ? { 
     profiles: { $: { where: { "user.id": user.id } }, community: {} },
-    communities: {}
+    communities: { creator: {} }
   } : null);
 
   const myProfiles = data?.profiles || [];
@@ -36,7 +36,9 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           if (isGlobal) return true;
           try {
             const admins = Array.isArray(c.adminEmails) ? c.adminEmails : [];
-            return admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+            const isAdmin = admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+            const isCreator = c.creator?.id === user.id;
+            return isAdmin || isCreator;
           } catch {
             return false;
           }

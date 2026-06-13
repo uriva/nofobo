@@ -23,7 +23,7 @@ const rules = {
     allow: {
       view: "true",
       create: "true",
-      update: "isAdmin || isGlobalAdmin",
+      update: "isAdmin || isGlobalAdmin || isCreator",
       delete: "false",
     },
     bind: [
@@ -31,6 +31,8 @@ const rules = {
       "auth.email in data.adminEmails",
       "isGlobalAdmin",
       "auth.email == 'uri.valevski@gmail.com'",
+      "isCreator",
+      "auth.id in data.ref('creator.id')",
     ],
   },
   comparisons: {
