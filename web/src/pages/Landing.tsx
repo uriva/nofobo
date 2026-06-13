@@ -43,7 +43,7 @@ export default function Landing() {
           <p className="text-xl text-grape-200/70 max-w-2xl mx-auto mb-10 leading-relaxed">
             Good relationships require focus, but you can't focus when you're
             juggling 20 conversations. NOFOBO uses the Gale-Shapley algorithm
-            to find you one optimal match per week. One person, full attention.
+            to find you one optimal match. One person, full attention.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -68,7 +68,7 @@ export default function Landing() {
           <div>
             <div className="text-3xl font-black text-white">1</div>
             <div className="text-grape-400 text-sm mt-1">
-              Match per week
+              Match
             </div>
           </div>
           <div>
