@@ -49,6 +49,7 @@ export default function Profile() {
 
   const myCommunity = communityData?.communities?.[0];
   const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
+  const requirePhone = !!myCommunity?.requirePhone;
 
   // Form state
   const [name, setName] = useState("");
@@ -59,6 +60,7 @@ export default function Profile() {
   const [tags, setTags] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
+  const [phone, setPhone] = useState("");
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   
   const [saving, setSaving] = useState(false);
@@ -87,6 +89,7 @@ export default function Profile() {
       }
       setBio(profile.bio || profile.aiDescription || "");
       setLocation(profile.location || "");
+      setPhone(profile.phone || "");
       
       try {
         const urls = profile.photoUrls;
@@ -140,7 +143,8 @@ export default function Profile() {
     attractedTo.length > 0 &&
     relationshipStatus &&
     bio.trim() &&
-    photos.length > 0;
+    photos.length > 0 &&
+    (!requirePhone || phone.trim());
 
   const saveProfile = async () => {
     if (!user || !profile || !isFormValid) return;
@@ -257,6 +261,23 @@ export default function Profile() {
                 />
               </div>
             </div>
+
+            {/* Phone */}
+            {(requirePhone || phone.trim() !== "") && (
+              <div>
+                <label className="block text-grape-300 text-sm mb-2 font-medium">
+                  Phone Number {requirePhone && <span className="text-red-400">*</span>}
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  placeholder="+1 (555) 123-4567"
+                />
+                <p className="text-grape-500 text-xs mt-2">Only visible to community admins.</p>
+              </div>
+            )}
 
             {/* Gender */}
             <div>
