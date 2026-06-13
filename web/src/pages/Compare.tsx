@@ -89,8 +89,8 @@ export default function Compare() {
       const data = await res.json();
       
       // Always update eligibleCount and totalComparisons if available
-      if (data.totalComparisons !== undefined) setTotalComparisons(data.totalComparisons);
-      if (data.eligibleCount !== undefined) setEligibleCount(data.eligibleCount);
+      setTotalComparisons(data.totalComparisons !== undefined ? data.totalComparisons : 0);
+      setEligibleCount(data.eligibleCount !== undefined ? data.eligibleCount : 0);
 
       if (data.pair) {
         setPair(data.pair);
