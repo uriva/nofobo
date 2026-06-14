@@ -28,7 +28,7 @@ const RELATIONSHIP_STATUSES = [
   "Very single",
   "Somewhat single",
   "In a non-exclusive relationship",
-  "In a committed relationship but open to play",
+  "I’m in a relationship but want to make new connections",
 ];
 
 export default function Compare() {
