@@ -69,6 +69,21 @@ export default function Onboarding() {
 
   const communities = data?.communities || [];
 
+  // Auto-fill and auto-advance community code from query param
+  useEffect(() => {
+    const codeParam = searchParams.get("code")?.trim().toLowerCase();
+    if (codeParam && communities.length > 0) {
+      const isValid = VALID_COMMUNITY_CODES.includes(codeParam) || communities.some((c: any) => c.code === codeParam);
+      if (isValid) {
+        setCommunityCode(codeParam);
+        setStep("profile");
+      } else {
+        setCodeError(`Invalid community code: "${codeParam}"`);
+        setStep("code");
+      }
+    }
+  }, [searchParams, communities]);
+
   // Determine which tags to show for this community
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());

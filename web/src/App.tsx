@@ -20,7 +20,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (error || !user) {
-    return <Navigate to="/app/auth" replace />;
+    return <Navigate to={`/app/auth${window.location.search}`} replace />;
   }
   return <>{children}</>;
 }

@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import QRCode from "qrcode";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import { API_URL } from "../../../constants.ts";
@@ -76,6 +77,37 @@ export default function Admin() {
     communities: { $: { where: { code: activeCommunityCode } } }
   } : null);
   const community = communityData?.communities?.[0];
+
+  // Invite Link & QR Code
+  const [showQR, setShowQR] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const inviteUrl = useMemo(() => {
+    const code = community?.code || activeCommunityCode || "";
+    return `${window.location.origin}/app/onboarding?code=${code}`;
+  }, [community?.code, activeCommunityCode]);
+
+  useEffect(() => {
+    if (inviteUrl) {
+      QRCode.toDataURL(inviteUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: "#0f0a1a",
+          light: "#ffffff",
+        },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error("QR Code generation error:", err));
+    }
+  }, [inviteUrl]);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const { data: profilesData, isLoading: loadingProfiles } = db.useQuery(
     activeCommunityCode
@@ -400,6 +432,55 @@ export default function Admin() {
               <h2 className="text-lg font-bold text-white mb-6">Community Settings</h2>
               
               <div className="space-y-6">
+                {/* Invite Link & QR Code */}
+                <div>
+                  <h3 className="text-white font-medium mb-1">Invite Link & QR Code</h3>
+                  <p className="text-grape-400 text-sm mb-4">
+                    Share this link or QR code with members to invite them directly to your community.
+                  </p>
+                  
+                  <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-4">
+                    <div className="relative flex-1 w-full">
+                      <input
+                        type="text"
+                        readOnly
+                        value={inviteUrl}
+                        className="w-full bg-grape-900 border border-grape-800 rounded-lg pl-4 pr-24 py-2.5 text-white text-sm focus:outline-none"
+                      />
+                      <button
+                        onClick={handleCopyLink}
+                        className="absolute right-2 top-1.5 bg-grape-700 hover:bg-grape-600 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+                      >
+                        {copied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setShowQR(!showQR)}
+                      className="w-full md:w-auto bg-transparent border border-grape-700 hover:border-grape-500 text-grape-300 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors text-center"
+                    >
+                      {showQR ? "Hide QR Code" : "Show QR Code"}
+                    </button>
+                  </div>
+
+                  {showQR && qrDataUrl && (
+                    <div className="flex flex-col items-center justify-center p-6 bg-grape-900/30 rounded-lg border border-grape-800">
+                      <div className="p-4 bg-white rounded-xl shadow-lg mb-4">
+                        <img src={qrDataUrl} alt="Community QR Code" className="w-48 h-48" />
+                      </div>
+                      <a
+                        href={qrDataUrl}
+                        download={`invite-qr-${community?.code || activeCommunityCode}.png`}
+                        className="text-grape-400 hover:text-white text-xs font-medium underline transition-colors"
+                      >
+                        Download QR Code PNG
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-grape-800" />
+
                 {/* Require Phone Toggle */}
                 <div className="flex items-center justify-between">
                   <div>
