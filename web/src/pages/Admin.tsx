@@ -370,7 +370,12 @@ export default function Admin() {
             {/* Community Tags */}
             <div className="mb-8 bg-grape-950 border border-grape-800 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white">Community Tags</h2>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Community Tags</h2>
+                  <p className="text-grape-400 text-sm">
+                    Tags for members to choose from on their profiles (e.g. hobbies, interests, vibes).
+                  </p>
+                </div>
                 {!isEditingTags && (
                   <button
                     onClick={() => {
@@ -392,9 +397,10 @@ export default function Admin() {
                     type="text"
                     value={editingTagsInput}
                     onChange={(e) => setEditingTagsInput(e.target.value)}
-                    placeholder="e.g. tag1, tag2, tag3"
+                    placeholder="e.g. Climber, Foodie, Poly, Burner"
                     className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
                   />
+                  <p className="text-grape-500 text-xs">Separate tags with commas.</p>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => setIsEditingTags(false)}
