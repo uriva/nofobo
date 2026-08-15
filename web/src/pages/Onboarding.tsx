@@ -56,6 +56,7 @@ export default function Onboarding() {
   const [communityCode, setCommunityCode] = useState("");
   const [newCommunityName, setNewCommunityName] = useState("");
   const [newCommunityTags, setNewCommunityTags] = useState("");
+  const [newCommunityAskRelationshipStatus, setNewCommunityAskRelationshipStatus] = useState(false);
   const [codeError, setCodeError] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -111,6 +112,7 @@ export default function Onboarding() {
   const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
   const availableTags = currentCommunity?.tags ? currentCommunity.tags : [];
   const requirePhone = !!currentCommunity?.requirePhone;
+  const askRelationshipStatus = !!currentCommunity?.askRelationshipStatus || currentCommunity?.code === "burningdesire";
 
   const handleCodeSubmit = () => {
     const code = communityCode.trim().toLowerCase();
@@ -150,6 +152,7 @@ export default function Onboarding() {
             name,
             code,
             tags: tagsArray ? (tagsArray) : undefined,
+            askRelationshipStatus: newCommunityAskRelationshipStatus ? true : undefined,
             createdAt: Date.now(),
           })
           .link({ creator: user!.id }),
@@ -254,7 +257,7 @@ export default function Onboarding() {
     !isNaN(parseInt(age)) &&
     gender &&
     attractedTo.length > 0 &&
-    relationshipStatus &&
+    (!askRelationshipStatus || relationshipStatus) &&
     bio.trim() &&
     (!requirePhone || phone.trim()) &&
     (photos.length > 0 || existingPhotoUrls.length > 0);
@@ -282,7 +285,7 @@ export default function Onboarding() {
         age: parseInt(age),
         gender,
         attractedTo: (attractedTo),
-        relationshipStatus,
+        relationshipStatus: askRelationshipStatus ? (relationshipStatus || undefined) : undefined,
         tags: (tags),
         bio: bio.trim(),
         location: location.trim() || undefined,
@@ -449,6 +452,26 @@ export default function Onboarding() {
                   placeholder="Custom tags (e.g. Climber, Foodie, Poly, Burner)"
                 />
                 <p className="text-grape-600 text-xs mt-2">Optional. Comma-separated list of tags for members to pick from (e.g. hobbies, interests, vibes).</p>
+              </div>
+
+              <div className="flex items-center justify-between py-2 px-1 text-left">
+                <div>
+                  <span className="text-grape-300 text-sm font-medium block">Ask for Relationship Status</span>
+                  <span className="text-grape-600 text-xs block">Include relationship status field on member profiles</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNewCommunityAskRelationshipStatus(prev => !prev)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    newCommunityAskRelationshipStatus ? "bg-grape-500" : "bg-grape-800"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      newCommunityAskRelationshipStatus ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
               </div>
             </div>
 
@@ -621,26 +644,28 @@ export default function Onboarding() {
           </div>
 
           {/* Relationship Status */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              My relationship status
-            </label>
-            <div className="grid grid-cols-1 gap-2">
-              {RELATIONSHIP_STATUSES.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setRelationshipStatus(status)}
-                  className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
-                    relationshipStatus === status
-                      ? "border-grape-500 bg-grape-600/20 text-white"
-                      : "border-grape-800 text-grape-400 hover:border-grape-600"
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+          {askRelationshipStatus && (
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">
+                My relationship status
+              </label>
+              <div className="grid grid-cols-1 gap-2">
+                {RELATIONSHIP_STATUSES.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setRelationshipStatus(status)}
+                    className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
+                      relationshipStatus === status
+                        ? "border-grape-500 bg-grape-600/20 text-white"
+                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Tags */}
           <div>

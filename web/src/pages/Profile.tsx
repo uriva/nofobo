@@ -50,6 +50,7 @@ export default function Profile() {
   const myCommunity = communityData?.communities?.[0];
   const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
   const requirePhone = !!myCommunity?.requirePhone;
+  const askRelationshipStatus = !!myCommunity?.askRelationshipStatus || myCommunity?.code === "burningdesire";
 
   // Form state
   const [name, setName] = useState("");
@@ -141,7 +142,7 @@ export default function Profile() {
     parseInt(age) >= 18 &&
     gender &&
     attractedTo.length > 0 &&
-    relationshipStatus &&
+    (!askRelationshipStatus || relationshipStatus) &&
     bio.trim() &&
     photos.length > 0 &&
     (!requirePhone || phone.trim());
@@ -167,7 +168,7 @@ export default function Profile() {
         age: parseInt(age),
         gender,
         attractedTo: (attractedTo),
-        relationshipStatus,
+        relationshipStatus: askRelationshipStatus ? (relationshipStatus || undefined) : undefined,
         tags: (tags),
         bio: bio.trim(),
         location: location.trim() || undefined,
@@ -329,26 +330,28 @@ export default function Profile() {
             </div>
 
             {/* Relationship Status */}
-            <div>
-              <label className="block text-grape-300 text-sm mb-2 font-medium">
-                My relationship status
-              </label>
-              <div className="grid grid-cols-1 gap-2">
-                {RELATIONSHIP_STATUSES.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setRelationshipStatus(status)}
-                    className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
-                      relationshipStatus === status
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
+            {askRelationshipStatus && (
+              <div>
+                <label className="block text-grape-300 text-sm mb-2 font-medium">
+                  My relationship status
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {RELATIONSHIP_STATUSES.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setRelationshipStatus(status)}
+                      className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
+                        relationshipStatus === status
+                          ? "border-grape-500 bg-grape-600/20 text-white"
+                          : "border-grape-800 text-grape-400 hover:border-grape-600"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Tags */}
             <div>

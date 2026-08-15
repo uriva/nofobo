@@ -29,6 +29,7 @@ const _schema = i.schema({
       createdAt: i.number().indexed(),
       name: i.string(),
       requirePhone: i.boolean().optional(),
+      askRelationshipStatus: i.boolean().optional(),
       tags: i.json<string[]>().optional(),
       coverImageUrl: i.string().optional(),
     }),

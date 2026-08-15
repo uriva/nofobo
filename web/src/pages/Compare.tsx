@@ -48,6 +48,7 @@ export default function Compare() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const myCommunity = myData?.communities?.[0];
   const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
+  const askRelationshipStatus = !!myCommunity?.askRelationshipStatus || myCommunity?.code === "burningdesire";
 
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,24 +208,26 @@ export default function Compare() {
             </div>
 
             {/* Relationship status */}
-            <div>
-              <label className="text-grape-400 text-sm font-medium block mb-2">Relationship Status</label>
-              <div className="flex flex-wrap gap-2">
-                {RELATIONSHIP_STATUSES.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => toggleStatus(status)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      filterStatuses.includes(status)
-                        ? "bg-grape-600 border-grape-500 text-white"
-                        : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
+            {askRelationshipStatus && (
+              <div>
+                <label className="text-grape-400 text-sm font-medium block mb-2">Relationship Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {RELATIONSHIP_STATUSES.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => toggleStatus(status)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                        filterStatuses.includes(status)
+                          ? "bg-grape-600 border-grape-500 text-white"
+                          : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Tags */}
             <div>

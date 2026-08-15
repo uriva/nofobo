@@ -261,6 +261,13 @@ export default function Admin() {
     ]);
   };
 
+  const handleToggleRelationshipStatus = async () => {
+    const current = !!community.askRelationshipStatus;
+    await db.transact([
+      db.tx.communities[community.id].update({ askRelationshipStatus: !current }),
+    ]);
+  };
+
   const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !community) return;
     
@@ -502,6 +509,28 @@ export default function Admin() {
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                         community?.requirePhone ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="border-t border-grape-800" />
+
+                {/* Ask Relationship Status Toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-medium">Ask Relationship Status</h3>
+                    <p className="text-grape-400 text-sm">Include relationship status field on member profiles</p>
+                  </div>
+                  <button
+                    onClick={handleToggleRelationshipStatus}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      community?.askRelationshipStatus ? "bg-grape-500" : "bg-grape-800"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        community?.askRelationshipStatus ? "translate-x-6" : "translate-x-1"
                       }`}
                     />
                   </button>
@@ -754,7 +783,7 @@ export default function Admin() {
                           )}
                         </div>
                         <div className="text-grape-400 text-xs">
-                          {p.gender} · attracted to {(() => { const a = p.attractedTo; return Array.isArray(a) ? a.join(", ") : (a === "both" ? "men, women" : a); })()} · {p.relationshipStatus}
+                          {p.gender} · attracted to {(() => { const a = p.attractedTo; return Array.isArray(a) ? a.join(", ") : (a === "both" ? "men, women" : a); })()}{p.relationshipStatus ? ` · ${p.relationshipStatus}` : ""}
                         </div>
                         {p.phone && (
                           <div className="text-grape-400 text-xs mt-1">
