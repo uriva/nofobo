@@ -317,7 +317,7 @@ const _schema = i.schema({
       },
       reverse: {
         on: "$users",
-        has: "one",
+        has: "many",
         label: "profile",
       },
     },

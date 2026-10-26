@@ -1,12 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { id } from "@instantdb/react";
 import db from "../db.ts";
-import { getStorageUrl, extractPath } from "../utils/storage.ts";
+import { extractPath } from "../utils/storage.ts";
 import StorageImage from "../components/StorageImage.tsx";
 import { normalizePhone } from "../utils/phone.ts";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const firstOf = (x: any) => (Array.isArray(x) ? x[0] : x);
 
 const RELATIONSHIP_STATUSES = [
   "Very single",
@@ -48,15 +51,23 @@ interface PhotoItem {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = db.useAuth();
+  const [searchParams] = useSearchParams();
+  const isNew = searchParams.get("new") === "1";
+  const initialCodeParam = searchParams.get("code")?.trim().toLowerCase() || "";
 
-  // Step: "code" or "profile" or "create_community"
-  const [step, setStep] = useState<"code" | "profile" | "create_community">("code");
+  // Step: "choose", "code", "create_community", or "profile"
+  const [step, setStep] = useState<"choose" | "code" | "create_community" | "profile">(
+    initialCodeParam ? "code" : "choose",
+  );
 
   // Form state
-  const [communityCode, setCommunityCode] = useState("");
+  const [communityCode, setCommunityCode] = useState(initialCodeParam);
   const [newCommunityName, setNewCommunityName] = useState("");
   const [newCommunityTags, setNewCommunityTags] = useState("");
   const [newCommunityAskRelationshipStatus, setNewCommunityAskRelationshipStatus] = useState(false);
+  const [creatingCommunity, setCreatingCommunity] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [createdCommunity, setCreatedCommunity] = useState<any | null>(null);
   const [codeError, setCodeError] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -72,45 +83,68 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const hasPrefilledRef = useRef(false);
 
-  const [searchParams] = useSearchParams();
-  const isNew = searchParams.get("new") === "1";
-
-  // Check if already onboarded
+  // Check user's profiles and communities
   const { data } = db.useQuery(
     user
       ? {
           profiles: {
             $: {
-              where: { "user.id": user.id, onboardingComplete: true },
+              where: { "user.id": user.id },
             },
+            community: {},
           },
-          communities: {}
+          communities: {},
         }
       : null,
   );
 
-  const communities = data?.communities || [];
+  const communities = useMemo(() => data?.communities || [], [data?.communities]);
+  const completedProfiles = useMemo(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    () => (data?.profiles || []).filter((p: any) => p.onboardingComplete),
+    [data?.profiles],
+  );
 
   // Auto-fill and auto-advance community code from query param
   useEffect(() => {
     const codeParam = searchParams.get("code")?.trim().toLowerCase();
     if (codeParam && communities.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isValid = VALID_COMMUNITY_CODES.includes(codeParam) || communities.some((c: any) => c.code === codeParam);
       if (isValid) {
         setCommunityCode(codeParam);
-        setStep("profile");
+        // If user already has a completed profile in this community, go straight to compare
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const alreadyInCommunity = completedProfiles.some((p: any) => firstOf(p.community)?.code === codeParam);
+        if (alreadyInCommunity && !isNew) {
+          localStorage.setItem("activeCommunityCode", codeParam);
+          navigate("/app/compare");
+        } else {
+          setStep("profile");
+        }
       } else {
         setCodeError(`Invalid community code: "${codeParam}"`);
         setStep("code");
       }
     }
-  }, [searchParams, communities]);
+  }, [searchParams, communities, completedProfiles, isNew, navigate]);
 
-  // Determine which tags to show for this community
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentCommunity = communities.find((c: any) => c.code === communityCode.trim().toLowerCase());
-  const availableTags = currentCommunity?.tags ? currentCommunity.tags : [];
+  // Determine which community settings/tags to show
+  const currentCommunity = useMemo(() => {
+    const normalized = communityCode.trim().toLowerCase();
+    return (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      communities.find((c: any) => c.code === normalized) ||
+      (createdCommunity?.code === normalized ? createdCommunity : undefined)
+    );
+  }, [communities, communityCode, createdCommunity]);
+
+  const availableTags: string[] = useMemo(
+    () => (Array.isArray(currentCommunity?.tags) ? currentCommunity.tags : []),
+    [currentCommunity?.tags],
+  );
   const requirePhone = !!currentCommunity?.requirePhone;
   const askRelationshipStatus = !!currentCommunity?.askRelationshipStatus || currentCommunity?.code === "burningdesire";
 
@@ -120,7 +154,7 @@ export default function Onboarding() {
       setCodeError("Please enter a community code");
       return;
     }
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isValid = VALID_COMMUNITY_CODES.includes(code) || communities.some((c: any) => c.code === code);
     if (!isValid) {
@@ -132,13 +166,16 @@ export default function Onboarding() {
   };
 
   const handleCreateCommunity = async () => {
-    const name = newCommunityName.trim();
-    if (!name) {
+    if (creatingCommunity) return;
+    const commName = newCommunityName.trim();
+    if (!commName) {
       setCodeError("Please enter a community name");
       return;
     }
 
     const code = getUniqueCommunityCode(communities);
+    setCreatingCommunity(true);
+    setCodeError("");
 
     try {
       const communityId = id();
@@ -146,37 +183,44 @@ export default function Onboarding() {
         ? newCommunityTags.split(",").map(t => t.trim()).filter(Boolean)
         : null;
 
+      const commData = {
+        name: commName,
+        code,
+        tags: tagsArray ? tagsArray : undefined,
+        askRelationshipStatus: newCommunityAskRelationshipStatus ? true : undefined,
+        createdAt: Date.now(),
+      };
+
       await db.transact([
         db.tx.communities[communityId]
-          .update({
-            name,
-            code,
-            tags: tagsArray ? (tagsArray) : undefined,
-            askRelationshipStatus: newCommunityAskRelationshipStatus ? true : undefined,
-            createdAt: Date.now(),
-          })
+          .update(commData)
           .link({ creator: user!.id }),
       ]);
+      setCreatedCommunity({ id: communityId, ...commData });
+      localStorage.setItem("activeCommunityCode", code);
       setCommunityCode(code);
       setStep("profile");
     } catch (e) {
       setCodeError(e instanceof Error ? e.message : "Failed to create community");
+    } finally {
+      setCreatingCommunity(false);
     }
   };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    
+
     const remainingSlots = MAX_PHOTOS - existingPhotoUrls.length - photos.length;
     const filesToAdd = files.slice(0, remainingSlots);
 
     const newPhotos = filesToAdd.map(file => ({
       file,
-      preview: URL.createObjectURL(file)
+      preview: URL.createObjectURL(file),
     }));
 
     setPhotos(prev => [...prev, ...newPhotos]);
+    setSaveError("");
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
@@ -197,51 +241,65 @@ export default function Onboarding() {
     });
   };
 
+  // Redirect already-onboarded users only if they landed on /app/onboarding directly without ?new=1 or ?code=
   useEffect(() => {
-    if (data?.profiles?.length) {
-      if (!isNew) {
-        navigate("/app/compare");
-      } else {
-        // Pre-fill form for the new community
-        const p = data.profiles[0];
-        setName(prev => prev || p.name || "");
-        setAge(prev => prev || p.age?.toString() || "");
-        setGender(prev => prev || p.gender || "");
-        setAttractedTo(prev => {
-          if (prev.length > 0) return prev;
-          const raw = p.attractedTo;
-          if (Array.isArray(raw)) return raw;
-          if (raw && typeof raw === "string" && raw.startsWith("[")) { try { return JSON.parse(raw); } catch { /* fall through */ } }
-          if (raw === "both") return ["men", "women"];
-          if (raw) return [raw];
-          return [];
-        });
-        setRelationshipStatus(prev => prev || p.relationshipStatus || "");
-        setBio(prev => prev || p.bio || "");
-        setLocation(prev => prev || p.location || "");
-        setPhone(prev => prev || p.phone || "");
-        
-        if (tags.length === 0) {
-          try {
-            const parsedTags = p.tags;
-            // Only keep tags that are available in the new community
-            const filteredTags = parsedTags.filter((t: string) => availableTags.includes(t));
-            setTags(filteredTags);
-          } catch { setTags([]); }
-        }
+    const codeParam = searchParams.get("code")?.trim().toLowerCase();
+    if (completedProfiles.length > 0 && !isNew && !codeParam && step === "choose" && !saving) {
+      navigate("/app/compare");
+    }
+  }, [completedProfiles.length, isNew, searchParams, step, saving, navigate]);
 
-        if (existingPhotoUrls.length === 0 && photos.length === 0) {
+  // Pre-fill profile form once from existing profile if user already has one
+  useEffect(() => {
+    if (completedProfiles.length > 0 && !hasPrefilledRef.current) {
+      hasPrefilledRef.current = true;
+      const p = completedProfiles[0];
+      setName(prev => prev || p.name || "");
+      setAge(prev => prev || p.age?.toString() || "");
+      setGender(prev => prev || p.gender || "");
+      setAttractedTo(prev => {
+        if (prev.length > 0) return prev;
+        const raw = p.attractedTo;
+        if (Array.isArray(raw)) return raw;
+        if (raw && typeof raw === "string" && raw.startsWith("[")) {
           try {
-            const urls = p.photoUrls;
-            if (urls.length > 0) setExistingPhotoUrls(urls);
-            else if (p.photoUrl) setExistingPhotoUrls([p.photoUrl]);
-          } catch { 
-            if (p.photoUrl) setExistingPhotoUrls([p.photoUrl]);
+            return JSON.parse(raw);
+          } catch {
+            /* fall through */
           }
         }
+        if (raw === "both") return ["men", "women"];
+        if (raw) return [raw];
+        return [];
+      });
+      setRelationshipStatus(prev => prev || p.relationshipStatus || "");
+      setBio(prev => prev || p.bio || "");
+      setLocation(prev => prev || p.location || "");
+      setPhone(prev => prev || p.phone || "");
+
+      const urls = Array.isArray(p.photoUrls) ? p.photoUrls : [];
+      if (urls.length > 0) {
+        setExistingPhotoUrls(urls);
+      } else if (p.photoUrl) {
+        setExistingPhotoUrls([p.photoUrl]);
       }
     }
-  }, [data, isNew, navigate, availableTags]);
+  }, [completedProfiles]);
+
+  // Scope pre-filled tags to the selected community's availableTags without causing render loops
+  useEffect(() => {
+    if (!currentCommunity || completedProfiles.length === 0) return;
+    const p = completedProfiles[0];
+    const sourceTags: string[] = Array.isArray(p?.tags) ? p.tags : [];
+    const filteredTags = sourceTags.filter((t: string) => availableTags.includes(t));
+    setTags(prev => {
+      if (prev.length > 0) return prev;
+      if (prev.length === filteredTags.length && prev.every((t, i) => t === filteredTags[i])) {
+        return prev;
+      }
+      return filteredTags;
+    });
+  }, [currentCommunity, availableTags, completedProfiles]);
 
   const toggleTag = (tag: string) => {
     setTags((prev: string[]) =>
@@ -251,26 +309,69 @@ export default function Onboarding() {
     );
   };
 
-  const isFormValid =
+  const parsedAge = parseInt(age, 10);
+  const isFormValid = Boolean(
     name.trim() &&
     age &&
-    !isNaN(parseInt(age)) &&
+    !isNaN(parsedAge) &&
+    parsedAge >= 18 &&
     gender &&
     attractedTo.length > 0 &&
     (!askRelationshipStatus || relationshipStatus) &&
     bio.trim() &&
     (!requirePhone || phone.trim()) &&
-    (photos.length > 0 || existingPhotoUrls.length > 0);
+    (photos.length > 0 || existingPhotoUrls.length > 0),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !isFormValid || saving) return;
+    if (!user || saving) return;
+
+    if (!isFormValid) {
+      const missing: string[] = [];
+      if (!name.trim()) missing.push("name");
+      if (!age || isNaN(parsedAge) || parsedAge < 18) missing.push("age (18+)");
+      if (requirePhone && !phone.trim()) missing.push("phone number");
+      if (!gender) missing.push("gender");
+      if (attractedTo.length === 0) missing.push("who you're attracted to");
+      if (askRelationshipStatus && !relationshipStatus) missing.push("relationship status");
+      if (photos.length === 0 && existingPhotoUrls.length === 0) missing.push("at least 1 photo");
+      if (!bio.trim()) missing.push("bio");
+      setSaveError(`Please fill out required fields: ${missing.join(", ")}`);
+      return;
+    }
 
     setSaving(true);
     setSaveError("");
     try {
-      const existingProfileId = data?.profiles?.[0]?.id;
-      const profileId = existingProfileId || id();
+      const targetCode = communityCode.trim().toLowerCase();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let targetCommunity = communities.find((c: any) => c.code === targetCode) ||
+        (createdCommunity?.code === targetCode ? createdCommunity : undefined);
+
+      if (!targetCommunity) {
+        const { data: commQuery } = await db.queryOnce({
+          communities: { $: { where: { code: targetCode } } },
+        });
+        targetCommunity = commQuery?.communities?.[0];
+      }
+
+      if (!targetCommunity) {
+        setSaveError("Community not found. Please go back and select a valid community.");
+        setSaving(false);
+        return;
+      }
+
+      // Reuse profile if user already has one for this community (or an unlinked profile); otherwise create a new profile for this community
+      const allProfiles = data?.profiles || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existingForCommunity = allProfiles.find((p: any) => {
+        const comm = firstOf(p.community);
+        return comm?.code === targetCode || comm?.id === targetCommunity.id;
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const unlinkedProfile = allProfiles.find((p: any) => !firstOf(p.community));
+      const profileId = existingForCommunity?.id || unlinkedProfile?.id || id();
 
       // Upload photos
       const finalPhotoUrls: string[] = [...existingPhotoUrls].map(extractPath);
@@ -282,11 +383,11 @@ export default function Onboarding() {
 
       const profileData: Record<string, unknown> = {
         name: name.trim(),
-        age: parseInt(age),
+        age: parsedAge,
         gender,
-        attractedTo: (attractedTo),
+        attractedTo,
         relationshipStatus: askRelationshipStatus ? (relationshipStatus || undefined) : undefined,
-        tags: (tags),
+        tags,
         bio: bio.trim(),
         location: location.trim() || undefined,
         phone: normalizePhone(phone) || undefined,
@@ -295,24 +396,30 @@ export default function Onboarding() {
       };
       if (finalPhotoUrls.length > 0) {
         profileData.photoUrl = finalPhotoUrls[0]; // backward compat
-        profileData.photoUrls = (finalPhotoUrls);
+        profileData.photoUrls = finalPhotoUrls;
       }
 
-      const targetCode = communityCode.trim().toLowerCase();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const targetCommunity = communities.find((c: any) => c.code === targetCode);
-      if (!targetCommunity) {
-        setSaveError("Community not found. Please go back and select a valid community.");
-        setSaving(false);
-        return;
+      try {
+        await db.transact([
+          db.tx.profiles[profileId]
+            .update(profileData)
+            .link({ user: user.id, community: targetCommunity.id }),
+        ]);
+      } catch (txErr) {
+        // Fallback if DB schema still has a 1:1 constraint on profiles.user
+        const fallbackId = allProfiles[0]?.id;
+        if (fallbackId && fallbackId !== profileId) {
+          await db.transact([
+            db.tx.profiles[fallbackId]
+              .update(profileData)
+              .link({ user: user.id, community: targetCommunity.id }),
+          ]);
+        } else {
+          throw txErr;
+        }
       }
 
-      await db.transact([
-        db.tx.profiles[profileId]
-          .update(profileData)
-          .link({ user: user.id, community: targetCommunity.id }),
-      ]);
-
+      localStorage.setItem("activeCommunityCode", targetCode);
       navigate("/app/compare");
     } catch (e) {
       console.error("Save profile error:", e);
@@ -326,18 +433,86 @@ export default function Onboarding() {
 
   if (!user) return null;
 
-  // Step 1: Community code gate
-  if (step === "code") {
+  // Step 0: Choose between entering a community code or creating a new community
+  if (step === "choose") {
     return (
       <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
         <div className="border-b border-grape-900/50 px-6 py-4">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
             <span
               onClick={() => navigate("/")}
               className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
             >
               NOFOBO
             </span>
+            {completedProfiles.length > 0 && (
+              <button
+                onClick={() => navigate("/app/compare")}
+                className="text-grape-400 text-sm hover:text-white"
+              >
+                Back
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="max-w-md w-full text-center">
+            <h1 className="text-4xl font-black text-white mb-3">
+              Join or create a community
+            </h1>
+            <p className="text-grape-400 mb-8">
+              Enter an invite code from your organizer, or start a new community of your own.
+            </p>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => {
+                  setStep("code");
+                  setCodeError("");
+                }}
+                className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white py-4 rounded-xl font-bold text-lg transition-all"
+              >
+                Enter Community Code
+              </button>
+
+              <button
+                onClick={() => {
+                  setStep("create_community");
+                  setCodeError("");
+                }}
+                className="w-full bg-grape-950 border border-grape-700 hover:border-grape-500 hover:bg-grape-900 text-white py-4 rounded-xl font-bold text-lg transition-all"
+              >
+                Create a Community
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 1a: Enter Community Code
+  if (step === "code") {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
+        <div className="border-b border-grape-900/50 px-6 py-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <span
+              onClick={() => navigate("/")}
+              className="text-xl font-black text-white cursor-pointer hover:text-grape-300 transition-colors"
+            >
+              NOFOBO
+            </span>
+            <button
+              onClick={() => {
+                setStep("choose");
+                setCodeError("");
+              }}
+              className="text-grape-400 text-sm hover:text-white"
+            >
+              Back
+            </button>
           </div>
         </div>
 
@@ -371,19 +546,9 @@ export default function Onboarding() {
             <button
               onClick={handleCodeSubmit}
               disabled={!communityCode.trim()}
-              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all mb-4"
+              className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
             >
               Continue
-            </button>
-
-            <button
-              onClick={() => {
-                setStep("create_community");
-                setCodeError("");
-              }}
-              className="w-full bg-transparent border border-grape-700 hover:border-grape-500 hover:bg-grape-900 text-grape-300 py-3 rounded-xl font-medium transition-all"
-            >
-              Or create a new community
             </button>
           </div>
         </div>
@@ -391,7 +556,7 @@ export default function Onboarding() {
     );
   }
 
-  // Step 1.5: Create Community
+  // Step 1b: Create Community
   if (step === "create_community") {
     return (
       <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
@@ -405,7 +570,7 @@ export default function Onboarding() {
             </span>
             <button
               onClick={() => {
-                setStep("code");
+                setStep("choose");
                 setCodeError("");
               }}
               className="text-grape-400 text-sm hover:text-white"
@@ -481,10 +646,10 @@ export default function Onboarding() {
 
             <button
               onClick={handleCreateCommunity}
-              disabled={!newCommunityName.trim()}
+              disabled={!newCommunityName.trim() || creatingCommunity}
               className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
             >
-              Create & Continue
+              {creatingCommunity ? "Creating..." : "Create & Continue"}
             </button>
           </div>
         </div>
@@ -786,8 +951,9 @@ export default function Onboarding() {
 
           {/* Submit */}
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={!isFormValid || saving}
+            disabled={saving}
             className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
           >
             {saving ? "Saving..." : "Create Profile"}
