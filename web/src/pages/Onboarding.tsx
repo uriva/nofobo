@@ -543,7 +543,7 @@ export default function Onboarding() {
                 setCodeError("");
               }}
               onKeyDown={(e) => e.key === "Enter" && handleCodeSubmit()}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500 mb-3"
+              className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-500 focus:outline-none focus:border-grape-400 mb-3"
               placeholder="community code"
               autoFocus
             />
@@ -608,7 +608,7 @@ export default function Onboarding() {
                     setCodeError("");
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateCommunity()}
-                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
                   placeholder="Community Name (e.g. Burners)"
                   autoFocus
                 />
@@ -622,21 +622,21 @@ export default function Onboarding() {
                     setNewCommunityTags(e.target.value);
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateCommunity()}
-                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
-                  placeholder="Custom tags (e.g. Climber, Foodie, Poly, Burner)"
+                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
+                  placeholder="Custom tags (e.g. Climber, Foodie, Poly)"
                 />
-                <p className="text-grape-600 text-xs mt-2">Optional. Comma-separated list of tags for members to pick from (e.g. hobbies, interests, vibes).</p>
+                <p className="text-grape-400 text-xs mt-2">Optional. Comma-separated list of tags for members to pick from (e.g. hobbies, interests, vibes).</p>
               </div>
 
-              <div className="flex items-center justify-between py-2 px-1 text-left">
+              <div className="flex items-center justify-between py-2 px-1 text-left gap-3">
                 <div>
-                  <span className="text-grape-300 text-sm font-medium block">Ask for Relationship Status</span>
-                  <span className="text-grape-600 text-xs block">Include relationship status field on member profiles</span>
+                  <span className="text-grape-200 text-sm font-medium block">Ask for Relationship Status</span>
+                  <span className="text-grape-400 text-xs block">Include relationship status field on member profiles</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setNewCommunityAskRelationshipStatus(prev => !prev)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                     newCommunityAskRelationshipStatus ? "bg-grape-500" : "bg-grape-800"
                   }`}
                 >
@@ -713,47 +713,49 @@ export default function Onboarding() {
           </div>
         )}
 
-        <div className="space-y-8">
-          {/* Name */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Your first name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
-              placeholder="Alex"
-            />
-          </div>
+        <div className="space-y-6 pb-8">
+          {/* Name & Age */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-grape-200 text-sm mb-2 font-medium">
+                Your first name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
+                placeholder="Alex"
+              />
+            </div>
 
-          {/* Age */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Your age
-            </label>
-            <input
-              type="number"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
-              placeholder="28"
-              min="18"
-              max="120"
-            />
+            <div>
+              <label className="block text-grape-200 text-sm mb-2 font-medium">
+                Your age
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
+                placeholder="28"
+                min="18"
+                max="120"
+              />
+            </div>
           </div>
 
           {/* Location */}
           <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Location <span className="text-grape-500 font-normal">(optional)</span>
+            <label className="block text-grape-200 text-sm mb-2 font-medium">
+              Location <span className="text-grape-400 font-normal">(optional)</span>
             </label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+              className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
               placeholder="San Francisco, CA"
             />
           </div>
@@ -761,34 +763,35 @@ export default function Onboarding() {
           {/* Phone */}
           {(requirePhone || phone.trim() !== "") && (
             <div>
-              <label className="block text-grape-300 text-sm mb-2 font-medium">
+              <label className="block text-grape-200 text-sm mb-2 font-medium">
                 Phone Number {requirePhone && <span className="text-red-400">*</span>}
               </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
                 placeholder="+1 (555) 123-4567"
               />
-              <p className="text-grape-500 text-xs mt-2">Only visible to community admins.</p>
+              <p className="text-grape-400 text-xs mt-2">Only visible to community admins.</p>
             </div>
           )}
 
           {/* Gender */}
           <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
+            <label className="block text-grape-200 text-sm mb-2 font-medium">
               I look like a
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {["man", "woman", "nonbinary"].map((g) => (
                 <button
                   key={g}
+                  type="button"
                   onClick={() => setGender(g)}
-                  className={`py-3 rounded-xl border font-medium capitalize transition-all ${
+                  className={`py-3 px-2 rounded-xl border font-medium capitalize text-sm sm:text-base transition-all ${
                     gender === g
-                      ? "border-grape-500 bg-grape-600/20 text-white"
-                      : "border-grape-800 text-grape-400 hover:border-grape-600"
+                      ? "border-grape-400 bg-grape-600/30 text-white shadow-sm"
+                      : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                   }`}
                 >
                   {g === "nonbinary" ? "non-binary" : g}
@@ -799,10 +802,10 @@ export default function Onboarding() {
 
           {/* Attracted To */}
           <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
+            <label className="block text-grape-200 text-sm mb-2 font-medium">
               I'm attracted to people who look like
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {[
                 { value: "men", label: "Men" },
                 { value: "women", label: "Women" },
@@ -810,39 +813,41 @@ export default function Onboarding() {
               ].map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => setAttractedTo((prev) =>
                     prev.includes(opt.value)
                       ? prev.filter((v) => v !== opt.value)
                       : [...prev, opt.value]
                   )}
-                  className={`py-3 rounded-xl border font-medium transition-all ${
+                  className={`py-3 px-2 rounded-xl border font-medium text-sm sm:text-base transition-all ${
                     attractedTo.includes(opt.value)
-                      ? "border-grape-500 bg-grape-600/20 text-white"
-                      : "border-grape-800 text-grape-400 hover:border-grape-600"
+                      ? "border-grape-400 bg-grape-600/30 text-white shadow-sm"
+                      : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                   }`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-            <p className="text-grape-500 text-xs mt-2">Select all that apply</p>
+            <p className="text-grape-400 text-xs mt-2">Select all that apply</p>
           </div>
 
           {/* Relationship Status */}
           {askRelationshipStatus && (
             <div>
-              <label className="block text-grape-300 text-sm mb-2 font-medium">
+              <label className="block text-grape-200 text-sm mb-2 font-medium">
                 My relationship status
               </label>
               <div className="grid grid-cols-1 gap-2">
                 {RELATIONSHIP_STATUSES.map((status) => (
                   <button
                     key={status}
+                    type="button"
                     onClick={() => setRelationshipStatus(status)}
-                    className={`py-3 px-4 rounded-xl border font-medium text-left transition-all ${
+                    className={`py-3 px-4 rounded-xl border font-medium text-left text-sm sm:text-base transition-all ${
                       relationshipStatus === status
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                        ? "border-grape-400 bg-grape-600/30 text-white shadow-sm"
+                        : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                     }`}
                   >
                     {status}
@@ -855,18 +860,19 @@ export default function Onboarding() {
           {/* Tags */}
           {availableTags.length > 0 && (
             <div>
-              <label className="block text-grape-300 text-sm mb-2 font-medium">
-                Tags <span className="text-grape-500 font-normal">(optional — select any that apply)</span>
+              <label className="block text-grape-200 text-sm mb-2 font-medium">
+                Tags <span className="text-grape-400 font-normal">(optional — select any that apply)</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {availableTags.map((tag: string) => (
                   <button
                     key={tag}
+                    type="button"
                     onClick={() => toggleTag(tag)}
                     className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
                       tags.includes(tag)
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                        ? "border-grape-400 bg-grape-600/30 text-white"
+                        : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                     }`}
                   >
                     {tag}
@@ -878,8 +884,8 @@ export default function Onboarding() {
 
           {/* Photos */}
           <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Photos <span className="text-grape-500 font-normal">(at least 1 · {existingPhotoUrls.length + photos.length}/{MAX_PHOTOS})</span>
+            <label className="block text-grape-200 text-sm mb-2 font-medium">
+              Photos <span className="text-grape-400 font-normal">(at least 1 · {existingPhotoUrls.length + photos.length}/{MAX_PHOTOS})</span>
             </label>
             <input
               ref={photoInputRef}
@@ -895,14 +901,14 @@ export default function Onboarding() {
                   <StorageImage
                     pathOrUrl={url}
                     alt={`Existing Photo ${i + 1}`}
-                    className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
+                    className="w-full h-full object-cover rounded-xl border-2 border-grape-500"
                   />
                   <button
                     type="button"
                     onClick={() => removeExistingPhoto(i)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors"
+                    className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md transition-colors"
                   >
-                    x
+                    ✕
                   </button>
                 </div>
               ))}
@@ -911,14 +917,14 @@ export default function Onboarding() {
                   <StorageImage
                     pathOrUrl={photo.preview}
                     alt={`Photo ${i + 1}`}
-                    className="w-full h-full object-cover rounded-xl border-2 border-grape-600"
+                    className="w-full h-full object-cover rounded-xl border-2 border-grape-500"
                   />
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold transition-colors"
+                    className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md transition-colors"
                   >
-                    x
+                    ✕
                   </button>
                 </div>
               ))}
@@ -926,7 +932,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="aspect-square border-2 border-dashed border-grape-800 rounded-xl text-grape-500 hover:border-grape-600 hover:text-grape-400 transition-colors flex flex-col items-center justify-center gap-1"
+                  className="aspect-square border-2 border-dashed border-grape-700 bg-grape-950/40 rounded-xl text-grape-300 hover:border-grape-500 hover:text-white transition-colors flex flex-col items-center justify-center gap-1"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -942,22 +948,22 @@ export default function Onboarding() {
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  <span className="text-xs">Add photo</span>
+                  <span className="text-xs font-medium">Add photo</span>
                 </button>
               )}
             </div>
-            <p className="text-grape-600 text-xs mt-2">Max 5MB each</p>
+            <p className="text-grape-400 text-xs mt-2">Max 5MB each</p>
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
+            <label className="block text-grape-200 text-sm mb-2 font-medium">
               About you
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500 h-32 resize-none"
+              className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400 h-32 resize-none"
               placeholder="Write a bit about yourself, what you're into, what you're looking for..."
             />
           </div>

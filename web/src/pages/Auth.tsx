@@ -65,12 +65,12 @@ export default function Auth() {
         {/* Back link */}
         <button
           onClick={() => navigate("/")}
-          className="text-grape-500 hover:text-grape-400 mb-6 flex items-center gap-2 transition-colors text-sm"
+          className="text-grape-400 hover:text-white mb-6 flex items-center gap-2 transition-colors text-sm"
         >
           &larr; About NOFOBO
         </button>
 
-        <div className="bg-grape-950/50 border border-grape-900/50 rounded-2xl overflow-hidden">
+        <div className="bg-grape-950/70 border border-grape-800 rounded-2xl overflow-hidden shadow-xl">
           {invitedCommunity?.coverImageUrl && (
             <div className="w-full h-36 relative border-b border-grape-900/50">
               <StorageImage
@@ -81,7 +81,7 @@ export default function Auth() {
             </div>
           )}
 
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             <div className="text-center mb-6">
               {invitedCommunity ? (
                 <>
@@ -146,33 +146,34 @@ export default function Auth() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendCode()}
                 placeholder="your@email.com"
-                className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500 transition-colors"
+                className="w-full bg-[#0f0a1a] border border-grape-700/80 rounded-xl px-4 py-3.5 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400 transition-colors"
                 autoFocus
               />
               <button
                 onClick={handleSendCode}
                 disabled={loading || !email.trim()}
-                className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-all"
+                className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold transition-all"
               >
-                {loading ? "Sending..." : "Send Magic Code"}
+                {loading ? "Sending..." : "Continue with Email"}
               </button>
             </div>
           ) : (
             <div className="space-y-4">
               <input
                 type="text"
+                inputMode="numeric"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleVerifyCode()}
-                placeholder="Enter 6-digit code"
-                className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500 transition-colors text-center text-2xl tracking-widest"
+                placeholder="6-digit code"
+                className="w-full bg-[#0f0a1a] border border-grape-700/80 rounded-xl px-4 py-3.5 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400 transition-colors text-center text-2xl tracking-widest"
                 autoFocus
                 maxLength={6}
               />
               <button
                 onClick={handleVerifyCode}
                 disabled={loading || !code.trim()}
-                className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-all"
+                className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold transition-all"
               >
                 {loading ? "Verifying..." : "Verify & Continue"}
               </button>
@@ -182,7 +183,7 @@ export default function Auth() {
                   setCode("");
                   setError("");
                 }}
-                className="w-full text-grape-500 hover:text-grape-400 text-sm transition-colors"
+                className="w-full text-grape-400 hover:text-white text-sm transition-colors"
               >
                 Use a different email
               </button>
@@ -197,9 +198,8 @@ export default function Auth() {
           </div>
         </div>
 
-        <p className="text-center text-grape-600 text-xs mt-6">
-          No password needed. We'll send you a magic code every time you sign
-          in.
+        <p className="text-center text-grape-400 text-xs mt-6">
+          No password needed. We'll send a one-time login code to your email.
         </p>
       </div>
     </div>

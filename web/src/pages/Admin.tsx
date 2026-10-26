@@ -558,14 +558,14 @@ export default function Admin() {
                 <div className="border-t border-grape-800" />
 
                 {/* Require Phone Toggle */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-white font-medium">Require Phone Number</h3>
                     <p className="text-grape-400 text-sm">Users must provide a phone number during onboarding</p>
                   </div>
                   <button
                     onClick={handleToggleRequirePhone}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                       community?.requirePhone ? "bg-grape-500" : "bg-grape-800"
                     }`}
                   >
@@ -580,14 +580,14 @@ export default function Admin() {
                 <div className="border-t border-grape-800" />
 
                 {/* Ask Relationship Status Toggle */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-white font-medium">Ask Relationship Status</h3>
                     <p className="text-grape-400 text-sm">Include relationship status field on member profiles</p>
                   </div>
                   <button
                     onClick={handleToggleRelationshipStatus}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                       community?.askRelationshipStatus ? "bg-grape-500" : "bg-grape-800"
                     }`}
                   >

@@ -48,7 +48,11 @@ export default function Profile() {
   );
 
   const myCommunity = communityData?.communities?.[0];
-  const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
+  const availableTags: string[] = Array.isArray(myCommunity?.tags)
+    ? myCommunity.tags
+    : myCommunity?.code === "burningdesire"
+      ? TAG_OPTIONS
+      : [];
   const requirePhone = !!myCommunity?.requirePhone;
   const askRelationshipStatus = !!myCommunity?.askRelationshipStatus || myCommunity?.code === "burningdesire";
 
@@ -226,7 +230,7 @@ export default function Profile() {
             </button>
           </div>
         ) : (
-          <div className="space-y-8 bg-grape-950/50 border border-grape-900/50 rounded-2xl p-6 md:p-8">
+          <div className="space-y-6 sm:space-y-8 bg-grape-950/50 border border-grape-900/50 rounded-2xl p-4 sm:p-8">
              {/* Name */}
             <div>
               <label className="block text-grape-300 text-sm mb-2 font-medium">Your name</label>
@@ -239,25 +243,28 @@ export default function Profile() {
             </div>
             
              {/* Age & Location */}
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-grape-300 text-sm mb-2 font-medium">Your age</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  className="w-full bg-[#0f0a1a] border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
                   min="18"
                   max="120"
                 />
               </div>
               <div>
-                <label className="block text-grape-300 text-sm mb-2 font-medium">Location</label>
+                <label className="block text-grape-300 text-sm mb-2 font-medium">
+                  Location <span className="text-grape-500 font-normal">(optional)</span>
+                </label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full bg-[#0f0a1a] border border-grape-800 rounded-xl px-4 py-3 text-white placeholder:text-grape-600 focus:outline-none focus:border-grape-500"
+                  className="w-full bg-[#0f0a1a] border border-grape-700/80 rounded-xl px-4 py-3 text-white placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
                   placeholder="San Francisco, CA"
                 />
               </div>
@@ -283,15 +290,16 @@ export default function Profile() {
             {/* Gender */}
             <div>
               <label className="block text-grape-300 text-sm mb-2 font-medium">I look like a</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {["man", "woman", "nonbinary"].map((g) => (
                   <button
                     key={g}
+                    type="button"
                     onClick={() => setGender(g)}
-                    className={`py-3 rounded-xl border font-medium capitalize transition-all ${
+                    className={`py-3 px-2 rounded-xl border font-medium capitalize text-sm sm:text-base whitespace-nowrap transition-all ${
                       gender === g
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                        ? "border-grape-400 bg-grape-600/30 text-white"
+                        : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                     }`}
                   >
                     {g === "nonbinary" ? "non-binary" : g}
@@ -303,7 +311,7 @@ export default function Profile() {
             {/* Attracted To */}
             <div>
               <label className="block text-grape-300 text-sm mb-2 font-medium">I'm attracted to people who look like</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { value: "men", label: "Men" },
                   { value: "women", label: "Women" },
@@ -311,22 +319,23 @@ export default function Profile() {
                 ].map((opt) => (
                   <button
                     key={opt.value}
+                    type="button"
                     onClick={() => setAttractedTo((prev) =>
                       prev.includes(opt.value)
                         ? prev.filter((v) => v !== opt.value)
                         : [...prev, opt.value]
                     )}
-                    className={`py-3 rounded-xl border font-medium transition-all ${
+                    className={`py-3 px-2 rounded-xl border font-medium text-sm sm:text-base whitespace-nowrap transition-all ${
                       attractedTo.includes(opt.value)
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
+                        ? "border-grape-400 bg-grape-600/30 text-white"
+                        : "border-grape-700/80 bg-grape-950/40 text-grape-300 hover:border-grape-500"
                     }`}
                   >
                     {opt.label}
                   </button>
                 ))}
               </div>
-              <p className="text-grape-500 text-xs mt-2">Select all that apply</p>
+              <p className="text-grape-400 text-xs mt-2">Select all that apply</p>
             </div>
 
             {/* Relationship Status */}
@@ -354,26 +363,28 @@ export default function Profile() {
             )}
 
             {/* Tags */}
-            <div>
-              <label className="block text-grape-300 text-sm mb-2 font-medium">
-                Tags (select all that apply)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag: string) => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
-                      tags.includes(tag)
-                        ? "border-grape-500 bg-grape-600/20 text-white"
-                        : "border-grape-800 text-grape-400 hover:border-grape-600"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+            {availableTags.length > 0 && (
+              <div>
+                <label className="block text-grape-300 text-sm mb-2 font-medium">
+                  Tags <span className="text-grape-500 font-normal">(optional — select all that apply)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag: string) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                        tags.includes(tag)
+                          ? "border-grape-500 bg-grape-600/20 text-white"
+                          : "border-grape-800 text-grape-400 hover:border-grape-600"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Photos */}
             <div>

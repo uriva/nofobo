@@ -106,7 +106,7 @@ export default function Layout({ children, headerActions }: { children: ReactNod
                     setActiveCommunityCode(e.target.value);
                   }
                 }}
-                className="bg-grape-900 border border-grape-800 text-grape-300 text-xs sm:text-sm rounded-lg focus:ring-grape-500 focus:border-grape-500 block px-2 py-1 sm:px-2.5 sm:py-1.5 truncate max-w-[140px] sm:max-w-xs"
+                className="bg-grape-900 border border-grape-700 text-grape-100 font-medium text-xs sm:text-sm rounded-lg focus:ring-grape-500 focus:border-grape-500 block px-2.5 py-1.5 truncate max-w-[180px] sm:max-w-xs"
               >
                 {dropdownCommunities.map((code) => {
                   const communityName =

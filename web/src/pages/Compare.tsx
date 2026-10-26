@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
@@ -33,6 +34,7 @@ const RELATIONSHIP_STATUSES = [
 ];
 
 export default function Compare() {
+  const navigate = useNavigate();
   const { user } = db.useAuth();
   const { activeCommunityCode, myProfiles } = useCommunity();
 
@@ -48,7 +50,11 @@ export default function Compare() {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const myCommunity = myData?.communities?.[0];
-  const availableTags = myCommunity?.tags ? myCommunity.tags : TAG_OPTIONS;
+  const availableTags: string[] = Array.isArray(myCommunity?.tags)
+    ? myCommunity.tags
+    : myCommunity?.code === "burningdesire"
+      ? TAG_OPTIONS
+      : [];
   const askRelationshipStatus = !!myCommunity?.askRelationshipStatus || myCommunity?.code === "burningdesire";
 
   const [pair, setPair] = useState<[PairProfile, PairProfile] | null>(null);
@@ -95,6 +101,24 @@ export default function Compare() {
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShareLink = async () => {
+    if (!inviteUrl) return;
+    const communityTitle = myCommunity?.name || "our community";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${communityTitle} on NOFOBO`,
+          text: `Join ${communityTitle} on NOFOBO — create your profile so we can compare and get matched 1-on-1:`,
+          url: inviteUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed; fall back to copy if needed
+      }
+    }
+    handleCopyLink();
   };
 
   const getAuthToken = () => {
@@ -267,24 +291,26 @@ export default function Compare() {
             )}
 
             {/* Tags */}
-            <div>
-              <label className="text-grape-400 text-sm font-medium block mb-2">Tags (at least one overlap)</label>
-              <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag: string) => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      filterTags.includes(tag)
-                        ? "bg-grape-600 border-grape-500 text-white"
-                        : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+            {availableTags.length > 0 && (
+              <div>
+                <label className="text-grape-400 text-sm font-medium block mb-2">Tags (at least one overlap)</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.map((tag: string) => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                        filterTags.includes(tag)
+                          ? "bg-grape-600 border-grape-500 text-white"
+                          : "bg-grape-950 border-grape-700 text-grape-400 hover:border-grape-500"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Apply / Clear */}
             <div className="flex gap-3">
@@ -361,7 +387,25 @@ export default function Compare() {
           </div>
         ) : message ? (
           <div className="max-w-md mx-auto text-center py-6">
-            {totalComparisons > 0 ? (
+            {!myProfile ? (
+              <>
+                <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-200 text-xs font-semibold">
+                  Profile Needed
+                </div>
+                <h2 className="text-white text-3xl font-black mb-3">
+                  Join {myCommunity?.name || "this community"}
+                </h2>
+                <p className="text-grape-300 text-sm mb-6 leading-relaxed">
+                  You don't have a profile in <strong>{myCommunity?.name || activeCommunityCode}</strong> yet. Create your profile in 1 click to start comparing members.
+                </p>
+                <button
+                  onClick={() => navigate(`/app/onboarding?code=${activeCommunityCode}&new=1`)}
+                  className="mb-8 w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white py-3.5 px-6 rounded-xl font-bold text-base transition-all"
+                >
+                  Create Profile in {myCommunity?.name || "Community"}
+                </button>
+              </>
+            ) : totalComparisons > 0 ? (
               <>
                 <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-300 text-xs font-semibold">
                   ✓ Caught Up
@@ -370,6 +414,12 @@ export default function Compare() {
                 <p className="text-grape-400 text-sm mb-6 leading-relaxed">
                   You've made {totalComparisons} comparisons so far. As more members sign up, new pairs will appear here — check back anytime!
                 </p>
+                <button
+                  onClick={loadPair}
+                  className="mb-8 inline-flex items-center gap-2 bg-grape-900 hover:bg-grape-800 border border-grape-700 text-grape-200 hover:text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Check for New Members
+                </button>
               </>
             ) : (
               <>
@@ -382,15 +432,14 @@ export default function Compare() {
                 <p className="text-grape-300 text-sm mb-6 leading-relaxed">
                   Your profile is all set. It takes a little time for everyone in the community to sign up — once a few more compatible members join, you can come back here to compare profiles side-by-side.
                 </p>
+                <button
+                  onClick={loadPair}
+                  className="mb-8 inline-flex items-center gap-2 bg-grape-900 hover:bg-grape-800 border border-grape-700 text-grape-200 hover:text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  Check for New Members
+                </button>
               </>
             )}
-
-            <button
-              onClick={loadPair}
-              className="mb-8 inline-flex items-center gap-2 bg-grape-900 hover:bg-grape-800 border border-grape-700 text-grape-200 hover:text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            >
-              Check for New Members
-            </button>
 
             {inviteUrl && (
               <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6 space-y-6 text-left">
@@ -403,19 +452,30 @@ export default function Compare() {
                   </p>
                 </div>
 
-                <div className="relative w-full">
-                  <input
-                    type="text"
-                    readOnly
-                    value={inviteUrl}
-                    className="w-full bg-grape-900 border border-grape-800 rounded-lg pl-4 pr-24 py-2.5 text-white text-sm focus:outline-none"
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    className="absolute right-2 top-1.5 bg-grape-700 hover:bg-grape-600 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
-                  >
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
+                <div className="space-y-3">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      readOnly
+                      value={inviteUrl}
+                      className="w-full bg-grape-900 border border-grape-700/80 rounded-xl pl-4 pr-20 py-3 text-white text-xs sm:text-sm focus:outline-none truncate"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="absolute right-2 top-2 bg-grape-700 hover:bg-grape-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+
+                  {typeof navigator !== "undefined" && "share" in navigator && (
+                    <button
+                      onClick={handleShareLink}
+                      className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 text-white py-3 rounded-xl font-bold text-sm transition-all"
+                    >
+                      Share Invite Link
+                    </button>
+                  )}
                 </div>
 
                 {qrDataUrl && (
