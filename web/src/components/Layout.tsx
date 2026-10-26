@@ -108,11 +108,16 @@ export default function Layout({ children, headerActions }: { children: ReactNod
                 }}
                 className="bg-grape-900 border border-grape-800 text-grape-300 text-xs sm:text-sm rounded-lg focus:ring-grape-500 focus:border-grape-500 block px-2 py-1 sm:px-2.5 sm:py-1.5 truncate max-w-[140px] sm:max-w-xs"
               >
-                {dropdownCommunities.map((code) => (
-                  <option key={code} value={code}>
-                    /{code}
-                  </option>
-                ))}
+                {dropdownCommunities.map((code) => {
+                  const communityName =
+                    allCommunities.find((c) => c.code === code)?.name ||
+                    myProfiles.find((p) => p.community?.code === code)?.community?.name;
+                  return (
+                    <option key={code} value={code}>
+                      {communityName || `/${code}`}
+                    </option>
+                  );
+                })}
                 <option value="new" className="text-grape-500 font-bold border-t border-grape-800">
                   + Add/Join Community
                 </option>
