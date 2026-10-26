@@ -73,6 +73,7 @@ export default function Admin() {
   const [isEditingCommunityInfo, setIsEditingCommunityInfo] = useState(false);
   const [editingCommunityName, setEditingCommunityName] = useState("");
   const [editingCommunityCode, setEditingCommunityCode] = useState("");
+  const [editingCommunityDescription, setEditingCommunityDescription] = useState("");
   const [savingCommunityInfo, setSavingCommunityInfo] = useState(false);
   const [deletingCommunity, setDeletingCommunity] = useState(false);
   
@@ -325,7 +326,11 @@ export default function Admin() {
       }
 
       await db.transact([
-        db.tx.communities[community.id].update({ name, code }),
+        db.tx.communities[community.id].update({
+          name,
+          code,
+          description: editingCommunityDescription.trim() || undefined,
+        }),
       ]);
 
       // Switch the active community code if it changed
@@ -601,18 +606,22 @@ export default function Admin() {
 
                 <div className="border-t border-grape-800" />
 
-                {/* Community Name & Code Editor */}
+                {/* Community Name, Code & Owner Message Editor */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-white font-medium">Community Name & Code</h3>
+                      <h3 className="text-white font-medium">Community Info & Invite Message</h3>
                       <p className="text-grape-400 text-sm">Name: <span className="text-white">{community?.name}</span> · Code: <span className="text-white">{community?.code}</span></p>
+                      {community?.description && (
+                        <p className="text-grape-300 text-xs mt-1 italic">“{community.description}”</p>
+                      )}
                     </div>
                     {!isEditingCommunityInfo && (
                       <button
                         onClick={() => {
                           setEditingCommunityName(community?.name || "");
                           setEditingCommunityCode(community?.code || "");
+                          setEditingCommunityDescription(community?.description || "");
                           setIsEditingCommunityInfo(true);
                         }}
                         className="text-grape-400 hover:text-white text-sm font-medium"
@@ -643,7 +652,16 @@ export default function Admin() {
                           placeholder="e.g. burning-desire"
                           className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-600 focus:outline-none focus:border-grape-500"
                         />
-                        <p className="text-grape-600 text-xs mt-1">Only lowercase letters, numbers, hyphens, and underscores</p>
+                        <p className="text-grape-400 text-xs mt-1">Only lowercase letters, numbers, hyphens, and underscores</p>
+                      </div>
+                      <div>
+                        <label className="block text-grape-400 text-sm mb-2">Community Owner Message (shown on invite page)</label>
+                        <textarea
+                          value={editingCommunityDescription}
+                          onChange={(e) => setEditingCommunityDescription(e.target.value)}
+                          placeholder="Welcome! Tell members what this community is about or when you'll run matching..."
+                          className="w-full bg-grape-900 border border-grape-800 rounded-lg px-4 py-2 text-white placeholder-grape-500 focus:outline-none focus:border-grape-500 h-24 resize-none text-sm"
+                        />
                       </div>
                       <div className="flex justify-end gap-2">
                         <button

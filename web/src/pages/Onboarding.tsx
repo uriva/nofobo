@@ -5,6 +5,7 @@ import db from "../db.ts";
 import { extractPath } from "../utils/storage.ts";
 import StorageImage from "../components/StorageImage.tsx";
 import Spinner from "../components/Spinner.tsx";
+import AlgoComic from "../components/AlgoComic.tsx";
 import { normalizePhone } from "../utils/phone.ts";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
@@ -64,9 +65,14 @@ export default function Onboarding() {
   // Form state
   const [communityCode, setCommunityCode] = useState(initialCodeParam);
   const [newCommunityName, setNewCommunityName] = useState("");
+  const [newCommunityDescription, setNewCommunityDescription] = useState("");
+  const [newCommunityCoverFile, setNewCommunityCoverFile] = useState<File | null>(null);
+  const [newCommunityCoverPreview, setNewCommunityCoverPreview] = useState("");
   const [newCommunityTags, setNewCommunityTags] = useState("");
   const [newCommunityAskRelationshipStatus, setNewCommunityAskRelationshipStatus] = useState(false);
   const [creatingCommunity, setCreatingCommunity] = useState(false);
+  const [showComicOnProfile, setShowComicOnProfile] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [createdCommunity, setCreatedCommunity] = useState<any | null>(null);
   const [codeError, setCodeError] = useState("");
@@ -96,7 +102,9 @@ export default function Onboarding() {
             },
             community: {},
           },
-          communities: {},
+          communities: {
+            creator: { profile: {} },
+          },
         }
       : null,
   );
@@ -184,9 +192,18 @@ export default function Onboarding() {
         ? newCommunityTags.split(",").map(t => t.trim()).filter(Boolean)
         : null;
 
+      let coverImageUrl: string | undefined;
+      if (newCommunityCoverFile) {
+        const coverPath = `communities/${communityId}/cover-${Date.now()}`;
+        await db.storage.uploadFile(coverPath, newCommunityCoverFile);
+        coverImageUrl = coverPath;
+      }
+
       const commData = {
         name: commName,
         code,
+        description: newCommunityDescription.trim() || undefined,
+        coverImageUrl,
         tags: tagsArray ? tagsArray : undefined,
         askRelationshipStatus: newCommunityAskRelationshipStatus ? true : undefined,
         createdAt: Date.now(),
@@ -598,8 +615,11 @@ export default function Onboarding() {
               Give your community a name to get started.
             </p>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-8 text-left">
               <div>
+                <label className="block text-grape-200 text-sm mb-1.5 font-medium">
+                  Community Name
+                </label>
                 <input
                   type="text"
                   value={newCommunityName}
@@ -608,13 +628,78 @@ export default function Onboarding() {
                     setCodeError("");
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateCommunity()}
-                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
-                  placeholder="Community Name (e.g. Burners)"
+                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3.5 text-white text-base placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
+                  placeholder="e.g. Burners, Loveolution"
                   autoFocus
                 />
               </div>
 
               <div>
+                <label className="block text-grape-200 text-sm mb-1.5 font-medium">
+                  Welcome Message from You <span className="text-grape-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={newCommunityDescription}
+                  onChange={(e) => setNewCommunityDescription(e.target.value)}
+                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white text-sm placeholder:text-grape-500 focus:outline-none focus:border-grape-400 h-24 resize-none"
+                  placeholder="Shown on the invite screen (e.g. Welcome! Fill out your profile before Friday night so we can run matching...)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-grape-200 text-sm mb-1.5 font-medium">
+                  Banner Image <span className="text-grape-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                      setCodeError("Banner image must be under 5MB");
+                      return;
+                    }
+                    setNewCommunityCoverFile(file);
+                    setNewCommunityCoverPreview(URL.createObjectURL(file));
+                  }}
+                />
+                {newCommunityCoverPreview ? (
+                  <div className="relative w-full h-32 rounded-xl overflow-hidden border border-grape-600">
+                    <img
+                      src={newCommunityCoverPreview}
+                      alt="Community Banner Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCommunityCoverFile(null);
+                        setNewCommunityCoverPreview("");
+                        if (coverInputRef.current) coverInputRef.current.value = "";
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-400 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shadow-md"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    className="w-full py-4 border-2 border-dashed border-grape-700/80 bg-grape-950/40 hover:border-grape-500 rounded-xl text-grape-300 hover:text-white text-sm font-medium transition-colors"
+                  >
+                    + Upload Banner Image
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-grape-200 text-sm mb-1.5 font-medium">
+                  Custom Profile Tags <span className="text-grape-400 font-normal">(optional)</span>
+                </label>
                 <input
                   type="text"
                   value={newCommunityTags}
@@ -622,10 +707,10 @@ export default function Onboarding() {
                     setNewCommunityTags(e.target.value);
                   }}
                   onKeyDown={(e) => e.key === "Enter" && handleCreateCommunity()}
-                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-4 text-white text-center text-lg placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
-                  placeholder="Custom tags (e.g. Climber, Foodie, Poly)"
+                  className="w-full bg-grape-950/60 border border-grape-700/80 rounded-xl px-4 py-3 text-white text-sm placeholder:text-grape-500 focus:outline-none focus:border-grape-400"
+                  placeholder="e.g. Climber, Foodie, Poly, Burner"
                 />
-                <p className="text-grape-400 text-xs mt-2">Optional. Comma-separated list of tags for members to pick from (e.g. hobbies, interests, vibes).</p>
+                <p className="text-grape-400 text-xs mt-1.5">Comma-separated list of tags for members to pick from.</p>
               </div>
 
               <div className="flex items-center justify-between py-2 px-1 text-left gap-3">
@@ -666,6 +751,19 @@ export default function Onboarding() {
     );
   }
 
+  const creatorObj = firstOf(currentCommunity?.creator);
+  const creatorProfiles = Array.isArray(creatorObj?.profile)
+    ? creatorObj.profile
+    : creatorObj?.profile
+      ? [creatorObj.profile]
+      : [];
+  const creatorProfile = creatorProfiles[0];
+  const ownerName: string | undefined = creatorProfile?.name;
+  const ownerPhoto: string | undefined =
+    creatorProfile?.photoUrl ||
+    (Array.isArray(creatorProfile?.photoUrls) ? creatorProfile.photoUrls[0] : undefined);
+  const ownerMessage: string | undefined = currentCommunity?.description?.trim();
+
   // Step 2: Profile form
   return (
     <div className="min-h-screen bg-[#0f0a1a] flex flex-col">
@@ -693,16 +791,84 @@ export default function Onboarding() {
       )}
 
       <div className={`flex-1 max-w-2xl mx-auto w-full px-6 ${currentCommunity?.coverImageUrl ? 'py-4' : 'py-8'}`}>
-        <div className="text-center mb-8 relative z-10">
+        <div className="text-center mb-6 relative z-10">
           <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-300 text-xs font-semibold uppercase tracking-wider">
-            Step 1 of 2 · Profile Setup
+            Community Invite · Profile Setup
           </div>
-          <h1 className="text-3xl font-black text-white mb-2 drop-shadow-md">
-            Join {currentCommunity?.name || "the community"}
+          <h1 className="text-2xl sm:text-4xl font-black text-white mb-2 drop-shadow-md leading-tight">
+            Find your stable match in{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-grape-300 to-purple-200">
+              {currentCommunity?.name || "this"}
+            </span>{" "}
+            community
           </h1>
           <p className="text-grape-300 text-sm max-w-lg mx-auto leading-relaxed drop-shadow-md">
-            Create your profile for this community. Next, you'll compare pairs of members as everyone joins, and NOFOBO will compute your <strong>1 optimal match</strong>.
+            Create your profile below. As everyone joins, you'll compare pairs of members and our Nobel Prize–winning algorithm will find your <strong>1 optimal match</strong>.
           </p>
+        </div>
+
+        {/* Community Owner Text / Organizer Welcome */}
+        {(ownerMessage || ownerName) && (
+          <div className="mb-6 bg-grape-950/70 border border-grape-700/80 rounded-xl p-4 text-left">
+            <div className="flex items-center gap-3 mb-2">
+              {ownerPhoto ? (
+                <StorageImage
+                  pathOrUrl={ownerPhoto}
+                  alt={ownerName || "Organizer"}
+                  className="w-9 h-9 rounded-full object-cover border border-grape-500 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-grape-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  {(ownerName || currentCommunity?.name || "O").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="text-white text-xs sm:text-sm font-bold">
+                  {ownerName ? `Hosted by ${ownerName}` : `${currentCommunity?.name || "Community"} Organizer`}
+                </div>
+                <div className="text-grape-400 text-xs">Community Owner</div>
+              </div>
+            </div>
+            {ownerMessage ? (
+              <p className="text-grape-200 text-sm leading-relaxed whitespace-pre-wrap pl-1">
+                “{ownerMessage}”
+              </p>
+            ) : (
+              <p className="text-grape-300 text-xs sm:text-sm leading-relaxed pl-1">
+                Welcome to <strong>{currentCommunity?.name}</strong>! Set up your profile below so we can match everyone 1-on-1.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Collapsible What is a Stable Match + Comic */}
+        <div className="mb-8 bg-grape-950/50 border border-grape-800/80 rounded-xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowComicOnProfile((prev) => !prev)}
+            className="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-grape-900/40 transition-colors"
+          >
+            <div>
+              <span className="text-white text-sm font-bold block">
+                What is a stable match?
+              </span>
+              <span className="text-grape-300 text-xs block">
+                See the 8-panel comic explaining how the Gale-Shapley algorithm works
+              </span>
+            </div>
+            <span className="text-grape-300 text-xs font-semibold px-2.5 py-1 rounded-lg bg-grape-900 border border-grape-700 flex-shrink-0 ml-3">
+              {showComicOnProfile ? "Hide Comic ▲" : "View Comic ▼"}
+            </span>
+          </button>
+
+          {showComicOnProfile && (
+            <div className="p-4 sm:p-6 border-t border-grape-800/80 space-y-4">
+              <p className="text-grape-200 text-xs sm:text-sm leading-relaxed">
+                Instead of juggling 20 chats and wondering if there's a "better option" out there (<strong>FOBO</strong>), everyone privately compares two profiles at a time. Those picks build your private ELO ranking, and the Nobel Prize–winning <strong>Gale-Shapley algorithm</strong> pairs everyone so no two people would rather be with each other than their match.
+              </p>
+              <AlgoComic />
+            </div>
+          )}
         </div>
 
         {completedProfiles.length > 0 && (

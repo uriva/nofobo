@@ -28,6 +28,7 @@ const _schema = i.schema({
       code: i.string().unique().indexed(),
       createdAt: i.number().indexed(),
       name: i.string(),
+      description: i.string().optional(),
       requirePhone: i.boolean().optional(),
       askRelationshipStatus: i.boolean().optional(),
       tags: i.json<string[]>().optional(),
