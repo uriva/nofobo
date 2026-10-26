@@ -23,10 +23,16 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   const [activeCommunityCode, setActiveCommunityCode] = useState<string | null>(null);
 
   useEffect(() => {
-    // If no active community selected, try to load from storage or default to first profile
-    if (!activeCommunityCode) {
+    const activeExists =
+      activeCommunityCode &&
+      (!data || allCommunities.some((c: any) => c.code === activeCommunityCode));
+
+    // If no active community selected (or it was deleted), try to load from storage or default to first profile
+    if (!activeExists) {
       const saved = localStorage.getItem("activeCommunityCode");
-      if (saved) {
+      const savedExists =
+        saved && (!data || allCommunities.some((c: any) => c.code === saved));
+      if (savedExists) {
         setActiveCommunityCode(saved);
       } else if (myProfiles.length > 0 && myProfiles[0].community?.code) {
         setActiveCommunityCode(myProfiles[0].community.code);
@@ -50,7 +56,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-  }, [myProfiles, allCommunities, activeCommunityCode, user]);
+  }, [data, myProfiles, allCommunities, activeCommunityCode, user]);
 
   // Persist to local storage when changed
   useEffect(() => {

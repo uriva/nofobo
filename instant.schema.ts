@@ -326,6 +326,7 @@ const _schema = i.schema({
         on: "profiles",
         has: "one",
         label: "community",
+        onDelete: "cascade",
       },
       reverse: {
         on: "communities",

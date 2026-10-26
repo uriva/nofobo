@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
-import { API_URL } from "../../../constants.ts";
+import { API_URL, isGlobalAdmin } from "../../../constants.ts";
 import Layout from "../components/Layout.tsx";
 import { useCommunity } from "../components/CommunityContext.tsx";
 import ProfileModal from "../components/ProfileModal.tsx";
@@ -40,8 +41,9 @@ interface MatchPair {
 }
 
 export default function Admin() {
+  const navigate = useNavigate();
   const { user } = db.useAuth();
-  const { activeCommunityCode, setActiveCommunityCode } = useCommunity();
+  const { activeCommunityCode, setActiveCommunityCode, myProfiles, allCommunities } = useCommunity();
   const [error, setError] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -72,6 +74,7 @@ export default function Admin() {
   const [editingCommunityName, setEditingCommunityName] = useState("");
   const [editingCommunityCode, setEditingCommunityCode] = useState("");
   const [savingCommunityInfo, setSavingCommunityInfo] = useState(false);
+  const [deletingCommunity, setDeletingCommunity] = useState(false);
   
   const { data: communityData } = db.useQuery(activeCommunityCode ? {
     communities: { $: { where: { code: activeCommunityCode } } }
@@ -335,6 +338,66 @@ export default function Admin() {
       alert(e instanceof Error ? e.message : "Failed to save community info");
     } finally {
       setSavingCommunityInfo(false);
+    }
+  };
+
+  const handleDeleteCommunity = async () => {
+    if (!community || !activeCommunityCode || deletingCommunity) return;
+    const displayName = community.name || activeCommunityCode;
+    if (
+      !confirm(
+        `Are you sure you want to delete "${displayName}"? This will permanently delete the community and all profiles in it.`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingCommunity(true);
+    try {
+      const { data: commProfilesData } = await db.queryOnce({
+        profiles: { $: { where: { "community.id": community.id } } },
+      });
+      const commProfiles = commProfilesData?.profiles ?? [];
+
+      const txns = [
+        ...commProfiles.map((p: { id: string }) => db.tx.profiles[p.id].delete()),
+        db.tx.communities[community.id].delete(),
+      ];
+      await db.transact(txns);
+
+      // Pick the next available community for this user
+      const remainingProfileCodes = myProfiles
+        .map((p) => p.community?.code)
+        .filter((c): c is string => Boolean(c) && c !== activeCommunityCode);
+
+      const isGlobal = isGlobalAdmin(user?.email);
+      const remainingAdminCodes = allCommunities
+        .filter((c) => {
+          if (!c.code || c.code === activeCommunityCode) return false;
+          if (isGlobal) return true;
+          const admins = Array.isArray(c.adminEmails) ? c.adminEmails : [];
+          const isAdmin =
+            user?.email &&
+            admins.some((e: string) => e.toLowerCase() === user.email!.toLowerCase());
+          const isCreator = user?.id && c.creator?.id === user.id;
+          return isAdmin || isCreator;
+        })
+        .map((c) => c.code as string);
+
+      const nextCode = remainingProfileCodes[0] || remainingAdminCodes[0] || null;
+      if (nextCode) {
+        setActiveCommunityCode(nextCode);
+        localStorage.setItem("activeCommunityCode", nextCode);
+        navigate("/app/compare");
+      } else {
+        localStorage.removeItem("activeCommunityCode");
+        navigate("/app/onboarding?new=1");
+      }
+    } catch (e) {
+      console.error("Delete community error:", e);
+      alert(e instanceof Error ? e.message : "Failed to delete community");
+    } finally {
+      setDeletingCommunity(false);
     }
   };
 
@@ -712,6 +775,25 @@ export default function Admin() {
                       )}
                     </div>
                   )}
+                </div>
+
+                <div className="border-t border-grape-800" />
+
+                {/* Delete Community */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-red-400 font-medium">Delete Community</h3>
+                    <p className="text-grape-400 text-sm">
+                      Permanently delete this community and all profiles registered in it.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDeleteCommunity}
+                    disabled={deletingCommunity || !community}
+                    className="bg-red-600/20 border border-red-500/50 hover:bg-red-600 hover:border-red-500 text-red-300 hover:text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {deletingCommunity ? "Deleting..." : "Delete Community"}
+                  </button>
                 </div>
               </div>
             </div>

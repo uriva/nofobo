@@ -6,9 +6,18 @@ const rules = {
       view: "true",
       create: "isOwner",
       update: "isOwner",
-      delete: "isOwner",
+      delete: "isOwner || isCommunityAdmin || isGlobalAdmin || isCommunityCreator",
     },
-    bind: ["isOwner", "auth.id in data.ref('user.id')"],
+    bind: [
+      "isOwner",
+      "auth.id in data.ref('user.id')",
+      "isCommunityAdmin",
+      "auth.email in data.ref('community.adminEmails')",
+      "isGlobalAdmin",
+      "auth.email == 'uri.valevski@gmail.com'",
+      "isCommunityCreator",
+      "auth.id in data.ref('community.creator.id')",
+    ],
   },
   onboardingChats: {
     allow: {
@@ -24,7 +33,7 @@ const rules = {
       view: "true",
       create: "true",
       update: "isAdmin || isGlobalAdmin || isCreator",
-      delete: "false",
+      delete: "isAdmin || isGlobalAdmin || isCreator",
     },
     bind: [
       "isAdmin",
