@@ -49,7 +49,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!data?.profiles?.length) {
-    return <Navigate to="/app/onboarding" replace />;
+    return <Navigate to={`/app/onboarding${window.location.search}`} replace />;
   }
 
   return <CommunityProvider>{children}</CommunityProvider>;

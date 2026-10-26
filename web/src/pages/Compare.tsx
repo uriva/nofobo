@@ -196,22 +196,27 @@ export default function Compare() {
     (totalComparisons / MIN_COMPARISONS_FOR_MATCHING) * 100,
   );
 
+  const isWaitingForFirstMembers =
+    !loading && Boolean(message) && totalComparisons === 0 && eligibleCount < 2 && !hasActiveFilters;
+
   return (
     <Layout>
       <div className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         {/* Filters Toggle */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-full border ${
-              showFilters 
-                ? "bg-grape-900 border-grape-700 text-white" 
-                : "bg-grape-950 border-grape-800 text-grape-400 hover:border-grape-600 hover:text-grape-300"
-            }`}
-          >
-            Filters {hasActiveFilters ? `(active)` : ""}
-          </button>
-        </div>
+        {!isWaitingForFirstMembers && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`text-sm font-medium transition-colors whitespace-nowrap px-3 py-1.5 rounded-full border ${
+                showFilters 
+                  ? "bg-grape-900 border-grape-700 text-white" 
+                  : "bg-grape-950 border-grape-800 text-grape-400 hover:border-grape-600 hover:text-grape-300"
+              }`}
+            >
+              Filters {hasActiveFilters ? `(active)` : ""}
+            </button>
+          </div>
+        )}
 
         {/* Filters panel */}
         {showFilters && (
@@ -308,32 +313,34 @@ export default function Compare() {
         )}
 
         {/* Progress */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-grape-400 text-sm">
-              {totalComparisons} comparisons made
-            </span>
-            <span className="text-grape-400 text-sm flex items-center gap-2">
-              {activeCommunityCode && (
-                <span className="bg-grape-900 border border-grape-800 px-2 py-0.5 rounded text-xs" title="Share this code with your friends!">
-                  Code: <strong className="text-white">{activeCommunityCode}</strong>
-                </span>
-              )}
-              {eligibleCount} people in your pool
-            </span>
+        {!isWaitingForFirstMembers && (
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-grape-400 text-sm">
+                {totalComparisons} comparisons made
+              </span>
+              <span className="text-grape-400 text-sm flex items-center gap-2">
+                {activeCommunityCode && (
+                  <span className="bg-grape-900 border border-grape-800 px-2 py-0.5 rounded text-xs" title="Share this code with your friends!">
+                    Code: <strong className="text-white">{activeCommunityCode}</strong>
+                  </span>
+                )}
+                {eligibleCount} people in your pool
+              </span>
+            </div>
+            <div className="w-full h-2 bg-grape-950 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-grape-600 to-purple-500 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="text-grape-500 text-xs mt-1 text-right">
+              {totalComparisons >= MIN_COMPARISONS_FOR_MATCHING
+                ? "Enough data for great rankings!"
+                : `${MIN_COMPARISONS_FOR_MATCHING - totalComparisons} more for solid rankings`}
+            </div>
           </div>
-          <div className="w-full h-2 bg-grape-950 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-grape-600 to-purple-500 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <div className="text-grape-500 text-xs mt-1 text-right">
-            {totalComparisons >= MIN_COMPARISONS_FOR_MATCHING
-              ? "Enough data for great rankings!"
-              : `${MIN_COMPARISONS_FOR_MATCHING - totalComparisons} more for solid rankings`}
-          </div>
-        </div>
+        )}
 
         {!message && (
           <>
@@ -353,27 +360,49 @@ export default function Compare() {
             </div>
           </div>
         ) : message ? (
-          <div className="max-w-md mx-auto text-center py-10">
+          <div className="max-w-md mx-auto text-center py-6">
             {totalComparisons > 0 ? (
               <>
+                <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-300 text-xs font-semibold">
+                  ✓ Caught Up
+                </div>
                 <h2 className="text-white text-2xl font-bold mb-2">{message}</h2>
-                <p className="text-grape-400 text-sm mb-8">
-                  You've made {totalComparisons} comparisons so far. Invite more people to keep comparing!
+                <p className="text-grape-400 text-sm mb-6 leading-relaxed">
+                  You've made {totalComparisons} comparisons so far. As more members sign up, new pairs will appear here — check back anytime!
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-white text-2xl font-bold mb-2">
-                  Invite people to {myCommunity?.name || "your community"}
+                <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-200 text-xs font-semibold">
+                  ✓ Your profile is live in {myCommunity?.name || "the community"}
+                </div>
+                <h2 className="text-white text-3xl font-black mb-3">
+                  You're one of the first here!
                 </h2>
-                <p className="text-grape-400 text-sm mb-8">
-                  Share this link or QR code so others can join and start comparing.
+                <p className="text-grape-300 text-sm mb-6 leading-relaxed">
+                  Your profile is all set. It takes a little time for everyone in the community to sign up — once a few more compatible members join, you can come back here to compare profiles side-by-side.
                 </p>
               </>
             )}
 
+            <button
+              onClick={loadPair}
+              className="mb-8 inline-flex items-center gap-2 bg-grape-900 hover:bg-grape-800 border border-grape-700 text-grape-200 hover:text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            >
+              Check for New Members
+            </button>
+
             {inviteUrl && (
-              <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6 space-y-6">
+              <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6 space-y-6 text-left">
+                <div className="text-center">
+                  <h3 className="text-white font-bold text-base mb-1">
+                    Invite people to {myCommunity?.name || "your community"}
+                  </h3>
+                  <p className="text-grape-400 text-xs">
+                    Share this link or QR code to get everyone signed up faster.
+                  </p>
+                </div>
+
                 <div className="relative w-full">
                   <input
                     type="text"

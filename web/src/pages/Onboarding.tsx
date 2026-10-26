@@ -4,6 +4,7 @@ import { id } from "@instantdb/react";
 import db from "../db.ts";
 import { extractPath } from "../utils/storage.ts";
 import StorageImage from "../components/StorageImage.tsx";
+import Spinner from "../components/Spinner.tsx";
 import { normalizePhone } from "../utils/phone.ts";
 
 const VALID_COMMUNITY_CODES = ["burningdesire"];
@@ -57,7 +58,7 @@ export default function Onboarding() {
 
   // Step: "choose", "code", "create_community", or "profile"
   const [step, setStep] = useState<"choose" | "code" | "create_community" | "profile">(
-    initialCodeParam ? "code" : "choose",
+    initialCodeParam ? "profile" : "choose",
   );
 
   // Form state
@@ -86,7 +87,7 @@ export default function Onboarding() {
   const hasPrefilledRef = useRef(false);
 
   // Check user's profiles and communities
-  const { data } = db.useQuery(
+  const { data, isLoading: loadingData } = db.useQuery(
     user
       ? {
           profiles: {
@@ -433,6 +434,14 @@ export default function Onboarding() {
 
   if (!user) return null;
 
+  if (initialCodeParam && loadingData && !currentCommunity) {
+    return (
+      <div className="min-h-screen bg-[#0f0a1a] flex items-center justify-center">
+        <Spinner message="Loading community invite..." size="lg" />
+      </div>
+    );
+  }
+
   // Step 0: Choose between entering a community code or creating a new community
   if (step === "choose") {
     return (
@@ -685,19 +694,30 @@ export default function Onboarding() {
 
       <div className={`flex-1 max-w-2xl mx-auto w-full px-6 ${currentCommunity?.coverImageUrl ? 'py-4' : 'py-8'}`}>
         <div className="text-center mb-8 relative z-10">
+          <div className="inline-block mb-3 px-3 py-1 rounded-full bg-grape-900/80 border border-grape-700 text-grape-300 text-xs font-semibold uppercase tracking-wider">
+            Step 1 of 2 · Profile Setup
+          </div>
           <h1 className="text-3xl font-black text-white mb-2 drop-shadow-md">
             Join {currentCommunity?.name || "the community"}
           </h1>
-          <p className="text-grape-400 drop-shadow-md">
-            Set up your profile to start comparing and finding your match
+          <p className="text-grape-300 text-sm max-w-lg mx-auto leading-relaxed drop-shadow-md">
+            Create your profile for this community. Next, you'll compare pairs of members as everyone joins, and NOFOBO will compute your <strong>1 optimal match</strong>.
           </p>
         </div>
+
+        {completedProfiles.length > 0 && (
+          <div className="mb-8 bg-grape-950/80 border border-grape-700/80 rounded-xl p-4 text-center">
+            <p className="text-grape-200 text-sm">
+              ✨ We pre-filled your details from your existing profile — review below and click <strong>Join {currentCommunity?.name || "Community"}</strong>!
+            </p>
+          </div>
+        )}
 
         <div className="space-y-8">
           {/* Name */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Your name
+              Your first name
             </label>
             <input
               type="text"
@@ -727,7 +747,7 @@ export default function Onboarding() {
           {/* Location */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Location
+              Location <span className="text-grape-500 font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -833,13 +853,13 @@ export default function Onboarding() {
           )}
 
           {/* Tags */}
-          <div>
-            <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Tags (select all that apply)
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availableTags.length > 0 ? (
-                availableTags.map((tag: string) => (
+          {availableTags.length > 0 && (
+            <div>
+              <label className="block text-grape-300 text-sm mb-2 font-medium">
+                Tags <span className="text-grape-500 font-normal">(optional — select any that apply)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableTags.map((tag: string) => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
@@ -851,17 +871,15 @@ export default function Onboarding() {
                   >
                     {tag}
                   </button>
-                ))
-              ) : (
-                <p className="text-grape-500 text-sm italic">No custom tags set for this community.</p>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Photos */}
           <div>
             <label className="block text-grape-300 text-sm mb-2 font-medium">
-              Photos ({existingPhotoUrls.length + photos.length}/{MAX_PHOTOS})
+              Photos <span className="text-grape-500 font-normal">(at least 1 · {existingPhotoUrls.length + photos.length}/{MAX_PHOTOS})</span>
             </label>
             <input
               ref={photoInputRef}
@@ -956,7 +974,9 @@ export default function Onboarding() {
             disabled={saving}
             className="w-full bg-gradient-to-r from-grape-600 to-purple-500 hover:from-grape-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
           >
-            {saving ? "Saving..." : "Create Profile"}
+            {saving
+              ? "Joining..."
+              : `Join ${currentCommunity?.name || "Community"}`}
           </button>
         </div>
       </div>
