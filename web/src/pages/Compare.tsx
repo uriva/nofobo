@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import QRCode from "qrcode";
 import db from "../db.ts";
 import Spinner from "../components/Spinner.tsx";
 import { API_URL, MIN_COMPARISONS_FOR_MATCHING } from "../../../constants.ts";
@@ -64,6 +65,37 @@ export default function Compare() {
   const [maxAge, setMaxAge] = useState("");
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
+
+  // Invite link & QR code state
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const inviteUrl = useMemo(() => {
+    const code = myCommunity?.code || activeCommunityCode || "";
+    return code ? `${window.location.origin}/app/onboarding?code=${code}` : "";
+  }, [myCommunity?.code, activeCommunityCode]);
+
+  useEffect(() => {
+    if (inviteUrl) {
+      QRCode.toDataURL(inviteUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: "#0f0a1a",
+          light: "#ffffff",
+        },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error("QR Code generation error:", err));
+    }
+  }, [inviteUrl]);
+
+  const handleCopyLink = () => {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const getAuthToken = () => {
     return user?.refresh_token ?? "";
@@ -321,13 +353,58 @@ export default function Compare() {
             </div>
           </div>
         ) : message ? (
-          <div className="text-center py-20">
-            <p className="text-grape-300 text-lg mb-4">{message}</p>
-            <p className="text-grape-500 text-sm">
-              {totalComparisons > 0
-                ? `You've made ${totalComparisons} comparisons so far. Nice work!`
-                : "More people need to join before you can start comparing."}
-            </p>
+          <div className="max-w-md mx-auto text-center py-10">
+            {totalComparisons > 0 ? (
+              <>
+                <h2 className="text-white text-2xl font-bold mb-2">{message}</h2>
+                <p className="text-grape-400 text-sm mb-8">
+                  You've made {totalComparisons} comparisons so far. Invite more people to keep comparing!
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-white text-2xl font-bold mb-2">
+                  Invite people to {myCommunity?.name || "your community"}
+                </h2>
+                <p className="text-grape-400 text-sm mb-8">
+                  Share this link or QR code so others can join and start comparing.
+                </p>
+              </>
+            )}
+
+            {inviteUrl && (
+              <div className="bg-grape-950 border border-grape-800 rounded-2xl p-6 space-y-6">
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    readOnly
+                    value={inviteUrl}
+                    className="w-full bg-grape-900 border border-grape-800 rounded-lg pl-4 pr-24 py-2.5 text-white text-sm focus:outline-none"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className="absolute right-2 top-1.5 bg-grape-700 hover:bg-grape-600 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+
+                {qrDataUrl && (
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="p-4 bg-white rounded-xl shadow-lg mb-3">
+                      <img src={qrDataUrl} alt="Community QR Code" className="w-48 h-48" />
+                    </div>
+                    <a
+                      href={qrDataUrl}
+                      download={`invite-qr-${myCommunity?.code || activeCommunityCode}.png`}
+                      className="text-grape-400 hover:text-white text-xs font-medium underline transition-colors"
+                    >
+                      Download QR Code PNG
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : pair ? (
           <>
