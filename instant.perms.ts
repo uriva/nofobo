@@ -6,7 +6,8 @@ const rules = {
       view: "true",
       create: "isOwner",
       update: "isOwner",
-      delete: "isOwner || isCommunityAdmin || isGlobalAdmin || isCommunityCreator",
+      delete:
+        "isOwner || isCommunityAdmin || isGlobalAdmin || isCommunityCreator",
     },
     bind: [
       "isOwner",

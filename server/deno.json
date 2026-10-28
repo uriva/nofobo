@@ -33,9 +33,5 @@
     "web",
     "node_modules",
     "dist"
-  ],
-  "deploy": {
-    "org": "uriva",
-    "app": "nofobo-api-v6"
-  }
+  ]
 }

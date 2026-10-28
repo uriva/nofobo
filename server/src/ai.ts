@@ -1,6 +1,6 @@
 // AI-powered profile generation and onboarding chat
 
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
+const getOpenAiKey = () => Deno.env.get("OPENAI_API_KEY") ?? "";
 
 interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -12,14 +12,14 @@ async function callAI(messages: ChatMessage[]): Promise<string> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${getOpenAiKey()}`,
     },
-    body: {
+    body: JSON.stringify({
       model: "gpt-4o-mini",
       messages,
       max_tokens: 1024,
       temperature: 0.7,
-    },
+    }),
   });
 
   if (!res.ok) {

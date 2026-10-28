@@ -2,6 +2,8 @@
   "tasks": {
     "dev": "npx vite --host 0.0.0.0 --port 3000",
     "serve": "deno run -A server/src/main.ts",
+    "build:worker": "deno run -A scripts/buildWorker.ts",
+    "deploy": "npx wrangler deploy",
     "check": "deno fmt --check && deno lint && deno check server/src/main.ts",
     "push-schema": "npx instant-cli push schema --yes",
     "push-perms": "npx instant-cli push perms --yes",
@@ -34,9 +36,5 @@
     "web",
     "node_modules",
     "dist"
-  ],
-  "deploy": {
-    "org": "uriva",
-    "app": "nofobo"
-  }
+  ]
 }

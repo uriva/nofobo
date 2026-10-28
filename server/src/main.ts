@@ -117,7 +117,7 @@ async function verifyAuth(
   }
 }
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -712,7 +712,8 @@ async function handler(req: Request): Promise<Response> {
 }
 
 // --- Server ---
-const port = parseInt(Deno.env.get("PORT") ?? "8000");
-console.log(`NOFOBO server running on port ${port}`);
-
-Deno.serve({ port }, handler);
+if (import.meta.main) {
+  const port = parseInt(Deno.env.get("PORT") ?? "8000");
+  console.log(`NOFOBO server running on port ${port}`);
+  Deno.serve({ port }, handler);
+}
