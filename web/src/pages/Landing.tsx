@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import db from "../db.ts";
 
 export default function Landing() {
@@ -183,11 +183,29 @@ export default function Landing() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-grape-900/50">
         <div className="max-w-4xl mx-auto text-center text-grape-500 text-sm">
-          <p>NOFOBO - No Fear Of Better Option</p>
+          <p>NOFOBO - No Fear Of Better Option · 18+ Only</p>
           <p className="mt-2">
             Built with the Gale-Shapley stable matching algorithm (Nobel Prize
             in Economics, 2012)
           </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-grape-400">
+            <Link to="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <span>&middot;</span>
+            <Link to="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <span>&middot;</span>
+            <a
+              href="https://uriv.me"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              uriv.me
+            </a>
+          </div>
         </div>
       </footer>
     </div>

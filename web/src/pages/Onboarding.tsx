@@ -1140,6 +1140,27 @@ export default function Onboarding() {
           )}
 
           {/* Submit */}
+          <p className="text-center text-grape-400 text-xs leading-relaxed">
+            By joining, you confirm you are at least <strong className="text-grape-200">18 years old</strong> and agree to our{" "}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-grape-300 underline hover:text-white"
+            >
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-grape-300 underline hover:text-white"
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
           <button
             type="button"
             onClick={handleSubmit}

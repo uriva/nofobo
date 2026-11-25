@@ -7,6 +7,8 @@ import Compare from "./pages/Compare.tsx";
 import MyDecisions from "./pages/MyDecisions.tsx";
 import Admin from "./pages/Admin.tsx";
 import Profile from "./pages/Profile.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
 import { CommunityProvider } from "./components/CommunityContext.tsx";
 import Spinner from "./components/Spinner.tsx";
 
@@ -60,6 +62,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/app/auth" element={<Auth />} />
         <Route
           path="/app/onboarding"

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Navigate, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import db from "../db.ts";
 import StorageImage from "../components/StorageImage.tsx";
 import AlgoComic from "../components/AlgoComic.tsx";
@@ -262,6 +262,17 @@ export default function Auth() {
               <p className="text-center text-grape-400 text-xs mt-4">
                 No password needed — we'll send a one-time login code to your email.
               </p>
+              <p className="text-center text-grape-500 text-xs mt-3 leading-relaxed">
+                By continuing, you confirm you are at least <strong className="text-grape-300">18 years old</strong> and agree to our{" "}
+                <Link to="/terms" className="text-grape-300 underline hover:text-white">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" className="text-grape-300 underline hover:text-white">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </div>
           </div>
         </div>
@@ -328,6 +339,18 @@ export default function Auth() {
             </button>
           </div>
         </div>
+
+        <footer className="mt-8 pb-4 text-center text-xs text-grape-500 flex flex-wrap items-center justify-center gap-3">
+          <span>18+ Only</span>
+          <span>&middot;</span>
+          <Link to="/privacy" className="hover:text-grape-300 transition-colors">
+            Privacy Policy
+          </Link>
+          <span>&middot;</span>
+          <Link to="/terms" className="hover:text-grape-300 transition-colors">
+            Terms of Service
+          </Link>
+        </footer>
       </div>
     </div>
   );

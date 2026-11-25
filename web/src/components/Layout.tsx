@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import db from "../db.ts";
 import { useCommunity } from "./CommunityContext.tsx";
 import { isGlobalAdmin as checkGlobalAdmin } from "../../../constants.ts";
@@ -218,6 +218,30 @@ export default function Layout({ children, headerActions }: { children: ReactNod
       <div className="flex-1 flex flex-col">
         {children}
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-grape-900/40 py-5 px-4 text-center text-xs text-grape-500">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-3">
+          <span>NOFOBO · 18+ Only</span>
+          <span>&middot;</span>
+          <Link to="/privacy" className="hover:text-grape-300 transition-colors">
+            Privacy Policy
+          </Link>
+          <span>&middot;</span>
+          <Link to="/terms" className="hover:text-grape-300 transition-colors">
+            Terms of Service
+          </Link>
+          <span>&middot;</span>
+          <a
+            href="https://uriv.me"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-grape-300 transition-colors"
+          >
+            uriv.me
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
