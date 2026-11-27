@@ -31,6 +31,7 @@ export function normalizePhone(phone?: string): string | undefined {
 const db = init({
   appId: "6818f05d-46f3-4622-9aaf-dcd14e067e9e",
   adminToken: Deno.env.get("INSTANT_ADMIN_TOKEN") ?? "",
+  apiURI: "https://api.instantdb.uriv.me",
 });
 
 async function main() {

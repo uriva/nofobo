@@ -24,6 +24,7 @@ jobs:
 
       - name: Push to InstantDB
         env:
+          INSTANT_CLI_API_URI: https://api.instantdb.uriv.me
           INSTANT_APP_ID: 6818f05d-46f3-4622-9aaf-dcd14e067e9e
           INSTANT_ADMIN_TOKEN: ${{ secrets.INSTANT_ADMIN_TOKEN }}
         run: npx instant-cli push all --yes

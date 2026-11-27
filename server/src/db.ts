@@ -13,6 +13,7 @@ const getAdminDb = () => {
       appId,
       adminToken,
       schema,
+      apiURI: "https://api.instantdb.uriv.me",
     });
   }
   return _adminDb;

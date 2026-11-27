@@ -7,7 +7,11 @@ if (!APP_ID || !ADMIN_TOKEN) {
   Deno.exit(1);
 }
 
-const adminDb = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+const adminDb = init({
+  appId: APP_ID,
+  adminToken: ADMIN_TOKEN,
+  apiURI: "https://api.instantdb.uriv.me",
+});
 
 async function run() {
   const { profiles } = await adminDb.query({
